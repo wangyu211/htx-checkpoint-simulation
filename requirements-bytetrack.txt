@@ -1,0 +1,11 @@
+# Install in a separate .venv-bytetrack environment. Do not combine this file
+# with requirements.txt: opencv-python and opencv-python-headless share the
+# same cv2 namespace and are intentionally kept in separate environments.
+-r requirements-common.txt
+opencv-python==4.13.0.92
+supervision==0.25.1
+defusedxml==0.7.1
+Pillow==12.3.0
+PyYAML==6.0.3
+requests==2.34.2
+tqdm==4.69.1

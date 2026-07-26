@@ -1,0 +1,19 @@
+parameter,value,lower,upper,unit,source_class,source,model_use,status,notes
+video_sha256,4e2adef6a7c11ff4bac604a034229a08dfd53747360862cc53d0098f53bc7a2c,,,hex digest,MEASURED_METADATA,Local SHA-256 audit,Input identity,VERIFIED,Source pixels are not redistributed
+video_frame_rate,30.012692534,,,frames/second,MEASURED_METADATA,OpenCV decode audit,Metadata only,VERIFIED,Event clock uses decoded PTS rather than frame/fps
+video_duration,24.922788889,,,seconds,MEASURED_METADATA,OpenCV decode audit,Rate denominator,VERIFIED,Presentation duration
+video_decoded_frames,748,,,frames,MEASURED_METADATA,OpenCV decode audit,Audit completeness,VERIFIED,All decoded frames
+video_width,1280,,,pixels,MEASURED_METADATA,OpenCV decode audit,CV geometry,VERIFIED,
+video_height,720,,,pixels,MEASURED_METADATA,OpenCV decode audit,CV geometry,VERIFIED,
+analysis_roi_y_max,310,,,pixels,MEASURED_VIDEO,Visual reflection audit,CV geometry,WORKING,Pixels at y>=310 excluded to avoid glass reflections
+count_line_x,640,620,660,pixels,MEASURED_VIDEO,Counting-rule sensitivity,CV geometry,WORKING,Central reference line with plus or minus 20 px sensitivity
+crossing_count_review_bracket,,35,38,events,MEASURED_VIDEO,Strict candidate audit plus sequential visual sweep,Owner review evidence,WORKING,Not a confidence interval; includes three high-confidence recovered events pending owner sign-off
+bidirectional_rate_review_bracket,,1.404337,1.524709,travellers/second,MEASURED_VIDEO,Crossing count divided by 24.922788889 seconds,Input sensitivity evidence,WORKING,Not a long-run rate interval and not yet an arrival input
+arrival_rate,,,,travellers/second,MEASURED_VIDEO,Audited crossing ledger,Arrival process,TBD,Do not populate before manual reconciliation
+security_capacity,,,,servers,TRANSPARENT_ASSUMPTION,Task 2 assumption,Decision factor,TBD,No service-resource calibration data supplied
+immigration_capacity,,,,servers,TRANSPARENT_ASSUMPTION,Task 2 assumption,Decision factor,TBD,No service-resource calibration data supplied
+security_service_time,,,,seconds,TRANSPARENT_ASSUMPTION,Sensitivity range,Service process,TBD,Must remain positive
+immigration_service_time,,,,seconds,TRANSPARENT_ASSUMPTION,Sensitivity range,Service process,TBD,Must remain positive
+automation_uptake,0.5,0,1,proportion,TRANSPARENT_ASSUMPTION,Scenario factor,Technology mixture,PLANNED,Effective uptake not pure adoption
+automation_multiplier,0.6,0.4,0.6,multiplier,EXTERNAL_SCENARIO_ANCHOR,HTX and ICA reports,Technology mixture,PLANNED,Cross-context mapping assumption
+demand_multiplier,1.0,1.0,1.2,multiplier,ILLUSTRATIVE_SCENARIO,System-level aggregate informed,Arrival stress,PLANNED,Not a calibrated local peak multiplier

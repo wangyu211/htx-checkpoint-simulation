@@ -1,0 +1,33 @@
+# Python
+.venv/
+.venv-bytetrack/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Local task inputs and restricted derivatives
+data/raw/*
+!data/raw/README.md
+data/derived/annotated_*
+data/derived/frames/
+
+# Model weights and caches
+models/*.onnx
+models/*.pth
+models/*.pt
+.cache/
+
+# Generated experiment outputs
+results/raw/
+results/intermediate/
+_work/
+
+# AnyLogic / IDE / OS
+.metadata/
+.idea/
+.vscode/
+*.log
+~$*
+Thumbs.db
+.DS_Store

@@ -1,0 +1,37 @@
+event_id,track_id,frame_index,time_seconds,candidate_direction,centroid_x,centroid_y,confidence,ai_first_pass_decision,ai_first_pass_direction,notes
+1,1,56,1.854211,right_to_left,622.853,199.580,0.675385,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+2,3,63,2.087567,left_to_right,661.846,122.639,0.101959,ACCEPT,left_to_right,Visible continuous crossing in evidence strip
+3,11,96,3.187656,right_to_left,622.326,225.103,0.611185,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+4,17,102,3.387667,left_to_right,657.295,128.509,0.706729,ACCEPT,left_to_right,Visible continuous crossing in evidence strip
+5,58,144,4.787789,left_to_right,666.960,123.432,0.076378,ACCEPT,left_to_right,Visible continuous crossing in evidence strip
+6,13,151,5.021133,left_to_right,665.491,46.573,0.285364,ACCEPT,left_to_right,Partial top-edge target but crossing direction is visible
+7,57,153,5.087811,right_to_left,551.719,83.233,0.110869,REJECT,,Implausible one-frame location jump indicates an ID association switch
+8,44,157,5.221156,right_to_left,619.604,285.868,0.211356,ACCEPT,right_to_left,Partial bottom-edge target but crossing is visible
+9,59,183,6.087889,left_to_right,658.762,37.532,0.063383,ACCEPT,left_to_right,Partial top-edge target but crossing direction is visible
+10,52,197,6.554600,right_to_left,625.176,194.462,0.433744,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+11,84,206,6.854622,right_to_left,612.045,202.853,0.322979,ACCEPT,right_to_left,Visible crossing; confirmation time follows first line contact
+12,63,216,7.187978,right_to_left,600.447,221.444,0.065201,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+13,56,229,7.621356,left_to_right,707.602,64.998,0.075439,ACCEPT,left_to_right,Partial top-edge target but crossing direction is visible
+14,97,293,9.754856,right_to_left,616.895,218.215,0.376207,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+15,67,299,9.954878,right_to_left,622.475,263.292,0.416872,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+16,111,322,10.721611,right_to_left,623.650,178.889,0.664113,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+17,66,323,10.754944,right_to_left,621.006,292.189,0.805916,ACCEPT,right_to_left,Partial bottom-edge target but crossing is visible
+18,121,344,11.455000,right_to_left,572.265,177.050,0.058741,ACCEPT,right_to_left,Visible crossing before later association displacement
+19,118,351,11.688356,right_to_left,563.626,288.655,0.724975,ACCEPT,right_to_left,Partial bottom-edge target but crossing is visible
+20,133,352,11.721689,right_to_left,622.976,291.319,0.408368,ACCEPT,right_to_left,Partial bottom-edge target but crossing is visible
+21,130,378,12.588422,right_to_left,622.195,160.558,0.385064,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+22,140,380,12.655100,right_to_left,570.149,285.815,0.295195,ACCEPT,right_to_left,Partial bottom-edge target but crossing is visible
+23,134,382,12.721767,right_to_left,566.009,284.947,0.264767,ACCEPT,right_to_left,Partial bottom-edge target but crossing is visible
+24,102,389,12.955122,right_to_left,622.996,295.093,0.347711,ACCEPT,right_to_left,Partial bottom-edge target but crossing is visible
+25,112,418,13.921867,right_to_left,624.910,184.937,0.413121,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+26,83,470,15.655344,right_to_left,620.442,94.866,0.364276,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+27,135,507,16.888778,right_to_left,622.252,165.922,0.062681,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+28,139,512,17.055456,right_to_left,615.386,183.229,0.374775,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+29,145,550,18.322233,right_to_left,624.933,115.559,0.268871,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+30,149,568,18.922278,right_to_left,623.410,132.153,0.078661,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+31,170,597,19.889033,right_to_left,616.276,232.408,0.070222,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+32,159,602,20.055711,left_to_right,656.829,47.074,0.354577,ACCEPT,left_to_right,Partial top-edge target but crossing direction is visible
+33,169,602,20.055711,right_to_left,619.115,269.660,0.126222,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+34,182,630,20.989122,right_to_left,618.809,122.574,0.064706,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+35,183,645,21.489156,right_to_left,618.421,274.818,0.433379,ACCEPT,right_to_left,Visible continuous crossing in evidence strip
+36,198,695,23.155967,left_to_right,659.671,287.062,0.324829,ACCEPT,left_to_right,Partial bottom-edge target but crossing is visible

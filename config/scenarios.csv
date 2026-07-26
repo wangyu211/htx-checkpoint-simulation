@@ -1,0 +1,8 @@
+scenario_id,description,demand_multiplier,security_capacity_delta,immigration_capacity_delta,queue_policy,automation_uptake,automation_multiplier,status
+D100_SEC+0_IMM+0_QSEP_U00_M60,Baseline assumptions,1.0,0,0,separate,0.0,0.6,PLANNED
+D100_SEC+1_IMM+0_QSEP_U00_M60,Security capacity sensitivity,1.0,1,0,separate,0.0,0.6,PLANNED
+D100_SEC+0_IMM+1_QSEP_U00_M60,Immigration capacity sensitivity,1.0,0,1,separate,0.0,0.6,PLANNED
+D100_SEC+0_IMM+0_QPOOL_U00_M60,Immigration pooled queue,1.0,0,0,pooled,0.0,0.6,PLANNED
+D100_SEC+0_IMM+0_QSEP_U50_M60,Technology mixture - conservative anchor,1.0,0,0,separate,0.5,0.6,PLANNED
+D100_SEC+0_IMM+0_QSEP_U50_M40,Technology mixture - full-rollout anchor,1.0,0,0,separate,0.5,0.4,PLANNED
+D120_SEC+0_IMM+0_QSEP_U00_M60,Illustrative +20 percent local-demand sensitivity,1.2,0,0,separate,0.0,0.6,PLANNED
