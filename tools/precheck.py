@@ -133,11 +133,12 @@ def check_user_paths(tracked: set[str]) -> list[str]:
 
 def validate_compact_audit() -> list[str]:
     errors: list[str] = []
+    root = PROJECT_ROOT / "results" / "analysis" / "operational"
     manifest_path = (
-        PROJECT_ROOT / "results" / "analysis" / "operational" / "audit_manifest.json"
+        root / "audit_manifest.json"
     )
     validation_path = (
-        PROJECT_ROOT / "results" / "analysis" / "operational" / "validation.json"
+        root / "validation.json"
     )
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -154,6 +155,44 @@ def validate_compact_audit() -> list[str]:
         errors.append(
             "tracked operational validation report must record 61,218 entities"
         )
+    for key in ("run_manifest", "replication_kpis"):
+        entry = manifest.get(key)
+        if not isinstance(entry, dict) or entry.get("tracked") is not True:
+            errors.append(f"operational audit {key} must be tracked")
+            continue
+        raw_path = entry.get("path")
+        expected_hash = entry.get("sha256")
+        if not isinstance(raw_path, str) or not raw_path:
+            errors.append(f"operational audit {key} has no portable path")
+            continue
+        artifact = (PROJECT_ROOT / raw_path).resolve()
+        try:
+            artifact.relative_to(PROJECT_ROOT.resolve())
+        except ValueError:
+            errors.append(f"operational audit {key} escapes the repository")
+            continue
+        if not artifact.is_file():
+            errors.append(f"operational audit {key} artifact is missing")
+        elif not isinstance(expected_hash, str) or sha256(artifact) != expected_hash:
+            errors.append(f"operational audit {key} hash mismatch")
+        expected_rows = 150
+        if entry.get("row_count") != expected_rows:
+            errors.append(
+                f"operational audit {key} must record {expected_rows} rows"
+            )
+    entity_entry = manifest.get("entity_log")
+    if not isinstance(entity_entry, dict):
+        errors.append("operational audit entity_log disclosure is missing")
+    else:
+        if entity_entry.get("tracked") is not False:
+            errors.append("operational entity ledger must be disclosed as untracked")
+        if entity_entry.get("row_count") != 61218:
+            errors.append("operational entity ledger must record 61,218 rows")
+        entity_hash = entity_entry.get("sha256")
+        if not isinstance(entity_hash, str) or not re.fullmatch(
+            r"[0-9a-f]{64}", entity_hash
+        ):
+            errors.append("operational entity ledger SHA-256 is invalid")
     return errors
 
 

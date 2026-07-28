@@ -95,7 +95,11 @@ def _read(path: Path) -> str:
 
 def _write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text.replace("\r\n", "\n"), encoding="utf-8")
+    # Force repository-canonical LF bytes on every platform.  Relying on
+    # Path.write_text()'s default newline translation made regeneration look
+    # dirty on Windows even when the XML/Java content was unchanged.
+    with path.open("w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text.replace("\r\n", "\n"))
 
 
 def _class_id(path: Path) -> str:

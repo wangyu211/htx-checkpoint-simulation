@@ -330,10 +330,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args.report.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.report.with_suffix(args.report.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
     temporary.replace(args.report)
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["status"] == "PASS" else 1
