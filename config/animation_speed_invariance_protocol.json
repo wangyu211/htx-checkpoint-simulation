@@ -13,6 +13,32 @@
     "entity_log.csv",
     "replication_kpis.csv"
   ],
+  "expected_run_identity": {
+    "schema_version": "1.0",
+    "config_id": "OP_INTERACTIVE_AD_HOC_V1",
+    "config_sha256": "3391798f85b19b8e8f8b6e204824e58a78c890fd9486a13fb32bd35666f4d48c",
+    "model_version": "TASK3_OPERATIONAL_POOLED_V1",
+    "scenario_id": "INTERACTIVE_D100_SEC036_IMM021_U000_M100",
+    "scenario_family": "INTERACTIVE_EXPLORATORY",
+    "reference_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+    "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "replication_id": "0",
+    "master_seed": "2026072800",
+    "arrival_seed": "2026072801",
+    "service_seed": "2026072802",
+    "routing_seed": "2026072803",
+    "tie_seed": "2026072804",
+    "start_state": "EMPTY_AND_IDLE",
+    "arrival_mode": "HPP",
+    "arrival_cutoff_seconds": "300.000000000",
+    "drain_rule": "FULL_DRAIN",
+    "engine_name": "AnyLogic",
+    "engine_version": "8.9.9.202607020720",
+    "calibration_status": "NOT_CALIBRATED",
+    "claim_ceiling": "COMPARATIVE_WHAT_IF_ONLY",
+    "crn_alignment_status": "NOT_TESTED",
+    "run_status": "COMPLETE"
+  },
   "required_run_order": [
     {
       "run_mode": "GUI_1X",

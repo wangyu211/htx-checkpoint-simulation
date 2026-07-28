@@ -123,6 +123,42 @@ def load_protocol(path: Path = DEFAULT_PROTOCOL) -> dict[str, Any]:
     if required_files != [RESULT_FILES[table] for table in EXPECTED_TABLES]:
         errors.append("required_core_files: unexpected table/file contract")
 
+    expected_identity = protocol.get("expected_run_identity")
+    expected_identity_fields = (
+        "schema_version",
+        "config_id",
+        "config_sha256",
+        "model_version",
+        "scenario_id",
+        "scenario_family",
+        "reference_scenario_id",
+        "input_sample_id",
+        "replication_id",
+        "master_seed",
+        "arrival_seed",
+        "service_seed",
+        "routing_seed",
+        "tie_seed",
+        "start_state",
+        "arrival_mode",
+        "arrival_cutoff_seconds",
+        "drain_rule",
+        "engine_name",
+        "engine_version",
+        "calibration_status",
+        "claim_ceiling",
+        "crn_alignment_status",
+        "run_status",
+    )
+    if not isinstance(expected_identity, dict):
+        errors.append("expected_run_identity: expected object")
+    elif tuple(expected_identity) != expected_identity_fields:
+        errors.append("expected_run_identity: fields or order are not frozen")
+    elif not HEX64.fullmatch(
+        str(expected_identity.get("config_sha256") or "")
+    ):
+        errors.append("expected_run_identity.config_sha256 must be 64 hex")
+
     modes = protocol.get("required_run_order")
     expected_modes = (
         (
@@ -303,6 +339,74 @@ def _validate_one_run(
     if not tables["entity_log"]["rows"]:
         errors.append(f"{run_dir}: entity_log must contain at least one row")
 
+    manifest_row = (
+        tables["run_manifest"]["rows"][0]
+        if len(tables["run_manifest"]["rows"]) == 1
+        else {}
+    )
+    kpi_row = (
+        tables["replication_kpis"]["rows"][0]
+        if len(tables["replication_kpis"]["rows"]) == 1
+        else {}
+    )
+    for field, expected in protocol["expected_run_identity"].items():
+        if manifest_row.get(field) != expected:
+            errors.append(
+                f"{run_dir / RESULT_FILES['run_manifest']}:{field}: "
+                f"expected {expected!r}, found {manifest_row.get(field)!r}"
+            )
+
+    shared_lineage = (
+        "schema_version",
+        "config_id",
+        "config_sha256",
+        "model_version",
+        "scenario_id",
+        "input_sample_id",
+        "replication_id",
+    )
+    for field in shared_lineage:
+        manifest_value = manifest_row.get(field)
+        if kpi_row and kpi_row.get(field) != manifest_value:
+            errors.append(
+                f"{run_dir}: replication_kpis.{field} differs from manifest"
+            )
+        for line, row in enumerate(
+            tables["entity_log"]["rows"], start=2
+        ):
+            if row.get(field) != manifest_value:
+                errors.append(
+                    f"{run_dir / RESULT_FILES['entity_log']}:{line}:{field}: "
+                    "differs from manifest"
+                )
+
+    if manifest_row and kpi_row:
+        for field in ("arrival_cutoff_seconds", "drain_end_seconds"):
+            if kpi_row.get(field) != manifest_row.get(field):
+                errors.append(
+                    f"{run_dir}: replication_kpis.{field} differs from manifest"
+                )
+        try:
+            expected_count = int(kpi_row["arrivals"])
+            completed_count = int(kpi_row["completed_after_drain"])
+        except (KeyError, ValueError):
+            pass
+        else:
+            if len(tables["entity_log"]["rows"]) != expected_count:
+                errors.append(
+                    f"{run_dir}: entity row count differs from arrivals"
+                )
+            if completed_count != expected_count:
+                errors.append(
+                    f"{run_dir}: completed_after_drain differs from arrivals"
+                )
+
+    traveller_ids = [
+        row.get("traveller_id") for row in tables["entity_log"]["rows"]
+    ]
+    if len(set(traveller_ids)) != len(traveller_ids):
+        errors.append(f"{run_dir}: duplicate traveller_id in entity_log")
+
     metadata_path = run_dir / CAPTURE_METADATA_FILE
     try:
         metadata = _read_json(metadata_path)
@@ -390,14 +494,13 @@ def _validate_one_run(
                 errors.append(f"{label}: model_version mismatch")
             if row.get("run_status") != "COMPLETE" and table != "entity_log":
                 errors.append(f"{label}: run_status must be COMPLETE")
-    if tables["replication_kpis"]["rows"]:
-        row = tables["replication_kpis"]["rows"][0]
-        if row.get("conservation_pass") != "true":
+    if kpi_row:
+        if kpi_row.get("conservation_pass") != "true":
             errors.append(
                 f"{run_dir / RESULT_FILES['replication_kpis']}: "
                 "conservation_pass must be true"
             )
-        if row.get("rejected_or_dropped_count") != "0":
+        if kpi_row.get("rejected_or_dropped_count") != "0":
             errors.append(
                 f"{run_dir / RESULT_FILES['replication_kpis']}: "
                 "rejected_or_dropped_count must be zero"

@@ -25,7 +25,6 @@ from src.analysis.validate_operational_results import (
 
 
 MODEL_COMMIT = "1" * 40
-CONFIG_SHA256 = "2" * 64
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
@@ -41,13 +40,21 @@ class AnimationSpeedInvarianceTests(unittest.TestCase):
         special = {
             "schema_version": "1.0",
             "config_id": "OP_INTERACTIVE_AD_HOC_V1",
-            "config_sha256": CONFIG_SHA256,
+            "config_sha256": (
+                "3391798f85b19b8e8f8b6e204824e58a78c890fd9486a13f"
+                "b32bd35666f4d48c"
+            ),
             "model_version": "TASK3_OPERATIONAL_POOLED_V1",
             "scenario_id": "INTERACTIVE_D100_SEC036_IMM021_U000_M100",
             "scenario_family": "INTERACTIVE_EXPLORATORY",
             "reference_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
             "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
             "replication_id": "0",
+            "master_seed": "2026072800",
+            "arrival_seed": "2026072801",
+            "service_seed": "2026072802",
+            "routing_seed": "2026072803",
+            "tie_seed": "2026072804",
             "traveller_id": f"LOCAL_WINDOW_HPP_BASE_R000_T{row_index:05d}",
             "immigration_lane_id": "IMMIGRATION_POOLED",
             "security_resource_id": f"SECURITY_{row_index:03d}",

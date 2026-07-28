@@ -24,6 +24,16 @@ equality. File paths, filesystem times, capture times, screenshots, window
 metadata and optional wall-clock elapsed time are capture provenance and are
 excluded from the model-result comparison.
 
+The registered identity is also checked independently rather than merely
+requiring the three runs to agree with one another: interactive config
+`OP_INTERACTIVE_AD_HOC_V1`, canonical scenario
+`INTERACTIVE_D100_SEC036_IMM021_U000_M100`, configuration hash
+`3391798f...f4d48c`, input sample `LOCAL_WINDOW_HPP_BASE`, replication `0`,
+the five frozen stream seeds, AnyLogic `8.9.9.202607020720`, empty/idle HPP
+start, 300-second cutoff, full drain, and model
+`TASK3_OPERATIONAL_POOLED_V1`. This prevents three identical executions of a
+wrong input setting from passing.
+
 AnyLogic distinguishes real-time mode, where model time is mapped to real
 time, from virtual-time mode, where the model runs as fast as possible with no
 real-time mapping. The vendor documentation says virtual time is used where
