@@ -20,8 +20,9 @@ declared gate. It does not mean the model is calibrated to an HTX site.
 
 - [x] Use the supplied short video to determine the accepted directional
       aggregate and the mapped short-window arrival-rate input.
-- [x] Treat the observed crowd as characteristic only for the modelled baseline
-      entrance area, while documenting the extrapolation limitation.
+- [x] Treat the observed directional cross-section aggregate as a short-window
+      input anchor; do not infer long-run site demand or processing-unit
+      allocation.
 - [x] Record the primary YOLO26m/BoT-SORT candidate path, the licence-friendlier
       YOLOX-S/Supervision-ByteTrack fallback, human adjudication, estimates,
       limitations, and model use.
@@ -32,13 +33,16 @@ claimed to estimate long-run checkpoint demand.
 
 ## Task 2 - Systems design
 
-- [x] Version 0.4 maps the brief's five requested items directly to sections
-  A-E in `docs/task2_system_design.md`.
+- [x] The current Task 2 design maps the brief's five requested items directly
+  to sections A-E in `docs/task2_system_design.md`.
 - [x] Implemented pooled flow, proxy mechanisms, blocked inputs, and deferred
   extensions are visibly separated.
 - [x] Major entities/resources, reference inputs, and the 15-scenario matrix.
 - [x] Exported v1 outputs, replication estimands, and uncertainty method.
 - [x] Classified assumptions, claim boundary, exclusions, and V&V status.
+- [x] Corridor-to-processing-unit allocation is explicitly unobserved; the
+  executable model conditionally maps the full directional corridor rate into
+  one pooled abstraction.
 
 ## Task 3 - Simulation implementation
 
@@ -137,8 +141,9 @@ assumption-sandbox executions: their service times, capacities, queue guards,
 automation mappings, and risk bounds are registered context or transparent
 sensitivity inputs, not parameters identified from the video. The interactive
 run is exploratory/ad-hoc; reportable claims come from validated replication
-outputs. Results remain comparative and conditional, not site forecasts or
-final staffing recommendations.
+outputs. Processing-unit allocation, within-site routing, and model scale are
+also unobserved. Results remain comparative and conditional, not site
+forecasts or final staffing recommendations.
 
 Recorded evidence:
 
@@ -176,6 +181,6 @@ Evidence:
 - [x] Task 2 requirements/design.
 - [x] Task 3 simulation logic and key outputs/metrics.
 - [x] Task 4 slides.
-- [x] Current release commit passes the clean-clone precheck: clean tree,
-  129 tests, 143 local links, and all compact-evidence hash contracts.
+- [x] Current release passes the clean-clone precheck, including the complete
+  test suite, local-link audit, and compact-evidence hash contracts.
 - [ ] Repository URL ready for submission by email.

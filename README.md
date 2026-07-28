@@ -117,6 +117,16 @@ observed roster, causal staffing effect, or staffing recommendation. See the
 [`exploratory design and execution record`](docs/task3_capacity_response_surface_design.md)
 and [`compact analysis package`](results/analysis/capacity_response_surface/README.md).
 
+Across the 54 cell estimates, mean replication-level total-wait P95 spans
+`3.929–35.920 s` under a 300-second empty-start cohort; this is not a maximum
+individual wait. The registered illustrative `600 / 900 / 1200 s` exceedance
+rates are zero here, but they are not ICA service-level agreements. The
+accepted `1.364213/s` input is a directional corridor cross-section aggregate
+conditionally routed into one pooled model; processing-unit allocation is
+unobserved. The
+[`registered-threshold diagnostic`](results/analysis/capacity_response_surface/threshold_exceedance_diagnostics.json)
+makes this boundary auditable.
+
 The frozen grid already spans light through stressed conditions. Reference
 nominal maximum offered load is `0.585 / 0.845 / 1.180` at low/base/high;
 reference versus joint +4/+3 total-wait P95 is
@@ -125,7 +135,8 @@ At high load, single-stage expansion moves the bottleneck to the other stage,
 whereas joint capacity reduces the modelled P95 by `33.158 s`
 (`[31.410, 34.906]`). The resulting recommendation is conditional: carry the
 joint mechanism into field calibration only where observed peak demand and
-service distributions reproduce material queues; do not infer a staffing
+corridor-to-processing-unit allocation, service distributions, and
+open-resource schedules reproduce material queues; do not infer a staffing
 rollout. Post-hoc 15/30/60-second diagnostics are labelled as model-scale
 supporting evidence, not ICA SLAs.
 

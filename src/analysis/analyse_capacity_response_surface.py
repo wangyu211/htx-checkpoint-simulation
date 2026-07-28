@@ -79,6 +79,9 @@ ANALYSIS_ID = "TASK3_CAPACITY_RESPONSE_SURFACE_ANALYSIS_V1"
 VALIDATION_ID = "TASK3_CAPACITY_RESPONSE_SURFACE_INPUT_VALIDATION_V1"
 CRN_VALIDATION_ID = "CAPACITY_RESPONSE_SURFACE_CRN_ALIGNMENT_V1"
 REPRODUCIBILITY_ID = "CAPACITY_RESPONSE_SURFACE_CROSS_BATCH_V1"
+THRESHOLD_DIAGNOSTIC_ID = (
+    "CAPACITY_RESPONSE_SURFACE_REGISTERED_EXCEEDANCE_DIAGNOSTIC_V1"
+)
 SCHEMA_VERSION = "1.0"
 DEFAULT_CI_LEVEL = 0.95
 DEFAULT_NUMERIC_TOLERANCE = 1e-9
@@ -98,6 +101,11 @@ ANALYSIS_METRICS = (
     "immigration_wait_p95_seconds",
 )
 REPRODUCIBILITY_METRICS = ANALYSIS_METRICS
+THRESHOLD_EXCEEDANCE_FIELDS = (
+    (600, "total_queue_wait_exceed_600_rate"),
+    (900, "total_queue_wait_exceed_900_rate"),
+    (1200, "total_queue_wait_exceed_1200_rate"),
+)
 
 LINEAGE_FIELDS = (
     "schema_version",
@@ -144,6 +152,9 @@ REPLICATION_FIELDS = (
     "rejected_or_dropped_count",
     "total_queue_wait_p95_seconds",
     "total_queue_wait_mean_seconds",
+    "total_queue_wait_exceed_600_rate",
+    "total_queue_wait_exceed_900_rate",
+    "total_queue_wait_exceed_1200_rate",
     "security_wait_p95_seconds",
     "immigration_wait_p95_seconds",
     "cutoff_backlog",
@@ -1945,13 +1956,68 @@ def _write_json(path: Path, payload: Mapping[str, object]) -> None:
     temporary.replace(path)
 
 
+def build_threshold_exceedance_diagnostics(
+    replication_rows: Sequence[Mapping[str, object]],
+    *,
+    study_id: str,
+    entity_row_count: int,
+) -> dict[str, object]:
+    """Summarise registered illustrative wait thresholds without testing them."""
+
+    if not replication_rows:
+        raise ValueError("threshold diagnostics require replication rows")
+
+    thresholds: list[dict[str, object]] = []
+    for threshold_seconds, metric in THRESHOLD_EXCEEDANCE_FIELDS:
+        rates = [
+            _float(row[metric], f"{metric} replication {index}")
+            for index, row in enumerate(replication_rows, start=1)
+        ]
+        if any(rate < 0.0 or rate > 1.0 for rate in rates):
+            raise ValueError(f"{metric} must be within [0, 1]")
+        nonzero_count = sum(rate > 0.0 for rate in rates)
+        thresholds.append(
+            {
+                "threshold_seconds": threshold_seconds,
+                "metric": metric,
+                "mean_replication_rate": sum(rates) / len(rates),
+                "maximum_replication_rate": max(rates),
+                "nonzero_replication_count": nonzero_count,
+                "all_replication_rates_zero": nonzero_count == 0,
+            }
+        )
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "diagnostic": THRESHOLD_DIAGNOSTIC_ID,
+        "study_id": study_id,
+        "status": "COMPLETE",
+        "role": "REGISTERED_ILLUSTRATIVE_DIAGNOSTIC_NOT_ICA_SLA",
+        "estimand": "WITHIN_REPLICATION_TRAVELLER_EXCEEDANCE_RATE",
+        "replication_count": len(replication_rows),
+        "entity_row_count": entity_row_count,
+        "all_thresholds_zero": all(
+            bool(row["all_replication_rates_zero"]) for row in thresholds
+        ),
+        "thresholds": thresholds,
+    }
+
+
 def _readme_text(
     *,
     study_id: str,
     run_count: int,
     entity_row_count: int,
     cross_batch_status: str,
+    threshold_diagnostics: Mapping[str, object],
 ) -> str:
+    threshold_summary = (
+        "All registered illustrative 600/900/1200-second traveller-level "
+        "exceedance rates are zero in these runs. "
+        if threshold_diagnostics["all_thresholds_zero"]
+        else "At least one registered illustrative traveller-level "
+        "exceedance rate is non-zero in these runs. "
+    )
     return (
         "# Capacity response-surface analysis\n\n"
         f"`{study_id}` is a post-outcome exploratory sensitivity study at "
@@ -1964,11 +2030,21 @@ def _readme_text(
         "interactions all use the 50 replication units. Paired quantities are "
         "released only after exact registered seeds and traveller-level "
         "branch-invariant draws align across all cells.\n\n"
+        "Every cell uses a 300-second terminating arrival cohort from an "
+        "empty and idle start, followed by full drain. The accepted "
+        "1.364213/s directional corridor crossing rate is mapped "
+        "conditionally into one pooled two-stage processing abstraction; "
+        "physical processing-unit allocation, routing, and resource sharing "
+        "were not observed in the source video.\n\n"
         "Queue peaks are reconstructed from half-open waiting intervals over "
         "the full drain. Time-weighted queue means use the [0, 300) arrival "
         "window. The source entity ledgers are intentionally not copied into "
         f"this compact package; {entity_row_count:,} rows were streamed one "
         "run at a time and retained only through metrics and audit hashes.\n\n"
+        f"{threshold_summary}"
+        "These thresholds are supporting diagnostics, not ICA service-level "
+        "agreements; their auditable summary is in "
+        "`threshold_exceedance_diagnostics.json`.\n\n"
         f"Cross-batch validation status: `{cross_batch_status}`. Earlier "
         "results are validation-only and contribute no observations to these "
         "estimates.\n\n"
@@ -2149,6 +2225,11 @@ def package_capacity_response_surface_analysis(
             "immigration_service_p1_seconds",
         ),
     )
+    threshold_diagnostics = build_threshold_exceedance_diagnostics(
+        replication_rows,
+        study_id=study_id,
+        entity_row_count=entity_row_count,
+    )
 
     validation = {
         "schema_version": SCHEMA_VERSION,
@@ -2242,6 +2323,10 @@ def package_capacity_response_surface_analysis(
     _write_json(
         output_dir / "cross_batch_reproducibility.json", cross_batch
     )
+    _write_json(
+        output_dir / "threshold_exceedance_diagnostics.json",
+        threshold_diagnostics,
+    )
     readme_path = output_dir / "README.md"
     readme_path.write_text(
         _readme_text(
@@ -2249,6 +2334,7 @@ def package_capacity_response_surface_analysis(
             run_count=len(replication_rows),
             entity_row_count=entity_row_count,
             cross_batch_status=str(cross_batch["status"]),
+            threshold_diagnostics=threshold_diagnostics,
         ),
         encoding="utf-8",
         newline="\n",
@@ -2260,6 +2346,7 @@ def package_capacity_response_surface_analysis(
         output_dir / "validation.json",
         output_dir / "crn_alignment.json",
         output_dir / "cross_batch_reproducibility.json",
+        output_dir / "threshold_exceedance_diagnostics.json",
         readme_path,
     ]
     manifest: dict[str, object] = {
@@ -2281,6 +2368,16 @@ def package_capacity_response_surface_analysis(
             "comparison_method": "PAIRED_STUDENT_T",
         },
         "cross_batch_reproducibility_status": cross_batch["status"],
+        "threshold_exceedance_diagnostics": {
+            "role": threshold_diagnostics["role"],
+            "thresholds_seconds": [
+                row["threshold_seconds"]
+                for row in threshold_diagnostics["thresholds"]
+            ],
+            "all_thresholds_zero": threshold_diagnostics[
+                "all_thresholds_zero"
+            ],
+        },
         "queue_reconstruction": {
             "peak_window": "FULL_DRAIN",
             "time_weighted_mean_window": "[0,300)",

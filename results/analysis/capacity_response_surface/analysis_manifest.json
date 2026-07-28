@@ -22,7 +22,7 @@
     "README.md": {
       "path": "results/analysis/capacity_response_surface/README.md",
       "row_count": 1,
-      "sha256": "9fa170a68b5dcde91309667576c361498b52780718f9dc49a99bcc72a7e25dc1"
+      "sha256": "f1e457e7c9f55487c9b18c9ef3df28c456416cddf262291e9b6b3ad1f786e1aa"
     },
     "adjacent_marginal_penalties.csv": {
       "path": "results/analysis/capacity_response_surface/adjacent_marginal_penalties.csv",
@@ -77,7 +77,7 @@
     "response_surface_by_replication.csv": {
       "path": "results/analysis/capacity_response_surface/response_surface_by_replication.csv",
       "row_count": 2700,
-      "sha256": "5ec40ff13ee33744084c9217b2dbd6c1c728dfafa3b69a3f2e0ddc534df89f75"
+      "sha256": "63ba113131934fb2c49ba50d3467fa97f6d1e510aa9ccf857e9d707845874453"
     },
     "second_finite_differences.csv": {
       "path": "results/analysis/capacity_response_surface/second_finite_differences.csv",
@@ -93,6 +93,11 @@
       "path": "results/analysis/capacity_response_surface/stage_bottleneck_map.csv",
       "row_count": 54,
       "sha256": "df3c2a12f722c6f092894ddae9fb684d99f7ea10f0bf48528f0f8637ba948534"
+    },
+    "threshold_exceedance_diagnostics.json": {
+      "path": "results/analysis/capacity_response_surface/threshold_exceedance_diagnostics.json",
+      "row_count": 1,
+      "sha256": "06ae1949386ae80d49d8062fa7b3f19d9aeba26ce728bfebed277c10e50648f4"
     },
     "validation.json": {
       "path": "results/analysis/capacity_response_surface/validation.json",
@@ -124,5 +129,14 @@
     "raw_tree_sha256": "7421e2dbb3ad2713e1ff4fe27c6d920586396cce40f61bf87acd89b8b44ec88a"
   },
   "status": "PASS",
-  "study_id": "TASK3_CAPACITY_RESPONSE_SURFACE_EXPLORATORY_V1"
+  "study_id": "TASK3_CAPACITY_RESPONSE_SURFACE_EXPLORATORY_V1",
+  "threshold_exceedance_diagnostics": {
+    "all_thresholds_zero": true,
+    "role": "REGISTERED_ILLUSTRATIVE_DIAGNOSTIC_NOT_ICA_SLA",
+    "thresholds_seconds": [
+      600,
+      900,
+      1200
+    ]
+  }
 }

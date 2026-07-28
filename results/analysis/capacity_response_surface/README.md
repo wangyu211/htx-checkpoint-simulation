@@ -4,7 +4,11 @@
 
 The primary descriptive response is the mean replication-level P95 total queue wait. Cell intervals, one-position marginal penalties, second finite differences, and local difference-in-differences interactions all use the 50 replication units. Paired quantities are released only after exact registered seeds and traveller-level branch-invariant draws align across all cells.
 
+Every cell uses a 300-second terminating arrival cohort from an empty and idle start, followed by full drain. The accepted 1.364213/s directional corridor crossing rate is mapped conditionally into one pooled two-stage processing abstraction; physical processing-unit allocation, routing, and resource sharing were not observed in the source video.
+
 Queue peaks are reconstructed from half-open waiting intervals over the full drain. Time-weighted queue means use the [0, 300) arrival window. The source entity ledgers are intentionally not copied into this compact package; 1,113,588 rows were streamed one run at a time and retained only through metrics and audit hashes.
+
+All registered illustrative 600/900/1200-second traveller-level exceedance rates are zero in these runs. These thresholds are supporting diagnostics, not ICA service-level agreements; their auditable summary is in `threshold_exceedance_diagnostics.json`.
 
 Cross-batch validation status: `PASS`. Earlier results are validation-only and contribute no observations to these estimates.
 

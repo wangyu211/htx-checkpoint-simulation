@@ -1,0 +1,37 @@
+{
+  "all_thresholds_zero": true,
+  "diagnostic": "CAPACITY_RESPONSE_SURFACE_REGISTERED_EXCEEDANCE_DIAGNOSTIC_V1",
+  "entity_row_count": 1113588,
+  "estimand": "WITHIN_REPLICATION_TRAVELLER_EXCEEDANCE_RATE",
+  "replication_count": 2700,
+  "role": "REGISTERED_ILLUSTRATIVE_DIAGNOSTIC_NOT_ICA_SLA",
+  "schema_version": "1.0",
+  "status": "COMPLETE",
+  "study_id": "TASK3_CAPACITY_RESPONSE_SURFACE_EXPLORATORY_V1",
+  "thresholds": [
+    {
+      "all_replication_rates_zero": true,
+      "maximum_replication_rate": 0.0,
+      "mean_replication_rate": 0.0,
+      "metric": "total_queue_wait_exceed_600_rate",
+      "nonzero_replication_count": 0,
+      "threshold_seconds": 600
+    },
+    {
+      "all_replication_rates_zero": true,
+      "maximum_replication_rate": 0.0,
+      "mean_replication_rate": 0.0,
+      "metric": "total_queue_wait_exceed_900_rate",
+      "nonzero_replication_count": 0,
+      "threshold_seconds": 900
+    },
+    {
+      "all_replication_rates_zero": true,
+      "maximum_replication_rate": 0.0,
+      "mean_replication_rate": 0.0,
+      "metric": "total_queue_wait_exceed_1200_rate",
+      "nonzero_replication_count": 0,
+      "threshold_seconds": 1200
+    }
+  ]
+}

@@ -12,6 +12,7 @@ from src.analysis.analyse_capacity_response_surface import (
     REFERENCE_CELL,
     _crn_report,
     _entity_draw_signature,
+    build_threshold_exceedance_diagnostics,
     build_ideal_case_comparator,
     build_response_surface_analysis,
     deterministic_two_stage_oracle,
@@ -247,6 +248,45 @@ class DeterministicIdealComparatorTests(unittest.TestCase):
         self.assertAlmostEqual(
             float(high["variability_congestion_penalty_p95_wait_seconds"]),
             expected_penalty,
+        )
+
+
+class ThresholdExceedanceDiagnosticTests(unittest.TestCase):
+    def test_summarises_zero_and_nonzero_rates_without_enforcing_zero(self) -> None:
+        rows = [
+            {
+                "total_queue_wait_exceed_600_rate": 0.0,
+                "total_queue_wait_exceed_900_rate": 0.0,
+                "total_queue_wait_exceed_1200_rate": 0.0,
+            },
+            {
+                "total_queue_wait_exceed_600_rate": 0.25,
+                "total_queue_wait_exceed_900_rate": 0.1,
+                "total_queue_wait_exceed_1200_rate": 0.0,
+            },
+        ]
+        report = build_threshold_exceedance_diagnostics(
+            rows,
+            study_id="SYNTHETIC_SURFACE",
+            entity_row_count=8,
+        )
+
+        self.assertEqual(report["status"], "COMPLETE")
+        self.assertFalse(report["all_thresholds_zero"])
+        self.assertEqual(report["replication_count"], 2)
+        self.assertEqual(report["entity_row_count"], 8)
+        by_threshold = {
+            row["threshold_seconds"]: row for row in report["thresholds"]
+        }
+        self.assertEqual(by_threshold[600]["nonzero_replication_count"], 1)
+        self.assertAlmostEqual(
+            float(by_threshold[600]["maximum_replication_rate"]), 0.25
+        )
+        self.assertAlmostEqual(
+            float(by_threshold[900]["mean_replication_rate"]), 0.05
+        )
+        self.assertTrue(
+            by_threshold[1200]["all_replication_rates_zero"]
         )
 
 

@@ -1,10 +1,10 @@
 # Task 2 — System Design
 
-**Status:** pooled-FCFS operational v1 executed in AnyLogic; the 15 × 10 pilot
-and Part 1 12 × 50 capacity-expansion study passed their declared output
-gates; the independent Part 2 capacity-availability study is frozen pre-run
+**Status:** pooled-FCFS operational v1 executed in AnyLogic; the 15 × 10 pilot,
+the 600-run capacity-expansion study, the 600-run capacity-availability study,
+and the 2,700-run Base-demand response surface passed their declared gates
 
-**Version:** 0.6, 2026-07-28
+**Version:** 0.7, 2026-07-29
 
 **Claim ceiling:** executable, traceable assumption sandbox; not a calibrated
 HTX baseline, site forecast, digital twin, staffing recommendation, or
@@ -134,7 +134,7 @@ non-canonical configuration hashes.
 
 | Input | Reference value | Evidence/use class |
 |---|---:|---|
-| Arrival aggregate | 34 travellers / 24.922788889 s = `1.364213/s` | accepted local short-window measurement |
+| Directional corridor line-crossing aggregate | 34 travellers / 24.922788889 s = `1.364213/s` | accepted short-window cross-section measurement; not a measured processing-unit arrival stream |
 | Arrival process | HPP for `300 s`, then full drain | transparent assumption |
 | Security service | fixed `21.818181818 s` | reciprocal of external 165 passengers/hour/lane bound |
 | Immigration service | fixed `13 s` | named Singapore land bus-hall passport context |
@@ -143,6 +143,13 @@ non-canonical configuration hashes.
 | Queue / initial state | pooled FCFS; empty and idle | implemented structural assumption |
 | Automation / additional work | disabled | isolated in sensitivity rows |
 | Replications | `10` per scenario | variance and pipeline pilot, not confirmatory precision |
+
+The accepted `1.364213/s` is an aggregate directional crossing rate at one
+corridor cross-section. The executable sandbox conditionally routes the full
+rate into one pooled Security → Immigration abstraction. It does not observe
+how corridor traffic is allocated among physical processing zones, halls,
+lanes, or eligibility streams. That mapping—and any sharing or overflow
+rule—requires site data and is not inferred from the clip.
 
 ### Load-regime design and utilization semantics
 
@@ -289,6 +296,7 @@ timestamps and is hash-linked to the same 253,756-row entity ledger.
 | Service | Published means/bounds become fixed service values | variability is not inferred |
 | Resources | Servers are homogeneous and continuously available within a run | no skill mix, breaks, downtime, or roster feasibility |
 | Capacity | Reference capacities target roughly 85% offered-load utilization | derived assumption, not observed staffing |
+| Structural scale | Full accepted corridor rate is conditionally mapped to one pooled two-stage abstraction | processing-unit allocation, physical-zone topology, and routing/overflow are unobserved |
 | Technology | Effective uptake combines eligibility, adoption, routing, and success | no component-level causal attribution |
 | Exceptions | Additional work holds the Immigration counter | conservative proxy; no secondary-pool claim |
 | Experiment | Empty/idle start, 300-second arrival window, full drain | terminating cohort, not steady state |

@@ -17,9 +17,10 @@ baseline, a site forecast, a staffing answer, or an economic recommendation.
 The decision is **conditional but explicit**:
 
 > Advance joint `Security +4 / Immigration +3` to field calibration at a
-> candidate site **only if** measured time-of-day demand and service
-> distributions reproduce material peak queues. Do not issue a staffing or
-> rollout recommendation from this sandbox.
+> candidate site **only if** measured time-of-day demand,
+> corridor-to-processing-unit allocation, stage-service distributions, and
+> open-resource schedules reproduce material peak queues. Do not issue a
+> staffing or rollout recommendation from this sandbox.
 
 The evidence is rate-dependent: the reference-minus-joint improvement is
 `2.678732 s` at the base rate and `33.158314 s` at the high endpoint, while
@@ -157,6 +158,30 @@ labelled post-outcome and does not enlarge the confirmatory claim above.
 | Traveller-level CRN alignment | `PASS` |
 | Prior/new reproducibility check | `250 / 250`, maximum difference `0.0` |
 
+### Load-exposure and absolute-scale boundary
+
+All 54 cells represent a 300-second terminating arrival cohort from an empty
+and idle start, followed by full drain. They use fixed service requirements,
+homogeneous continuously available resources, and the accepted directional
+corridor rate as the arrival stream to one pooled two-stage abstraction. The
+corridor-to-processing-unit allocation is unobserved.
+
+Across the 54 cell estimates, the mean across replications of
+within-replication total queue-wait P95 ranges from `3.929` to `35.920 s`; the
+mean simultaneous peak total waiting queue ranges from `9.34` to `48.42`
+travellers. The `35.920 s` endpoint is a cell-level mean of replication P95s,
+not a maximum traveller wait. The tracked threshold diagnostic confirms that
+the registered illustrative `600 / 900 / 1200 s` traveller-level exceedance
+rates are zero throughout this experiment. Those thresholds are not ICA
+service-level agreements, and their zero rates do not establish operational
+acceptability.
+
+Nominal offered-load ratios span `0.827–1.063` for Security and
+`0.845–1.108` for Immigration. A finite 300-second cohort can drain even when
+nominal `rho > 1`; the same cell would not be stable under sustained stationary
+demand. The magnitudes below therefore describe this short terminating
+experiment, not long-run capacity comfort.
+
 The primary single-stage slices show accelerating delay:
 
 | Capacity change | Mean total queue-wait P95 | Penalty for the next closed position |
@@ -186,19 +211,30 @@ joint capacity loss is beneficial.
 A deterministic ideal control uses perfectly regular arrivals, the same
 fixed service times, pooled FCFS, and the same integer capacities. Its stage
 throughput is the straight-line benchmark, but its queue delay is calculated,
-not forced to be linear. Ideal total-wait P95 stays at zero through `30 / 21`
-and `36 / 18`, then rises after saturation; the stochastic AnyLogic surface
-has positive waiting earlier because bursty HPP arrivals create transient
-queues. The reported AnyLogic-minus-ideal gap is a
-“variability/congestion penalty,” not a causal decomposition.
+not forced to be linear. Ideal total-wait mean and P95 are both zero in
+`28 / 54` cells: the rectangle with Security `30–36` and Immigration
+`18–21`. They are non-zero in the other `26 / 54` cells—exactly those where
+at least one nominal offered-load ratio exceeds one, with Security `≤29` or
+Immigration `≤17`. Ideal total-wait P95 spans `7.287–30.519 s` in that
+non-zero region.
+
+The stochastic AnyLogic surface has positive waiting before deterministic
+saturation because bursty HPP arrival timing and count create transient
+queues. AnyLogic-minus-ideal P95 remains positive across all 54 cells
+(`3.929–13.556 s`), but this is a model-conditional stochastic-arrival /
+congestion contrast with fixed service. It is not a paired causal
+decomposition and does not measure service-time variability.
 
 Permitted conclusion:
 
 > Within this fixed Base-demand, non-calibrated sandbox, capacity loss has an
 > accelerating rather than constant delay penalty, and the dominant
-> constraint migrates between the two serial stages. Use the surface to
-> identify field-calibration regions and candidate stress tests, not to infer
-> roster numbers or recommend staffing.
+> constraint migrates between the two serial stages. Arrival variability
+> consumes safety margin before nominal saturation; after `rho` crosses one,
+> deterministic capacity shortage and stochastic variability jointly
+> contribute to delay. Use the surface to identify field-calibration regions
+> and candidate stress tests, not to infer roster numbers, recommend staffing,
+> or claim long-run stability.
 
 Tracked response-surface evidence:
 
@@ -206,6 +242,7 @@ Tracked response-surface evidence:
 - [compact analysis package](../results/analysis/capacity_response_surface/README.md)
 - [strict validation](../results/analysis/capacity_response_surface/validation.json)
 - [CRN alignment](../results/analysis/capacity_response_surface/crn_alignment.json)
+- [registered-threshold diagnostic](../results/analysis/capacity_response_surface/threshold_exceedance_diagnostics.json)
 - [single-stage slices](../results/analysis/capacity_response_surface/security_only_slice.csv)
   and
   [Immigration slice](../results/analysis/capacity_response_surface/immigration_only_slice.csv)
@@ -349,6 +386,9 @@ ICA operations.
   claimed.
 - Fixed service times, homogeneous resources, HPP arrivals, and empty/idle
   starts suppress important real-world variability.
+- The directional corridor rate is conditionally routed into one pooled model;
+  processing-unit allocation, within-site routing, and sharing/overflow are
+  unobserved.
 - Utilization is normalized over each scenario's full-drain horizon; very
   long risk drains lower the utilization denominator and must not be read as
   within-window spare capacity.

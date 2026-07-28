@@ -17,6 +17,7 @@ models/*.onnx
 models/*.pth
 models/*.pt
 .cache/
+.tmp/
 
 # Generated experiment outputs
 results/raw/

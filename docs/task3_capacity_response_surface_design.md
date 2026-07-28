@@ -33,6 +33,7 @@ reduced? In particular:
 - Full factorial: 9 × 6 = 54 cells.
 - Replications: 50 per cell, with common exogenous random-number streams.
 - Reference: 36 Security / 21 Immigration.
+- Exposure: arrivals on `[0, 300 s)` from an empty/idle start, then full drain.
 
 The range crosses the approximate offered-workload thresholds:
 
@@ -42,8 +43,9 @@ The range crosses the approximate offered-workload thresholds:
 This makes the design capable of revealing a performance cliff around
 utilisation 1 instead of merely comparing a few arbitrary endpoints.
 
-Capacity means concurrently open service positions. It is not evidence of an
-observed HTX roster, installed estate, or one-to-one headcount requirement.
+Capacity means concurrently open experimental service positions. It is not
+evidence of an observed HTX roster, installed estate, one-to-one headcount
+requirement, or realistic single-zone scale.
 
 ### Queueing-theory interpretation layer
 
@@ -55,7 +57,7 @@ For every simulated capacity point, the analysis reports:
 - square-root staffing index: `beta = (c - a) / sqrt(a)`.
 
 For the reference Security setting, `a = 29.7647`, `c = 36`, and
-`beta = 1.1427`. The same quantities will be shown for Immigration and all
+`beta = 1.1429`. The same quantities will be shown for Immigration and all
 reduced-capacity points, with the `rho = 1` boundary marked on the response
 curves.
 
@@ -140,6 +142,18 @@ must not imply that fractional service positions were simulated.
 
 ## Interpretation boundary
 
+The accepted `1.364213/s` input is a directional corridor line-crossing rate,
+not an observed arrival stream into a named processing unit. The experiment
+conditionally maps the full rate into one pooled two-stage abstraction.
+Physical processing-zone allocation, topology, routing, and sharing/overflow
+rules are not identified by the clip.
+
+Every cell uses a 300-second terminating arrival cohort from an empty and idle
+start, followed by full drain. Fixed service requirements and homogeneous,
+continuously available pooled resources further bound the interpretation.
+Nominal `rho > 1` therefore marks a sustained-load stability warning even when
+the finite cohort drains.
+
 This study was designed after viewing Part 2 outcomes. It is therefore
 exploratory sensitivity analysis: useful for operational insight and future
 testable hypotheses, but not a new confirmatory finding. No multiplicity-free
@@ -158,6 +172,14 @@ metrics exactly (maximum absolute difference `0.0`). They contribute no rows
 to the response-surface estimates. The CRN gate compared `1,092,966`
 traveller pairs and `6,557,796` branch-invariant random draws and returned
 `PASS`, authorising paired finite differences and local interactions.
+
+Across the 54 cell estimates, the mean replication-level total queue-wait P95
+ranges from `3.929` to `35.920 s`, and the mean simultaneous peak total
+waiting queue from `9.34` to `48.42` travellers. These are cell-level means,
+not maxima over individual travellers or replications. The registered
+illustrative `600 / 900 / 1200 s` exceedance rates are zero in the
+[tracked diagnostic](../results/analysis/capacity_response_surface/threshold_exceedance_diagnostics.json);
+they are not ICA service-level agreements.
 
 At Immigration `21`, mean replication-level total queue-wait P95 rises from
 `3.929 s` at Security `36` to `24.434 s` at Security `28`. At Security `36`,
@@ -190,13 +212,15 @@ as sub-additivity caused by serial flow and upstream metering, not as a
 beneficial synergy.
 
 The deterministic ideal control sharpens that interpretation. With regular
-arrivals and fixed service, ideal total-wait P95 is `0 s` through Security
-`30` (Immigration `21`) and through Immigration `18` (Security `36`), then
-rises to `7.287 s` at `29 / 21` and `11.849 s` at `36 / 17`. The stochastic
+arrivals and fixed service, ideal total-wait mean and P95 are zero in `28` of
+the `54` cells: Security `30–36` crossed with Immigration `18–21`. The other
+`26` cells are exactly those where at least one nominal offered-load ratio
+exceeds one; ideal total-wait P95 spans `7.287–30.519 s` there. The stochastic
 AnyLogic surface already has positive delay below those ideal thresholds
-because HPP arrival variability creates transient queues. “AnyLogic minus
-ideal” is consequently labelled a variability/congestion penalty; it does
-not identify one uniquely causal source of delay.
+because HPP arrival timing and count create transient queues. “AnyLogic minus
+ideal” is consequently labelled a model-conditional stochastic-arrival /
+congestion contrast with fixed service; it is not a paired causal
+decomposition and does not measure service-time variability.
 
 Auditable outputs are in the
 [`capacity response-surface analysis package`](../results/analysis/capacity_response_surface/README.md).
