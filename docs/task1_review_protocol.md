@@ -1,7 +1,12 @@
 # Task 1 crossing-ledger review protocol
 
-**Purpose:** freeze a human-signed event ledger without confusing algorithm
-agreement with ground truth.
+**Current assessment status:** the 2026-07-27 Task 1 decision is a frozen
+human-adjudicated **aggregate** of 12 left-to-right and 34 right-to-left
+crossings. No signed event-time ledger exists.
+
+**Purpose of this protocol:** define the additional review required if a future
+study needs a human-signed event ledger, without confusing algorithm agreement
+with ground truth or retrofitting candidate IDs into the accepted aggregate.
 
 The evidence images remain local because they reproduce pixels from the
 assessment video. They are generated under:
@@ -30,8 +35,9 @@ _work/cv_hungarian_x640_fixed_20260726/owner_review/
 5. Reconcile accepted events by physical crossing, not by track ID. One person
    crossing once is one event even if the detector fragments it into several
    tracks.
-6. Confirm which image-space direction represents operational arrivals before
-   any direction-specific rate enters the simulation.
+6. Record the operational direction mapping. For the current assessment,
+   `right_to_left` is already mapped to arrivals; a later deployment must
+   validate that mapping against its own camera orientation.
 
 ## Decision rules
 
@@ -51,7 +57,7 @@ identity/trajectory decision. Preserve uncertain events separately; do not
 silently force them into the baseline. They may define lower/upper count
 scenarios.
 
-## Freeze products
+## Future event-ledger products
 
 The final public, non-pixel ledger must include:
 
@@ -76,5 +82,6 @@ Publish:
 - source video/model hashes and run configuration; and
 - a statement that the short clip does not establish long-run stationarity.
 
-Retain candidate, low-threshold, and final ledgers as different files. Never
-overwrite the candidate history with the signed decisions.
+Retain candidate, low-threshold, aggregate-freeze, and any future signed event
+ledger as different files. Never overwrite candidate history or imply that its
+IDs are the 46 final human-adjudicated people.

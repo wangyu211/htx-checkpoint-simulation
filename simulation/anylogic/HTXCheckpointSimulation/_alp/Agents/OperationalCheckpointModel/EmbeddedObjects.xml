@@ -1,0 +1,1374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmbeddedObjects>
+	<EmbeddedObject>
+		<Id>1785163120001</Id>
+		<Name><![CDATA[travellerSource]]></Name>
+		<X>40</X>
+		<Y>100</Y>
+		<Label>
+			<X>-10</X>
+			<Y>-20</Y>
+		</Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<ActiveObjectClass>
+			<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+			<ClassName>Source</ClassName>
+		</ActiveObjectClass>
+		<GenericParameterSubstitute>
+			<GenericParameterSubstituteReference>
+				<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+				<ClassName>Source</ClassName>
+				<ItemName>1412336242928</ItemName>
+			</GenericParameterSubstituteReference>
+		</GenericParameterSubstitute>
+		<Parameters>
+			<Parameter>
+				<Name><![CDATA[arrivalType]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[self.RATE]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[interarrivalTime]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[firstArrivalMode]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[firstArrivalTime]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[limitArrivals]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[false]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maxArrivals]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[newEntity]]></Name>
+				<Value Class="EntityCodeValue">
+					<IsAgentEntity>true</IsAgentEntity>
+					<EntityEmbeddedObject>
+						<Id>1785163120002</Id>
+						<ActiveObjectClass>
+							<PackageName>htx.checkpoint</PackageName>
+							<ClassName>OperationalTraveller</ClassName>
+						</ActiveObjectClass>
+						<GenericParameterSubstitute>
+							<GenericParameterSubstituteReference>
+								<PackageName>htx.checkpoint</PackageName>
+								<ClassName>OperationalTraveller</ClassName>
+								<ItemName>1785162453955</ItemName>
+							</GenericParameterSubstituteReference>
+						</GenericParameterSubstitute>
+						<Parameters/>
+						<ReplicationFlag>true</ReplicationFlag>
+						<Replication Class="CodeValue">
+							<Code><![CDATA[100]]></Code>
+						</Replication>
+						<CollectionType>ARRAY_LIST_BASED</CollectionType>
+						<InitialLocationType>XYZ</InitialLocationType>
+						<ColumnCode Class="CodeValue">
+							<Code><![CDATA[0]]></Code>
+						</ColumnCode>
+						<RowCode Class="CodeValue">
+							<Code><![CDATA[0]]></Code>
+						</RowCode>
+						<LocationNameCode Class="CodeValue">
+							<Code><![CDATA[""]]></Code>
+						</LocationNameCode>
+						<InitializationType>LOAD_FROM_DATABASE</InitializationType>
+						<InitializationDatabaseTableQuery>
+							<Id>1785163120003</Id>
+							<TableReference/>
+						</InitializationDatabaseTableQuery>
+						<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+						<QuantityColumn/>
+					</EntityEmbeddedObject>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onExit]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[if ( admitted + 1 >= arrival_guard ) {
+	guard_hit = true;
+	travellerSource.set_rate( 0.0, PER_SECOND );
+	throw new IllegalStateException( "arrival_guard reached before cutoff: " + arrival_guard );
+}
+double arrivalTime = time();
+if ( arrivalTime < 0.0 || arrivalTime >= arrival_cutoff_seconds ) {
+	throw new IllegalStateException( "HPP arrival outside [0, cutoff): " + arrivalTime );
+}
+if ( arrivalTime <= last_arrival_time ) {
+	throw new IllegalStateException( "arrival times are not strictly increasing" );
+}
+OperationalTraveller traveller = (OperationalTraveller) agent;
+int sequence = ++admitted;
+last_arrival_time = arrivalTime;
+traveller.traveller_id = String.format(
+	java.util.Locale.ROOT,
+	"%s_R%03d_T%05d",
+	input_sample_id,
+	replication_id,
+	sequence
+);
+traveller.input_sample_id = input_sample_id;
+traveller.replication_id = replication_id;
+traveller.arrival = arrivalTime;
+traveller.security_service_demand = security_service_p1_seconds;
+traveller.immigration_conventional_service_demand = immigration_service_p1_seconds;
+if ( routing_rng == null ) routing_rng = new java.util.Random( routing_seed );
+if ( tie_rng == null ) tie_rng = new java.util.Random( tie_seed );
+traveller.automation_u = routing_rng.nextDouble();
+traveller.technology_flag =
+	"MULTIPLIER".equals( automation_mapping_mode )
+	&& traveller.automation_u < automation_uptake;
+traveller.immigration_primary_service_demand =
+	traveller.immigration_conventional_service_demand
+	* ( traveller.technology_flag ? automation_multiplier : 1.0 );
+if ( traveller.technology_flag ) technology_count++;
+traveller.additional_check_u = routing_rng.nextDouble();
+double additionalProbability = traveller.technology_flag
+	? additional_check_probability_technology
+	: additional_check_probability_conventional;
+traveller.additional_check_flag =
+	"COUNTER_HELD_RISK_REFERRAL_PROXY".equals( additional_check_semantics )
+	&& traveller.additional_check_u < additionalProbability;
+traveller.additional_check_service_demand =
+	traveller.additional_check_flag ? additional_check_service_p1_seconds : 0.0;
+if ( traveller.additional_check_flag ) additional_check_count++;
+traveller.lane_tie_u = tie_rng.nextDouble();]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[rate]]></Name>
+				<Value Class="CodeUnitValue">
+					<Code><![CDATA[arrival_rate_per_second * demand_multiplier]]></Code>
+					<Unit Class="RateUnits">PER_SECOND</Unit>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[rateSchedule]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[modifyRate]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[rateExpression]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[arrivalSchedule]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[setAgentParametersFromDB]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[databaseTable]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[arrivalDate]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[multipleEntitiesPerArrival]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[entitiesPerArrival]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationX]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationY]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationZ]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationLatitude]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationLongitude]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationGeoPlaceName]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationXYZInNetwork]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationNetwork]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationLevel]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationNode]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[locationAttractor]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[speed]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[changeDimensions]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[length]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[width]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[height]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableCustomStartTime]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[startTime]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[addToCustomPopulation]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[population]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[pushProtocol]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[discardHangingEntities]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onBeforeArrival]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onAtExit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onDiscard]]></Name>
+			</Parameter>
+		</Parameters>
+		<ReplicationFlag>false</ReplicationFlag>
+		<Replication Class="CodeValue">
+			<Code><![CDATA[100]]></Code>
+		</Replication>
+		<CollectionType>ARRAY_LIST_BASED</CollectionType>
+		<InitialLocationType>XYZ</InitialLocationType>
+		<ColumnCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</ColumnCode>
+		<RowCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</RowCode>
+		<LocationNameCode Class="CodeValue">
+			<Code><![CDATA[""]]></Code>
+		</LocationNameCode>
+		<InitializationType>SPECIFIED_NUMBER</InitializationType>
+		<InitializationDatabaseTableQuery>
+			<Id>1785163120004</Id>
+			<TableReference/>
+		</InitializationDatabaseTableQuery>
+		<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+		<QuantityColumn/>
+	</EmbeddedObject>
+	<EmbeddedObject>
+		<Id>1785163120101</Id>
+		<Name><![CDATA[securityResources]]></Name>
+		<X>160</X>
+		<Y>190</Y>
+		<Label>
+			<X>-20</X>
+			<Y>-20</Y>
+		</Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<ActiveObjectClass>
+			<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+			<ClassName>ResourcePool</ClassName>
+		</ActiveObjectClass>
+		<GenericParameterSubstitute>
+			<GenericParameterSubstituteReference>
+				<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+				<ClassName>ResourcePool</ClassName>
+				<ItemName>1412336243135</ItemName>
+			</GenericParameterSubstituteReference>
+		</GenericParameterSubstitute>
+		<Parameters>
+			<Parameter>
+				<Name><![CDATA[type]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[self.RESOURCE_STATIC]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacityDefinitionType]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[self.CAPACITY_DIRECT]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacity]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[security_capacity]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[newUnit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[forceStatisticsCollection]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[true]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacityBasedOnAttractors]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacitySchedule]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacityScheduleOnOff]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacityOnValue]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[shiftGroupSchedules]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[shiftGroupSizes]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[shiftGroupsPlan]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destroyExcessUnits]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[speed]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[homeLocationType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[homeNode]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[homeNodes]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[showDefaultAnimationStatic]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[downtimeSource]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceProfile]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[downtimeList]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableMaintenance]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[initialTimeToMaintenance]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[timeBetweenMaintenances]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceTaskPriority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceTaskMayPreemptOtherTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceTime]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceTaskStart]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceUsageState]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableFailuresRepairs]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[initialTimeToFailure]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[timeBetweenFailures]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[countBusyOnlyTimeToFailure]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[repairType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[repairTime]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[repairTaskStart]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[repairUsageState]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableBreaks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breaksSchedule]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breakTaskPriority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breakTaskMayPreemptOtherTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breakTaskPreemptionPolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breakUsageState]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableCustomTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[customTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[endOfShiftTaskPriority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[endOfShiftTaskMayPreemptOtherTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[endOfShiftTaskPreemptionPolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[customizeRequestChoice]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[requestChoiceCondition]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[addToCustomPopulation]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[population]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onNewUnit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onDestroyUnit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onSeize]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onRelease]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onWrapUp]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onUnitStateChange]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onMaintenanceStart]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onMaintenanceEnd]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onFailure]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onRepair]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onBreakStart]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onBreakEnd]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onBreakTerminated]]></Name>
+			</Parameter>
+		</Parameters>
+		<ReplicationFlag>false</ReplicationFlag>
+		<Replication Class="CodeValue">
+			<Code><![CDATA[100]]></Code>
+		</Replication>
+		<CollectionType>ARRAY_LIST_BASED</CollectionType>
+		<InitialLocationType>XYZ</InitialLocationType>
+		<ColumnCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</ColumnCode>
+		<RowCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</RowCode>
+		<LocationNameCode Class="CodeValue">
+			<Code><![CDATA[""]]></Code>
+		</LocationNameCode>
+		<InitializationType>SPECIFIED_NUMBER</InitializationType>
+		<InitializationDatabaseTableQuery>
+			<Id>1785163120102</Id>
+			<TableReference/>
+		</InitializationDatabaseTableQuery>
+		<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+		<QuantityColumn/>
+	</EmbeddedObject>
+	<EmbeddedObject>
+		<Id>1785163120201</Id>
+		<Name><![CDATA[immigrationResources]]></Name>
+		<X>340</X>
+		<Y>190</Y>
+		<Label>
+			<X>-25</X>
+			<Y>-20</Y>
+		</Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<ActiveObjectClass>
+			<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+			<ClassName>ResourcePool</ClassName>
+		</ActiveObjectClass>
+		<GenericParameterSubstitute>
+			<GenericParameterSubstituteReference>
+				<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+				<ClassName>ResourcePool</ClassName>
+				<ItemName>1412336243135</ItemName>
+			</GenericParameterSubstituteReference>
+		</GenericParameterSubstitute>
+		<Parameters>
+			<Parameter>
+				<Name><![CDATA[type]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[self.RESOURCE_STATIC]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacityDefinitionType]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[self.CAPACITY_DIRECT]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacity]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[immigration_capacity]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[newUnit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[forceStatisticsCollection]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[true]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacityBasedOnAttractors]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacitySchedule]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacityScheduleOnOff]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[capacityOnValue]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[shiftGroupSchedules]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[shiftGroupSizes]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[shiftGroupsPlan]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destroyExcessUnits]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[speed]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[homeLocationType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[homeNode]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[homeNodes]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[showDefaultAnimationStatic]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[downtimeSource]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceProfile]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[downtimeList]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableMaintenance]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[initialTimeToMaintenance]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[timeBetweenMaintenances]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceTaskPriority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceTaskMayPreemptOtherTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceTime]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceTaskStart]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maintenanceUsageState]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableFailuresRepairs]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[initialTimeToFailure]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[timeBetweenFailures]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[countBusyOnlyTimeToFailure]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[repairType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[repairTime]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[repairTaskStart]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[repairUsageState]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableBreaks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breaksSchedule]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breakTaskPriority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breakTaskMayPreemptOtherTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breakTaskPreemptionPolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[breakUsageState]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableCustomTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[customTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[endOfShiftTaskPriority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[endOfShiftTaskMayPreemptOtherTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[endOfShiftTaskPreemptionPolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[customizeRequestChoice]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[requestChoiceCondition]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[addToCustomPopulation]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[population]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onNewUnit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onDestroyUnit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onSeize]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onRelease]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onWrapUp]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onUnitStateChange]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onMaintenanceStart]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onMaintenanceEnd]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onFailure]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onRepair]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onBreakStart]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onBreakEnd]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onBreakTerminated]]></Name>
+			</Parameter>
+		</Parameters>
+		<ReplicationFlag>false</ReplicationFlag>
+		<Replication Class="CodeValue">
+			<Code><![CDATA[100]]></Code>
+		</Replication>
+		<CollectionType>ARRAY_LIST_BASED</CollectionType>
+		<InitialLocationType>XYZ</InitialLocationType>
+		<ColumnCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</ColumnCode>
+		<RowCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</RowCode>
+		<LocationNameCode Class="CodeValue">
+			<Code><![CDATA[""]]></Code>
+		</LocationNameCode>
+		<InitializationType>SPECIFIED_NUMBER</InitializationType>
+		<InitializationDatabaseTableQuery>
+			<Id>1785163120202</Id>
+			<TableReference/>
+		</InitializationDatabaseTableQuery>
+		<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+		<QuantityColumn/>
+	</EmbeddedObject>
+	<EmbeddedObject>
+		<Id>1785163120301</Id>
+		<Name><![CDATA[securityService]]></Name>
+		<X>150</X>
+		<Y>90</Y>
+		<Label>
+			<X>-15</X>
+			<Y>-20</Y>
+		</Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<ActiveObjectClass>
+			<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+			<ClassName>Service</ClassName>
+		</ActiveObjectClass>
+		<GenericParameterSubstitute>
+			<GenericParameterSubstituteReference>
+				<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+				<ClassName>Service</ClassName>
+				<ItemName>1412336243141</ItemName>
+			</GenericParameterSubstituteReference>
+		</GenericParameterSubstitute>
+		<Parameters>
+			<Parameter>
+				<Name><![CDATA[seizeFromOnePool]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[true]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourcePool]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[securityResources]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[queueCapacity]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[security_queue_capacity]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[delayTime]]></Name>
+				<Value Class="CodeUnitValue">
+					<Code><![CDATA[((OperationalTraveller) agent).security_service_demand]]></Code>
+					<Unit Class="TimeUnits">SECOND</Unit>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[sendResources]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[false]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[forceStatisticsCollection]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[true]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onEnter]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[if ( security_queue_count >= security_queue_capacity ) {
+	rejected_or_dropped_count++;
+	throw new IllegalStateException( "Security queue capacity reached" );
+}
+OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.security_queue_join = time();
+security_queue_count++;
+max_security_queue = Math.max( max_security_queue, security_queue_count );]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onSeizeUnit]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[((OperationalTraveller) agent).security_resource_id = "SECURITY_" + Integer.toString( unit.getId() );]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onEnterDelay]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[OperationalTraveller traveller = (OperationalTraveller) agent;
+security_queue_count--;
+security_in_service_count++;
+traveller.security_start = time();]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onAtExit]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[OperationalTraveller traveller = (OperationalTraveller) agent;
+security_in_service_count--;
+traveller.security_end = time();
+security_busy_seconds += traveller.security_service_demand;]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceSets]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceQuantity]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[seizePolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maximumCapacity]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destinationType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destinationNode]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destinationAttractor]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[movingGoHome]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[entityLocationQueue]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[entityLocationDelay]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[priority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[taskMayPreemptOtherTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[taskPreemptionPolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[terminatedTasksEnter]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[suspendResumeEntities]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[wrapUpTaskPolicyType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[wrapUpTaskPriority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[wrapUpTaskPreemptionPolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[customizeResourceChoice]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceChoiceCondition]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceSelectionMode]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceRating]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceComparison]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableTimeout]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[timeout]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enablePreemption]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[restoreEntityLocationOnExit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[wrapUpUsageState]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onExitTimeout]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onExitPreempted]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onExit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onTaskTerminated]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onTaskSuspended]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onTaskResumed]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onRemove]]></Name>
+			</Parameter>
+		</Parameters>
+		<ReplicationFlag>false</ReplicationFlag>
+		<Replication Class="CodeValue">
+			<Code><![CDATA[100]]></Code>
+		</Replication>
+		<CollectionType>ARRAY_LIST_BASED</CollectionType>
+		<InitialLocationType>XYZ</InitialLocationType>
+		<ColumnCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</ColumnCode>
+		<RowCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</RowCode>
+		<LocationNameCode Class="CodeValue">
+			<Code><![CDATA[""]]></Code>
+		</LocationNameCode>
+		<InitializationType>SPECIFIED_NUMBER</InitializationType>
+		<InitializationDatabaseTableQuery>
+			<Id>1785163120302</Id>
+			<TableReference/>
+		</InitializationDatabaseTableQuery>
+		<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+		<QuantityColumn/>
+	</EmbeddedObject>
+	<EmbeddedObject>
+		<Id>1785163120401</Id>
+		<Name><![CDATA[immigrationService]]></Name>
+		<X>330</X>
+		<Y>90</Y>
+		<Label>
+			<X>-20</X>
+			<Y>-20</Y>
+		</Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<ActiveObjectClass>
+			<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+			<ClassName>Service</ClassName>
+		</ActiveObjectClass>
+		<GenericParameterSubstitute>
+			<GenericParameterSubstituteReference>
+				<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+				<ClassName>Service</ClassName>
+				<ItemName>1412336243141</ItemName>
+			</GenericParameterSubstituteReference>
+		</GenericParameterSubstitute>
+		<Parameters>
+			<Parameter>
+				<Name><![CDATA[seizeFromOnePool]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[true]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourcePool]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[immigrationResources]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[queueCapacity]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[immigration_queue_capacity]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[delayTime]]></Name>
+				<Value Class="CodeUnitValue">
+					<Code><![CDATA[((OperationalTraveller) agent).immigration_primary_service_demand
++ ((OperationalTraveller) agent).additional_check_service_demand]]></Code>
+					<Unit Class="TimeUnits">SECOND</Unit>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[sendResources]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[false]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[forceStatisticsCollection]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[true]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onEnter]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[if ( immigration_queue_count >= immigration_queue_capacity ) {
+	rejected_or_dropped_count++;
+	throw new IllegalStateException( "Immigration queue capacity reached" );
+}
+OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.immigration_queue_join = time();
+traveller.immigration_lane_id = "IMMIGRATION_POOLED";
+immigration_queue_count++;
+max_immigration_queue = Math.max( max_immigration_queue, immigration_queue_count );]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onSeizeUnit]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[((OperationalTraveller) agent).immigration_resource_id = "IMMIGRATION_" + Integer.toString( unit.getId() );]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onEnterDelay]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[OperationalTraveller traveller = (OperationalTraveller) agent;
+immigration_queue_count--;
+immigration_in_service_count++;
+traveller.immigration_start = time();
+traveller.immigration_primary_end =
+	traveller.immigration_start + traveller.immigration_primary_service_demand;]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onAtExit]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[OperationalTraveller traveller = (OperationalTraveller) agent;
+immigration_in_service_count--;
+if ( traveller.additional_check_flag ) traveller.additional_check_end = time();
+immigration_busy_seconds +=
+	traveller.immigration_primary_service_demand
+	+ traveller.additional_check_service_demand;]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceSets]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceQuantity]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[seizePolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[maximumCapacity]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destinationType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destinationNode]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destinationAttractor]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[movingGoHome]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[entityLocationQueue]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[entityLocationDelay]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[priority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[taskMayPreemptOtherTasks]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[taskPreemptionPolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[terminatedTasksEnter]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[suspendResumeEntities]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[wrapUpTaskPolicyType]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[wrapUpTaskPriority]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[wrapUpTaskPreemptionPolicy]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[customizeResourceChoice]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceChoiceCondition]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceSelectionMode]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceRating]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[resourceComparison]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enableTimeout]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[timeout]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[enablePreemption]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[restoreEntityLocationOnExit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[wrapUpUsageState]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onExitTimeout]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onExitPreempted]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onExit]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onTaskTerminated]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onTaskSuspended]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onTaskResumed]]></Name>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[onRemove]]></Name>
+			</Parameter>
+		</Parameters>
+		<ReplicationFlag>false</ReplicationFlag>
+		<Replication Class="CodeValue">
+			<Code><![CDATA[100]]></Code>
+		</Replication>
+		<CollectionType>ARRAY_LIST_BASED</CollectionType>
+		<InitialLocationType>XYZ</InitialLocationType>
+		<ColumnCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</ColumnCode>
+		<RowCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</RowCode>
+		<LocationNameCode Class="CodeValue">
+			<Code><![CDATA[""]]></Code>
+		</LocationNameCode>
+		<InitializationType>SPECIFIED_NUMBER</InitializationType>
+		<InitializationDatabaseTableQuery>
+			<Id>1785163120402</Id>
+			<TableReference/>
+		</InitializationDatabaseTableQuery>
+		<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+		<QuantityColumn/>
+	</EmbeddedObject>
+	<EmbeddedObject>
+		<Id>1785163120501</Id>
+		<Name><![CDATA[checkpointSink]]></Name>
+		<X>500</X>
+		<Y>100</Y>
+		<Label>
+			<X>-10</X>
+			<Y>-20</Y>
+		</Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<ActiveObjectClass>
+			<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+			<ClassName>Sink</ClassName>
+		</ActiveObjectClass>
+		<GenericParameterSubstitute>
+			<GenericParameterSubstituteReference>
+				<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+				<ClassName>Sink</ClassName>
+				<ItemName>1412336242929</ItemName>
+			</GenericParameterSubstituteReference>
+		</GenericParameterSubstitute>
+		<Parameters>
+			<Parameter>
+				<Name><![CDATA[onEnter]]></Name>
+				<Value Class="CodeValue">
+					<Code><![CDATA[OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.exit = time();
+completed++;
+last_exit = traveller.exit;
+double securityWait = traveller.security_start - traveller.security_queue_join;
+double immigrationWait = traveller.immigration_start - traveller.immigration_queue_join;
+double totalQueueWait = securityWait + immigrationWait;
+double systemTime = traveller.exit - traveller.arrival;
+security_waits.add( securityWait );
+immigration_waits.add( immigrationWait );
+total_queue_waits.add( totalQueueWait );
+system_times.add( systemTime );
+if ( totalQueueWait > 600.0 ) exceed_600_count++;
+if ( totalQueueWait > 900.0 ) exceed_900_count++;
+if ( totalQueueWait > 1200.0 ) exceed_1200_count++;
+entity_log_rows.add(
+	String.join(
+		",",
+		new String[] {
+			schema_version,
+			config_id,
+			config_sha256,
+			model_version,
+			scenario_id,
+			traveller.input_sample_id,
+			Integer.toString( traveller.replication_id ),
+			traveller.traveller_id,
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.arrival ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.security_service_demand ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_conventional_service_demand ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.automation_u ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_u ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.lane_tie_u ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.security_queue_join ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.security_start ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.security_end ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_queue_join ),
+			traveller.immigration_lane_id,
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_start ),
+			Boolean.toString( traveller.technology_flag ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_primary_service_demand ),
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_primary_end ),
+			Boolean.toString( traveller.additional_check_flag ),
+			traveller.additional_check_flag
+				? String.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_service_demand )
+				: "",
+			traveller.additional_check_flag
+				? String.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_end )
+				: "",
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.exit ),
+			traveller.security_resource_id,
+			traveller.immigration_resource_id
+		}
+	)
+);
+if ( arrivals_closed && completed == admitted ) {
+	run_status = "COMPLETE";
+	finishSimulation();
+}]]></Code>
+				</Value>
+			</Parameter>
+			<Parameter>
+				<Name><![CDATA[destroyEntity]]></Name>
+			</Parameter>
+		</Parameters>
+		<ReplicationFlag>false</ReplicationFlag>
+		<Replication Class="CodeValue">
+			<Code><![CDATA[100]]></Code>
+		</Replication>
+		<CollectionType>ARRAY_LIST_BASED</CollectionType>
+		<InitialLocationType>XYZ</InitialLocationType>
+		<ColumnCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</ColumnCode>
+		<RowCode Class="CodeValue">
+			<Code><![CDATA[0]]></Code>
+		</RowCode>
+		<LocationNameCode Class="CodeValue">
+			<Code><![CDATA[""]]></Code>
+		</LocationNameCode>
+		<InitializationType>SPECIFIED_NUMBER</InitializationType>
+		<InitializationDatabaseTableQuery>
+			<Id>1785163120502</Id>
+			<TableReference/>
+		</InitializationDatabaseTableQuery>
+		<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+		<QuantityColumn/>
+	</EmbeddedObject>
+</EmbeddedObjects>

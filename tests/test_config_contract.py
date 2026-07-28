@@ -24,6 +24,10 @@ class ParameterRegistryTests(unittest.TestCase):
             {
                 "video_sha256",
                 "video_duration",
+                "crossing_count_left_to_right",
+                "crossing_count_right_to_left",
+                "crossing_count_total",
+                "arrival_direction",
                 "arrival_rate",
                 "security_capacity",
                 "immigration_capacity",
@@ -51,10 +55,24 @@ class ParameterRegistryTests(unittest.TestCase):
             {row["source_class"] for row in self.rows} - allowed_source_class
         )
 
-    def test_unfrozen_arrival_input_has_no_hidden_value(self) -> None:
-        arrival = next(row for row in self.rows if row["parameter"] == "arrival_rate")
-        self.assertEqual(arrival["status"], "TBD")
-        self.assertEqual(arrival["value"], "")
+    def test_frozen_arrival_input_matches_accepted_aggregate(self) -> None:
+        by_key = {row["parameter"]: row for row in self.rows}
+
+        self.assertEqual(by_key["crossing_count_left_to_right"]["value"], "12")
+        self.assertEqual(by_key["crossing_count_right_to_left"]["value"], "34")
+        self.assertEqual(by_key["crossing_count_total"]["value"], "46")
+        self.assertEqual(by_key["arrival_direction"]["value"], "right_to_left")
+        self.assertEqual(by_key["arrival_direction"]["status"], "VERIFIED")
+
+        arrival = by_key["arrival_rate"]
+        self.assertEqual(arrival["status"], "VERIFIED")
+        self.assertEqual(arrival["value"], "1.364213")
+        self.assertEqual(arrival["unit"], "travellers/second")
+        self.assertAlmostEqual(
+            float(arrival["value"]),
+            34 / 24.922788889,
+            places=6,
+        )
 
 
 class ScenarioRegistryTests(unittest.TestCase):
@@ -76,6 +94,38 @@ class ScenarioRegistryTests(unittest.TestCase):
                 self.assertLessEqual(float(row["automation_uptake"]), 1.0)
                 self.assertGreater(float(row["automation_multiplier"]), 0.0)
                 self.assertEqual(row["status"], "PLANNED")
+
+
+class AnyLogicGateManifestTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.rows = read_csv("config/anylogic_gate_manifest.csv")
+
+    def test_gate_is_exactly_two_inputs_by_three_replications(self) -> None:
+        self.assertEqual(len(self.rows), 6)
+        by_input: dict[str, set[int]] = {}
+        for row in self.rows:
+            by_input.setdefault(row["input_sample_id"], set()).add(
+                int(row["replication_id"])
+            )
+        self.assertEqual(
+            by_input,
+            {
+                "GATE_INPUT_A": {1, 2, 3},
+                "GATE_INPUT_B": {1, 2, 3},
+            },
+        )
+
+    def test_gate_seed_lineage_is_unique_and_deterministic(self) -> None:
+        seeds = [int(row["run_seed"]) for row in self.rows]
+        self.assertEqual(len(seeds), len(set(seeds)))
+        for row in self.rows:
+            expected = (
+                202607270000
+                + 100 * (int(row["input_sample_index"]) + 1)
+                + int(row["replication_id"])
+            )
+            self.assertEqual(int(row["run_seed"]), expected)
+            self.assertEqual(int(row["gate_entity_count"]), 12)
 
 
 if __name__ == "__main__":

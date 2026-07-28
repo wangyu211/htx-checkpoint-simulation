@@ -1,0 +1,124 @@
+table_name,ordinal,field_name,data_type,nullable,unit,description
+run_manifest,1,schema_version,string,false,version,Output schema version
+run_manifest,2,config_id,string,false,identifier,Operational configuration identifier
+run_manifest,3,config_sha256,string,false,hex digest,SHA-256 of the exact configuration row
+run_manifest,4,model_version,string,false,identifier,Model source version
+run_manifest,5,scenario_id,string,false,identifier,Controlled scenario identifier
+run_manifest,6,scenario_family,string,false,enum,Scenario comparison family
+run_manifest,7,reference_scenario_id,string,false,identifier,Named comparison reference
+run_manifest,8,input_sample_id,string,false,identifier,Outer input sample identifier
+run_manifest,9,replication_id,integer,false,index,Inner replication identifier
+run_manifest,10,master_seed,integer,false,seed,Configuration-level seed
+run_manifest,11,arrival_seed,integer,false,seed,Arrival stream seed
+run_manifest,12,service_seed,integer,false,seed,Service-demand stream seed
+run_manifest,13,routing_seed,integer,false,seed,Automation and additional-check stream seed
+run_manifest,14,tie_seed,integer,false,seed,Separate-lane tie-break stream seed
+run_manifest,15,start_state,string,false,enum,Initial system state
+run_manifest,16,arrival_mode,string,false,enum,Arrival-process mode
+run_manifest,17,arrival_cutoff_seconds,number,false,seconds,Half-open arrival-window end
+run_manifest,18,drain_end_seconds,number,false,seconds,Time when admitted cohort clears
+run_manifest,19,drain_rule,string,false,enum,Cohort termination rule
+run_manifest,20,engine_name,string,false,text,Simulation engine
+run_manifest,21,engine_version,string,false,text,Exact engine version
+run_manifest,22,calibration_status,string,false,enum,Must state NOT_CALIBRATED in v1
+run_manifest,23,claim_ceiling,string,false,enum,Permitted interpretation
+run_manifest,24,crn_alignment_status,string,false,enum,Whether traveller-level alignment passed
+run_manifest,25,run_status,string,false,enum,Run completion state
+entity_log,1,schema_version,string,false,version,Output schema version
+entity_log,2,config_id,string,false,identifier,Operational configuration identifier
+entity_log,3,config_sha256,string,false,hex digest,SHA-256 of the exact configuration row
+entity_log,4,model_version,string,false,identifier,Model source version
+entity_log,5,scenario_id,string,false,identifier,Controlled scenario identifier
+entity_log,6,input_sample_id,string,false,identifier,Outer input sample identifier
+entity_log,7,replication_id,integer,false,index,Inner replication identifier
+entity_log,8,traveller_id,string,false,identifier,Stable traveller identifier within input sample
+entity_log,9,arrival_seconds,number,false,seconds,Arrival time
+entity_log,10,security_service_demand_seconds,number,false,seconds,Immutable Security work demand
+entity_log,11,immigration_conventional_service_demand_seconds,number,false,seconds,Immutable conventional Immigration work demand
+entity_log,12,automation_u,number,false,proportion,Immutable automation branch draw
+entity_log,13,additional_check_u,number,false,proportion,Immutable additional-check branch draw
+entity_log,14,lane_tie_u,number,false,proportion,Immutable separate-lane tie draw
+entity_log,15,security_queue_join_seconds,number,false,seconds,Security queue entry
+entity_log,16,security_start_seconds,number,false,seconds,Security service start
+entity_log,17,security_end_seconds,number,false,seconds,Security service end
+entity_log,18,immigration_queue_join_seconds,number,false,seconds,Immigration queue entry
+entity_log,19,immigration_lane_id,string,false,identifier,Selected Immigration lane
+entity_log,20,immigration_start_seconds,number,false,seconds,Immigration service start
+entity_log,21,technology_flag,boolean,false,boolean,Technology-enabled service route
+entity_log,22,immigration_primary_service_demand_seconds,number,false,seconds,Applied primary service demand
+entity_log,23,immigration_primary_end_seconds,number,false,seconds,Primary Immigration completion
+entity_log,24,additional_check_flag,boolean,false,boolean,Counter-held additional work selected
+entity_log,25,additional_check_service_demand_seconds,number,true,seconds,Applied extra work when selected
+entity_log,26,additional_check_end_seconds,number,true,seconds,Additional work completion when selected
+entity_log,27,exit_seconds,number,false,seconds,System exit after full processing
+entity_log,28,security_resource_id,string,false,identifier,Security resource used
+entity_log,29,immigration_resource_id,string,false,identifier,Immigration resource used
+replication_kpis,1,schema_version,string,false,version,Output schema version
+replication_kpis,2,config_id,string,false,identifier,Operational configuration identifier
+replication_kpis,3,config_sha256,string,false,hex digest,SHA-256 of the exact configuration row
+replication_kpis,4,model_version,string,false,identifier,Model source version
+replication_kpis,5,scenario_id,string,false,identifier,Controlled scenario identifier
+replication_kpis,6,input_sample_id,string,false,identifier,Outer input sample identifier
+replication_kpis,7,replication_id,integer,false,index,Inner replication identifier
+replication_kpis,8,arrival_cutoff_seconds,number,false,seconds,End of the arrival window
+replication_kpis,9,drain_end_seconds,number,false,seconds,Time when the cohort clears
+replication_kpis,10,arrivals,integer,false,travellers,Admitted arrival cohort
+replication_kpis,11,completed_at_cutoff,integer,false,travellers,Exited by cutoff
+replication_kpis,12,security_queue_at_cutoff,integer,false,travellers,Security queue at cutoff
+replication_kpis,13,security_in_service_at_cutoff,integer,false,travellers,Security service WIP at cutoff
+replication_kpis,14,immigration_queue_at_cutoff,integer,false,travellers,Immigration queue at cutoff
+replication_kpis,15,immigration_in_service_at_cutoff,integer,false,travellers,Immigration service WIP at cutoff
+replication_kpis,16,wip_at_cutoff,integer,false,travellers,All system WIP at cutoff
+replication_kpis,17,completed_after_drain,integer,false,travellers,Exited after full drain
+replication_kpis,18,rejected_or_dropped_count,integer,false,travellers,Lost or rejected travellers
+replication_kpis,19,technology_count,integer,false,travellers,Technology-enabled primary services
+replication_kpis,20,additional_check_count,integer,false,travellers,Additional checks
+replication_kpis,21,security_wait_mean_seconds,number,false,seconds,Mean Security queue wait
+replication_kpis,22,security_wait_p95_seconds,number,false,seconds,Within-replication Security queue-wait P95
+replication_kpis,23,immigration_wait_mean_seconds,number,false,seconds,Mean Immigration queue wait
+replication_kpis,24,immigration_wait_p95_seconds,number,false,seconds,Within-replication Immigration queue-wait P95
+replication_kpis,25,total_queue_wait_mean_seconds,number,false,seconds,Mean total queue wait
+replication_kpis,26,total_queue_wait_p95_seconds,number,false,seconds,Within-replication total queue-wait P95
+replication_kpis,27,total_queue_wait_exceed_600_rate,number,false,proportion,Cohort fraction over 600 seconds
+replication_kpis,28,total_queue_wait_exceed_900_rate,number,false,proportion,Cohort fraction over 900 seconds
+replication_kpis,29,total_queue_wait_exceed_1200_rate,number,false,proportion,Cohort fraction over 1200 seconds
+replication_kpis,30,system_time_mean_seconds,number,false,seconds,Mean arrival-to-exit time
+replication_kpis,31,system_time_p95_seconds,number,false,seconds,Within-replication arrival-to-exit P95
+replication_kpis,32,security_utilization,number,false,proportion,Busy-time utilisation through drain
+replication_kpis,33,immigration_utilization,number,false,proportion,Busy-time utilisation through drain
+replication_kpis,34,cutoff_backlog,integer,false,travellers,Arrival cohort not exited at cutoff
+replication_kpis,35,cutoff_backlog_fraction,number,false,proportion,Cutoff backlog divided by arrivals
+replication_kpis,36,cohort_clear_time_after_cutoff_seconds,number,false,seconds,Last exit minus cutoff
+replication_kpis,37,conservation_pass,boolean,false,boolean,Arrival and WIP identities passed
+replication_kpis,38,run_status,string,false,enum,Run completion state
+scenario_estimates,1,schema_version,string,false,version,Analysis output schema version
+scenario_estimates,2,scenario_id,string,false,identifier,Controlled scenario identifier
+scenario_estimates,3,input_sample_id,string,false,identifier,Outer input sample kept separate
+scenario_estimates,4,metric,string,false,identifier,Replication-level metric
+scenario_estimates,5,estimand,string,false,enum,Mean of replication-level metric
+scenario_estimates,6,n_replications,integer,false,replications,Independent inner replications
+scenario_estimates,7,mean,number,false,metric unit,Sample mean
+scenario_estimates,8,standard_deviation,number,false,metric unit,Sample standard deviation
+scenario_estimates,9,standard_error,number,false,metric unit,Standard error
+scenario_estimates,10,ci_level,number,false,proportion,Confidence level
+scenario_estimates,11,ci_low,number,false,metric unit,Student-t lower endpoint
+scenario_estimates,12,ci_high,number,false,metric unit,Student-t upper endpoint
+scenario_estimates,13,analysis_status,string,false,enum,Analysis completion state
+scenario_contrasts,1,schema_version,string,false,version,Analysis output schema version
+scenario_contrasts,2,scenario_id,string,false,identifier,Alternative scenario
+scenario_contrasts,3,reference_scenario_id,string,false,identifier,Reference scenario
+scenario_contrasts,4,scenario_input_sample_id,string,false,identifier,Alternative outer input sample
+scenario_contrasts,5,reference_input_sample_id,string,false,identifier,Reference outer input sample
+scenario_contrasts,6,metric,string,false,identifier,Replication-level metric
+scenario_contrasts,7,difference_direction,string,false,enum,Alternative minus reference
+scenario_contrasts,8,comparison_method,string,false,enum,Independent Welch or verified paired t
+scenario_contrasts,9,alignment_status,string,false,enum,CRN alignment evidence state
+scenario_contrasts,10,n_scenario,integer,false,replications,Alternative sample size
+scenario_contrasts,11,n_reference,integer,false,replications,Reference sample size
+scenario_contrasts,12,difference_mean,number,false,metric unit,Alternative minus reference estimate
+scenario_contrasts,13,standard_error,number,false,metric unit,Difference standard error
+scenario_contrasts,14,degrees_of_freedom,number,false,df,Welch or paired degrees of freedom
+scenario_contrasts,15,ci_level,number,false,proportion,Confidence level
+scenario_contrasts,16,ci_low,number,false,metric unit,Lower endpoint
+scenario_contrasts,17,ci_high,number,false,metric unit,Upper endpoint
+scenario_contrasts,18,analysis_status,string,false,enum,Analysis completion state

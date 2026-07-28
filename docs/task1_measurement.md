@@ -1,13 +1,25 @@
-# Task 1 — Day-1 Working Measurement Report
+# Task 1 — Final aggregate measurement report
 
-**Status:** WORKING EVIDENCE — NOT FROZEN
-**Last updated:** 2026-07-26
-**Decision:** No arrival-rate input is approved for the simulation yet.
+**Status:** FROZEN AGGREGATE — EVENT-TIME LEDGER UNAVAILABLE
 
-This report records the first reproducible measurement pass over the supplied
-video. It deliberately separates automated crossing candidates, a first-pass
-event review, and the still-pending final measurement ledger. It is not a claim
-that a 24.9-second clip is sufficient to calibrate an operational checkpoint.
+**Decision date:** 2026-07-27
+
+**Decision owner:** Wang Yu, assessment candidate and project owner
+
+**Accepted full-video aggregate:** 12 left-to-right and 34 right-to-left
+crossings over 24.922788889 seconds
+
+**Assessment entrance mapping:** `right_to_left` is the simulated arrival
+direction, giving `34 / 24.922788889 = 1.364213` travellers/second
+
+This report preserves the reproducible computer-vision candidate work and the
+subsequent full-video human aggregate adjudication. The accepted deliverable is
+an **aggregate freeze**, not a signed person-by-person event-time ledger. No
+event IDs or timestamps have been reconstructed after the fact.
+
+The frozen rate is a short-window input anchor for comparative simulation under
+the assignment premises. It is not evidence that a 24.9-second clip is
+sufficient to estimate long-run checkpoint demand.
 
 ## 1. Assignment premises and scope
 
@@ -23,10 +35,10 @@ day-to-day stationarity, peak-period behaviour, or transferability to a real
 checkpoint. The model will therefore be presented as a transparent comparative
 what-if simulation under the stated premises, not as a validated digital twin.
 
-The current direction labels, `left_to_right` and `right_to_left`, are image
-coordinates only. Neither direction is yet labelled as the operational
-“arrival” stream; that semantic mapping must be confirmed before a
-direction-specific arrival process is frozen.
+The direction labels, `left_to_right` and `right_to_left`, are image
+coordinates. For this assessment, the project owner mapped `right_to_left` to
+the operational entrance/arrival stream on 2026-07-27. This is an explicit
+assessment decision, not a direction inferred by the detector.
 
 ## 2. Source-video audit
 
@@ -41,6 +53,7 @@ direction-specific arrival process is frozen.
 | Average frame rate | 30.012692534 fps |
 | Presentation duration | 24.922788889 s |
 | YOLOX-S ONNX SHA-256 | `c5c2d13e59ae883e6af3b45daea64af4833a4951c92d116ec270d9ddbe998063` |
+| Local YOLO26m ONNX SHA-256 | `b5113287e92138b3740e2ad5100c5db54990310fe882e3e55f2ad4bcf07dcc73` |
 
 Frame rate is not used as the event clock. The video contains presentation-time
 variation and B-frames, so each observation and crossing is timestamped from
@@ -77,6 +90,14 @@ estimating total bidirectional corridor flow. The central corridor line is the
 current reproducible reference geometry.
 
 ## 4. Detection, tracking, and reconciliation pipeline
+
+Sections 4.1–4.6 preserve the original YOLOX-S/Hungarian/ByteTrack candidate
+and recall-review history. A later controlled comparison selected
+YOLO26m + BoT-SORT as the primary local candidate path and
+YOLOX-S + Supervision ByteTrack as the licence-friendlier public fallback.
+Neither path owns the accepted count: both inform the human adjudication, and
+their disagreement is evidence of method sensitivity. The final aggregate
+decision is recorded in Section 4.7.
 
 ### 4.1 Person detection
 
@@ -213,12 +234,33 @@ tracks 155/162 are duplicate/nested boxes for already-represented people;
 tracks 90/103 contain ID jumps; and track 2 is left-censored at the video
 start.
 
-If an owner accepts all three recovered events, the current working physical
-count becomes **38**: 9 left-to-right and 29 right-to-left, or 1.524709 total
-crossings per video second. Until that sign-off, **35–38 is a review bracket,
-not a confidence interval and not a frozen arrival input**. The owner must
-decide from raw-pixel evidence under the
-[`task1_review_protocol.md`](task1_review_protocol.md).
+At that historical stage, accepting all three recovered events would have
+produced **38**: 9 left-to-right and 29 right-to-left, or 1.524709 total
+crossings per video second. The resulting **35–38** range was a review bracket,
+not a confidence interval. It has been superseded by the later full-video human
+aggregate adjudication described below.
+
+### 4.7 Final full-video human aggregate adjudication
+
+After reviewing the full clip in both directions, the project owner froze the
+following aggregate on 2026-07-27:
+
+| Image direction | Accepted crossings | Observed-window rate |
+|---|---:|---:|
+| Left-to-right | 12 | 0.481487/s |
+| Right-to-left | 34 | 1.364213/s |
+| Total bidirectional | 46 | 1.845700/s |
+
+The assessment entrance analogy maps `right_to_left` to arrivals. The
+simulation therefore uses the observed-window anchor `1.364213/s`, with
+separate low/base/high sensitivity rather than treating the clip as a
+population demand study.
+
+This adjudication was performed as a full-video **aggregate count**. It did not
+produce a signed row for every physical crossing, so the candidate event IDs
+and timestamps in the earlier ledgers must not be relabelled as the final 46
+people. The authoritative non-pixel freeze product is
+[`task1_final_aggregate.csv`](../data/derived/task1_final_aggregate.csv).
 
 ## 5. Counting-rule sensitivity
 
@@ -246,21 +288,22 @@ some trajectories can leave the ROI before reaching every test line.
 Sensitivity events therefore need event-level reconciliation rather than
 mechanical averaging.
 
-## 6. What can and cannot yet parameterise the model
+## 6. What can and cannot parameterise the model
 
-| Candidate parameter | Day-1 evidence | Current disposition |
+| Candidate parameter | Evidence | Current disposition |
 |---|---|---|
-| Bidirectional crossing count | Strict candidates, low-threshold stress, and complete AI-assisted sequential sweep | Working owner-review bracket 35–38; not frozen |
-| Direction-specific arrival rate | Pixel directions measured, operational “arrival” direction not yet assigned | Not frozen |
-| Inter-arrival distribution | At most a 24.9-second local sample | Insufficient for a defensible long-run distribution; retain low/base/high sensitivity |
+| Bidirectional crossing count | Full-video human aggregate adjudication | Frozen for this assessment at 12 L→R and 34 R→L; aggregate-only |
+| Direction-specific arrival rate | Owner maps R→L to the entrance direction | Frozen short-window anchor at `1.364213/s` |
+| Inter-arrival distribution | At most a 24.9-second local sample; no final event-time ledger | Use a transparent HPP assumption and low/base/high rate sensitivity; do not claim a fitted empirical distribution |
 | Walking speed | Pixel displacement observable | No metres/second without a documented scale or homography |
 | Personal space / density | Pixel separation observable with perspective distortion | No metric calibration; use only as qualitative scene evidence |
 | Group size | Co-motion may suggest groups but is confounded by crowd flow | Do not infer groups automatically without a stated rule and review |
 
-Accordingly, **the simulation arrival input remains `TBD`**. Freezing
-either `35 / 24.92 s` or `38 / 24.92 s` as the baseline before owner review
-would conflate provisional event decisions, an unresolved direction mapping,
-and a very short observation window with population demand.
+Accordingly, the simulation may use `1.364213/s` as the **accepted local-window
+input anchor**. The earlier 27/29 R→L reviews and the 35–38 total review bracket
+are retained as historical evidence of detector/tracker and review sensitivity;
+they are not alternative statistical samples, confidence limits, or current
+model inputs.
 
 ## 7. Limitations
 
@@ -275,30 +318,37 @@ and a very short observation window with population demand.
   frame-level ground truth or a measured recall estimate.
 - No camera calibration, ground-plane homography, or known-distance reference
   is available for physical walking speed or spacing.
-- Direction in image space is not yet mapped to entrance-versus-exit semantics.
+- The R→L entrance mapping is an assessment decision and has not been validated
+  against an operational checkpoint camera specification.
 - The video contains no direct evidence about Security or Immigration service
   times, staffing, additional-check probabilities, or queue discipline; those
   must be explicit assumptions or scenario variables.
 
-## 8. Actions required before measurement freeze
+## 8. Freeze decision and remaining assurance work
 
-1. **Completed as AI-assisted evidence:** sequential full-video sweep plus
-   targeted raw-pixel review of boundaries, occlusions, and tracker
-   disagreement.
-2. **Completed provisionally:** recovered-event, duplicate, boundary, and
-   identity-switch cases are documented; three high-confidence events remain
-   in the owner review queue.
-3. Obtain project-owner human sign-off on all strict candidates, the three
-   recovered events, and direction.
-4. Confirm which image-space direction represents immigration-checkpoint
-   arrivals under the assignment’s entrance analogy.
-5. Promote a versioned final event ledger only after the preceding checks;
-   preserve candidate and final counts separately.
-6. Derive a documented baseline and low/high measurement sensitivity for the
-   simulation. Do not fit a complex arrival distribution to this clip alone.
-7. If physical walking speed is required, obtain a defensible distance
-   reference or state clearly that the value is literature-/assumption-based
-   and use the video only for qualitative calibration.
+Completed for the assessment submission:
 
-Until those actions are complete, every numerical count in this document is
-working evidence and must remain outside the frozen simulation parameter set.
+1. Reproducible detector/tracker candidate generation and sensitivity checks.
+2. Sequential full-video visual review, including direction-specific manual
+   counting.
+3. Project-owner aggregate decision: 12 L→R and 34 R→L on 2026-07-27.
+4. Explicit mapping of R→L to the assessment entrance stream.
+5. Versioned aggregate freeze in `task1_final_aggregate.csv`.
+6. Documented low/base/high demand-rate sensitivity for the simulation.
+
+Not completed, and therefore not claimed:
+
+1. A signed event-time ledger linking all 46 accepted people to timestamps,
+   reviewer decisions, and reason codes.
+2. Frame-level ground truth or measured detector/tracker accuracy.
+3. Evidence that the 24.9-second observed rate is stationary or representative
+   of long-run checkpoint demand.
+4. Metric speed, spacing, or density calibration from a homography or known
+   distance.
+
+If a later operational study needs trace replay, empirical inter-arrival
+modelling, or detector performance measurement, it must create a new signed
+event ledger from raw pixels under
+[`task1_review_protocol.md`](task1_review_protocol.md). That future work must
+remain separate from the accepted aggregate; historical candidate ledgers must
+not be overwritten or retrofitted into ground truth.

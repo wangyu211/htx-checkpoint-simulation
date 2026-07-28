@@ -1,117 +1,80 @@
-# Five-slide storyboard — working, result-blind
+# Task 4 — five-slide operational-insights storyboard
 
-This is the Day-1 narrative skeleton, not a completed result deck. Every
-bracketed result statement is a claim gate: it must be replaced with verified
-evidence or removed. The final deck has no more than five content slides.
+**Status:** implemented in
+[`HTX_Task4_Operational_Insights.pptx`](HTX_Task4_Operational_Insights.pptx).
 
-## Slide 1 — Decision, not animation
+The deck uses five content slides, matching the assessment limit. The visible
+copy is written for HTX reviewers; speaker notes retain the talk track and
+`[Sources]` blocks.
 
-**Working title**
+## Slide 1 — Problem overview
 
-> From 25 seconds of local evidence to a defensible checkpoint decision
+> From 25 seconds of video to a decision-ready checkpoint model
 
-**Claim to establish**
+The decision problem is framed as evidence-to-policy inference under sparse
+local data. The clip can seed a scenario, but it cannot validate a checkpoint
+or justify a staffing forecast.
 
-Which capacity, queue-policy, or technology intervention controls tail waiting
-under demand and input uncertainty?
+## Slide 2 — Simulation design and assumptions
 
-**Visual**
+> The pipeline prevents a short clip from becoming a false baseline
 
-`Video evidence → Security → Immigration → decision frontier`
+One three-step visual connects:
 
-Show the four levers: Security capacity, Immigration capacity, separate versus
-pooled Immigration queue, and technology-enabled effective uptake. State the
-scope boundary on-slide: local entrance-area comparative DES, not a whole
-checkpoint digital twin.
+1. candidate generation, fallback cross-check, and human-owned measurement;
+2. an event-driven `Arrival → Security → Immigration → full drain` model; and
+3. replicated output analysis with P95, cutoff WIP, clear time, intervals, and
+   explicit claim boundaries.
 
-## Slide 2 — The video is measured, not merely watched
+## Slide 3 — Reference performance
 
-**Working title**
+> The reference is stable because its assumptions provide headroom
 
-> A reflection-masked, event-audited pipeline turns a short clip into bounded evidence
+The slide labels the reference as a non-calibrated, pooled-FCFS assumption
+sandbox. It reports:
 
-**Claim to establish**
+- total queue-wait P95 `3.52 s` (`95% CI 2.92–4.12`);
+- Security / Immigration utilization `74.0% / 75.6%`; and
+- cohort clear time after the 300-second cutoff `35.3 s`
+  (`95% CI 34.1–36.5`).
 
-The arrival input has traceable geometry, timestamps, candidate events,
-manual-owner sign-off, and measurement sensitivity; unsupported speed or group
-metrics are not manufactured.
+The evidence gate is also visible: `150/150` runs, `61,218` traveller rows,
+zero drops, and strict validation `PASS`.
 
-**Visual**
+## Slide 4 — Scenario comparison
 
-An original-pixel-free schematic of the upper-corridor ROI, overlapping tiles,
-central count line, and the event-reconciliation funnel:
+> Single-stage capacity moves the bottleneck; service evidence dominates
 
-`YOLOX detections → high-recall candidates → conservative tracker cross-check → event audit`
+A stage-level clustered chart compares Reference, Security `+4`, Immigration
+`+3`, and joint `+4/+3`. It shows that expanding one stage largely leaves the
+other stage active. The joint contrast is `−1.91 s` versus reference
+(`95% CI −3.37 to −0.44`).
 
-**Numbers allowed only after freeze**
+Two sensitivity callouts prevent a narrow staffing interpretation:
 
-- final direction-specific accepted events;
-- observation duration and rate interval;
-- count-line/tracker sensitivity;
-- limitations of the 24.9-second sample.
+- `+20%` demand raises the total queue-wait P95 to `17.06 s`; and
+- the registered `24 s` Immigration context raises it to `164.87 s`.
 
-## Slide 3 — Why this pipeline and why DES
+The slide states the pilot boundary: `n=10` per scenario, pooled FCFS, fixed
+service times, and CRN not verified.
 
-**Working title**
+## Slide 5 — Recommendations and operational insight
 
-> Event-driven modelling matches the operational question; uncertainty stays outside the animation
+> Pilot balanced capacity—but buy evidence before buying certainty
 
-**Claim to establish**
+The recommendation is a staged site-evidence and mechanism-pilot programme,
+not a cost-free winner. The rare-work boundary demonstrates why a queue-wait
+P95 alone is insufficient:
 
-Finite resources and sequential stochastic queues require a true DES; Python
-handles measurement and statistical experiment control, while AnyLogic PLE
-provides the inspectable interactive model.
+- queue-wait P95 `30.4 s`; but
+- full-drain clear time `7,214 s ≈ 2.0 h`.
 
-**Visual**
+The next evidence priorities are time-of-day arrivals, service and exception
+distributions, queue/resource/roster observations, confirmatory precision with
+verified CRN, and cost/licensing constraints.
 
-One architecture diagram with four layers:
+## Claim boundary
 
-1. evidence and parameter provenance;
-2. `Arrival → Security → Immigration → Exit`;
-3. replicated, seeded scenario experiments;
-4. difference intervals and stability boundaries.
-
-Show the additional-check mechanism and distinguish technology effective uptake
-from eligibility or pure adoption.
-
-## Slide 4 — Controlled findings
-
-**Title must be written from verified results**
-
-Template only:
-
-> [Binding mechanism] drives tail wait; [intervention] changes P95 by [estimate and interval]
-
-**Visual**
-
-Primary panel: scenario-minus-baseline P95 differences with 95% intervals.
-
-Secondary panel: utilization, cutoff backlog, and cohort-clear time sufficient
-to explain the mechanism. Avoid decorative dashboards and raw single-run
-trajectories as decision evidence.
-
-**Claim gate**
-
-No bottleneck, pooling, CRN, or uncertainty language survives unless its
-implementation and verification tests pass.
-
-## Slide 5 — Decision boundary and next evidence
-
-**Title must be written from verified stability analysis**
-
-Template only:
-
-> [Policy set] remains feasible within [tested range]; the recommendation flips at [boundary]
-
-**Visual**
-
-Demand × effective-uptake feasibility map, or a one-dimensional tested-points
-threshold if the full map does not pass the P2 gate.
-
-List:
-
-- feasible and non-dominated policies, not a cost-free “winner”;
-- where the recommendation changes;
-- the most decision-relevant missing evidence;
-- how APICS/APCS batch service or identification-on-the-move would require a
-  different mechanism rather than a cosmetic parameter change.
+> Non-calibrated pooled-FCFS assumption sandbox; comparative Monte Carlo
+> evidence conditional on registered inputs—not measured HTX performance, a
+> site forecast, staffing recommendation, or economic optimum.

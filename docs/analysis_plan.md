@@ -1,102 +1,189 @@
-# Result-Blind Analysis Plan
+# Task 3 Pilot Analysis Plan and Execution Record
 
-Status: **DRAFT — do not treat as frozen**
+**Status:** pilot design executed; not a frozen confirmatory analysis plan
 
-Working version: `0.1`, 2026-07-26
+**Version:** 0.3, 2026-07-28
 
-This plan will be frozen after the selected simulation engine passes the
-baseline, export, seed, and verification gates, and before formal scenario
-results are inspected.
+The original result-blind draft established the primary estimand, claim
+boundary, and rule that paired common-random-number (CRN) analysis could be
+used only after alignment verification. The 15-scenario × 10-replication
+`OperationalPilot` has now been run and inspected. This document therefore
+records the executed pilot analysis; it is not retrospective
+preregistration and must not be presented as confirmatory.
+
+The engine/orchestration gate, deterministic two-stage oracle, operational
+contract, 150-run batch, strict result validation, replication analysis, and
+post-run dashboard all pass their declared software/evidence gates.
 
 ## Decision question
 
-Under documented baseline assumptions, which interventions—Security capacity,
-Immigration capacity, Immigration queue pooling, or a technology-enabled
-service mixture—form the operationally non-dominated set for controlling tail
-waiting risk as local demand and measurement uncertainty change?
+Under the registered reference assumptions, how sensitive is tail waiting and
+clearance behaviour to:
 
-The decision is deliberately framed as a feasible/Pareto-set problem. Without
-cost, implementation-risk, or staffing-value data, the analysis will not name
-an economic optimum.
+- Security and Immigration capacity;
+- local demand;
+- named Immigration service-time contexts;
+- effective technology uptake and service-time multipliers; and
+- external additional-work boundary stresses?
 
-## Result-blind hypotheses
+The pilot identifies conditional sensitivities and candidates for further
+study. Without calibrated site inputs, cost, implementation-risk, or
+staffing-value data, it does not identify an economic optimum or a final
+operational recommendation.
 
-- **H1 — Bottleneck migration.** If Immigration is the constraining stage,
-  adding Security capacity alone will not materially improve total tail wait
-  and may increase the transient downstream queue.
-- **H2 — Queue pooling.** With homogeneous Immigration servers, a pooled queue
-  will reduce lane imbalance and may reduce tail waiting without adding
-  capacity. The effect is conditional and may shrink under service or traveller
-  heterogeneity.
-- **H3 — Effective-uptake threshold.** Technology-enabled service will
-  outperform marginal Immigration capacity only beyond a joint threshold in
-  effective uptake and service-time reduction.
-- **H4 — Recommendation stability.** A policy is described as stable only if
-  it remains feasible across the predeclared local-demand and video-input
-  sensitivity cases actually tested.
+## Hypotheses and implementation boundary
 
-These are testable expectations, not conclusions. H2 remains in the final
-claim set only if separate and pooled queues are implemented as genuinely
-different mechanisms.
+- **H1 — Bottleneck migration.** Capacity at one stage may have limited value
+  if the other stage constrains the flow. The pilot includes Security-only,
+  Immigration-only, and joint-capacity scenarios.
+- **H2 — Queue pooling.** A pooled queue may reduce lane imbalance relative to
+  genuinely separate queues. This hypothesis is **not tested in v1**:
+  `OperationalCheckpointModel` implements pooled FCFS only, so no
+  separate-versus-pooled effect is claimed.
+- **H3 — Effective-uptake threshold.** Technology effects depend jointly on
+  effective uptake and service-time reduction. The pilot includes named
+  multiplier/uptake combinations as comparative scenarios, not adoption
+  forecasts.
+- **H4 — Stress sensitivity.** Conclusions may change under demand,
+  service-time, or additional-work stresses. The pilot includes explicit
+  low/high demand, named service contexts, and external risk-bound rows.
+
+These remain modelling expectations and scope statements rather than claims
+about an HTX site.
 
 ## Model boundary
 
-- Local entrance area represented by the supplied video.
-- Sequential Security and Immigration processing.
-- Finite operational-period experiment.
-- Comparative what-if model, not a calibrated digital twin or on-site diagnosis.
+- Local entrance demand evidence comes from the supplied short video.
+- Arrivals are represented by a stationary-independent HPP assumption.
+- The executable is a sequential Security-to-Immigration pooled-FCFS DES with
+  finite resources.
+- Arrivals occur for 300 seconds; the admitted cohort then fully drains.
+- Queue guards are finite and non-binding under the recorded runs; no
+  traveller may be silently dropped to improve a result.
+- Automation is represented by an effective service-time multiplier.
+- Additional work uses a counter-held risk proxy in the two external boundary
+  scenarios.
+- The model is a comparative what-if sandbox, not a calibrated digital twin,
+  site diagnosis, or operational forecast.
 
-## Planned primary estimand
+## Reference scenario
 
-For each replication, calculate the arrival-cohort P95 total waiting time
-(`Q95_r`). The scenario-level primary estimate is the mean of `Q95_r` across
-replications with a 95% confidence interval.
+The formal reference is `REFERENCE_ASSUMPTION_SANDBOX_V1`, never “calibrated
+HTX baseline.” Its declared inputs include:
 
-The working primary feasibility rule is that the upper endpoint of that
-scenario-level confidence interval is no more than **900 seconds (15 minutes)**.
-This is an explicitly **illustrative decision threshold**, not an ICA service
-standard. Decision stability will also be reported at predeclared 600-, 900-,
-and 1,200-second thresholds so that the recommendation is not an artefact of
-one unsupported cutoff.
+- Task 1 rate: 1.364213 travellers/second;
+- HPP demand multiplier: 1.0;
+- 300-second arrival cutoff and full drain;
+- Security: 36 resources and fixed 21.818181818-second service;
+- Immigration: 21 resources and fixed 13-second service;
+- pooled FCFS and 5,000-traveller queue guards;
+- automation disabled and zero additional checks; and
+- 10 pilot replications with registered scenario-specific seed lineage.
 
-Working guardrails:
+Each value is linked to direct evidence, named context, derivation, structural
+choice, or transparent assumption in the provenance registries. The
+2-second/3-second `TwoStageDeterministic` oracle remains ineligible for
+operational performance reporting.
 
-- cutoff backlog is no more than 5% of the arrival cohort;
-- the last member of the arrival cohort clears within 900 seconds after the
-  arrival window closes; and
-- no scenario may improve waiting by dropping, balking, or silently truncating
-  travellers.
+## Primary estimand
 
-Cutoff throughput is reported but is not counted as independent evidence from
-cutoff backlog when all admitted travellers are conserved. The confirmatory
-replication count, seed manifest, exact planned contrasts, and final arrival
-horizon remain `TBD` until the video audit and simulation pilot are complete.
+For replication `r`, calculate the admitted arrival-cohort P95 total queue
+waiting time, `Q95_r`. For each scenario, report the mean of its 10
+replication-level `Q95_r` values with a 95% confidence interval.
 
-## Minimum P1 comparisons
+Each scenario contrast is scenario minus
+`REFERENCE_ASSUMPTION_SANDBOX_V1`. Because traveller/draw alignment was not
+verified, the executed default is an independent Welch interval. No paired-CRN
+precision claim is made.
 
-- Baseline.
-- Security-capacity change.
-- Immigration-capacity change.
-- Immigration separate-versus-pooled queue policy.
-- Technology-enabled Immigration-service mixture.
-- Illustrative `+20%` local-demand sensitivity.
+Secondary outputs include:
 
-## Statistical gates
+- mean and P95 Security, Immigration, total queue, and system time;
+- Security and Immigration utilisation;
+- maximum queues;
+- cutoff backlog and stage WIP;
+- clear time after cutoff;
+- admitted, completed, rejected/dropped, technology, and additional-check
+  counts; and
+- conservation and full-drain indicators.
 
-- Use paired CRN analysis only after traveller-level random-input alignment is
-  verified; otherwise use independent replications and an independent
-  difference interval.
-- Baseline and retained policies use identical outer input sample IDs.
-- Use a fixed confirmatory replication count selected from pilot variance
-  before formal runs.
-- Minimum input treatment is low/base/high sensitivity; nested input
-  uncertainty is an enhancement after the P1 gate.
-- The threshold sensitivity is fixed at 600/900/1,200 seconds before formal
-  results. Any amendment must be logged rather than silently replacing it.
+The working 600/900/1,200-second wait thresholds are illustrative sensitivity
+levels only. They are not ICA service standards.
 
-## Decision output
+## Executed pilot scenario set
 
-Report the feasible and operationally non-dominated set. Without cost,
-implementation-risk, or staffing-value data, do not claim an overall economic
-optimum. A single option may be described only as a conditional pilot
-candidate under explicitly stated assumptions.
+The registered 15-row set contains:
+
+1. reference assumption sandbox;
+2. Security +4;
+3. Immigration +3;
+4. both capacity changes;
+5. demand ×0.8;
+6. demand ×1.2;
+7. Singapore bus-hall QR context at 10 seconds;
+8. Singapore train-kiosk context at 24 seconds;
+9. Singapore train manual-counter context at 45 seconds;
+10. HTX trial multiplier 0.6 at 50% effective uptake;
+11. HTX trial multiplier 0.6 at 100% effective uptake;
+12. ICA rollout multiplier 0.4 at 50% effective uptake;
+13. ICA rollout multiplier 0.4 at 100% effective uptake;
+14. external 2% / 900-second counter-held risk bound; and
+15. external 2% / 7,200-second counter-held risk bound.
+
+The external risk rows are deliberately pessimistic boundary tests. They are
+not estimates of ICA referral frequency, handling, or staffing.
+
+## Replication and statistical gates
+
+- The executed batch uses 10 replications per scenario. Ten is a pilot count
+  for variance and pipeline evidence, not a confirmatory precision claim.
+- Exact registered scenario × replication coverage is required: 150 runs,
+  with no duplicate or missing keys.
+- Seeds are scenario-specific and reproducible.
+- `crn_alignment_status` is `NOT_TESTED`; independent Welch contrasts are
+  therefore required.
+- Monte Carlo confidence intervals are conditional on the registered input
+  assumptions. They do not quantify input uncertainty or model-form error.
+- A future confirmatory design must select its replication count and exact
+  contrasts before inspecting new confirmatory outcomes.
+
+## Run, validate, analyse, and visualise
+
+Run `OperationalPilot: OperationalCheckpointModel` in AnyLogic PLE and wait
+for `Finished`, then execute:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.analysis.validate_operational_contract
+.\.venv\Scripts\python.exe -m src.analysis.consolidate_operational_results
+.\.venv\Scripts\python.exe -m src.analysis.validate_operational_results `
+  --require-pilot-coverage
+.\.venv\Scripts\python.exe -m src.analysis.analyse_operational_replications
+.\.venv\Scripts\python.exe -m src.analysis.build_operational_dashboard
+```
+
+Recorded execution:
+
+- 150/150 runs;
+- 61,218 traveller rows;
+- strict validation `PASS`; and
+- 165 scenario-estimate rows and 154 contrast rows.
+
+Primary evidence:
+
+- [`strict validation report`](../results/intermediate/operational_results/validation.json)
+- [`analysis manifest`](../results/analysis/operational/analysis_manifest.json)
+- [`scenario estimates`](../results/analysis/operational/scenario_estimates.csv)
+- [`scenario contrasts`](../results/analysis/operational/scenario_contrasts.csv)
+- [`dashboard and result interpretation`](../results/analysis/operational/README.md)
+
+## Decision output and claim rule
+
+The pilot may report direction, magnitude, uncertainty, and which assumptions
+dominate the observed scenario response. Fine rankings with overlapping
+intervals remain unresolved at `n=10`.
+
+No option is labelled an operational optimum or final recommendation. At most,
+an option may be described as a conditional candidate for a better-calibrated
+pilot under explicit assumptions. Separate-queue evaluation, field
+calibration, richer input distributions, confirmed CRN alignment, and
+confirmatory replication sizing remain future work.

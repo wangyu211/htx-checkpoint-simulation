@@ -11,13 +11,48 @@ video, third-party model weights, simulation engine, or third-party packages.
 - The model file is downloaded locally by `scripts/download_yolox_s.ps1` and is
   excluded from this repository.
 
+## Ultralytics YOLO26 experimental comparison
+
+- Project: [Ultralytics](https://github.com/ultralytics/ultralytics)
+- Experimental local assets: `yolo26s.pt`, `yolo26s.onnx`, `yolo26m.pt`, and
+  `yolo26m.onnx`
+- Upstream software and trained models are AGPL-3.0 by default, with separate
+  commercial licensing offered by Ultralytics.
+- The recorded ByteTrack and BoT-SORT experiment imports their implementations
+  from `ultralytics==8.4.107`; those implementations remain inside the same
+  AGPL-3.0 package even though separately maintained upstream implementations
+  of the algorithms use permissive licences.
+- These assets are used only for a detector sensitivity experiment, are
+  excluded from this repository, and are not the licensing baseline for the
+  assessment deliverable.
+- Ultralytics' official guidance lists private internal tools and R&D that is
+  not fully open-sourced among the cases requiring either an applicable paid
+  R&D licence for strictly non-operational research or an
+  Enterprise/commercial licence for operational use. A notice does not remove
+  that requirement.
+- Do not incorporate this path into proprietary, internal-business, or
+  production use without an appropriate licence determination:
+  [Ultralytics Licensing](https://www.ultralytics.com/license).
+
+See `LICENSING.md` for the repository-level deployment boundary.
+
 ## Supervision / ByteTrack sensitivity implementation
 
 - Project: [Roboflow Supervision](https://github.com/roboflow/supervision)
 - Version used for the optional ByteTrack cross-check: `0.25.1`
 - Upstream repository license: MIT
 - The canonical ByteTrack research implementation is
-  [ifzhang/ByteTrack](https://github.com/ifzhang/ByteTrack).
+  [FoundationVision/ByteTrack](https://github.com/FoundationVision/ByteTrack)
+  under MIT.
+
+## Upstream BoT-SORT alternative
+
+- Project: [NirAharon/BoT-SORT](https://github.com/NirAharon/BoT-SORT)
+- Upstream repository licence: MIT
+- This permissive upstream implementation is a candidate replacement for the
+  experimental Ultralytics tracker implementation. It has not yet replaced or
+  reproduced the recorded experiment, and its bundled components and
+  transitive dependencies still require review before deployment.
 
 ## AnyLogic PLE
 

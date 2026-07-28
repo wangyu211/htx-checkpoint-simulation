@@ -6,56 +6,128 @@ Status values: `PLANNED`, `IN PROGRESS`, `VERIFIED`.
 
 | Requirement | Planned evidence | Status |
 |---|---|---|
-| Model a real operational system | Two-stage event-driven DES and conceptual model | IN PROGRESS |
-| Basic AI inference for data collection | Person detection, tracking, directional crossing ledger, manual audit | IN PROGRESS |
-| Interactive simulation | Configurable controls, reset/re-run, 2D state and dashboard | PLANNED |
-| Maintainable solution | External configuration, modules, data dictionary, extension guide | IN PROGRESS |
-| Actionable insights | Controlled scenarios, uncertainty and conditional pilot recommendations | PLANNED |
-| Clear communication | Task 1-3 reports and five claim-driven content slides | IN PROGRESS |
+| Model a real operational system | Executable two-stage event-driven DES and explicit assumption boundary | VERIFIED |
+| Basic AI inference for data collection | Person detection, tracking, directional aggregate, human adjudication and fallback audit | VERIFIED |
+| Interactive simulation | Minimal executable GUI plus post-run dashboard; richer controls/layout excluded | IN PROGRESS |
+| Maintainable solution | External contracts, generated model fragments, schemas, validators and extension documentation | VERIFIED |
+| Actionable insights | Controlled pilot scenarios, uncertainty and conditional findings | VERIFIED |
+| Clear communication | Task 1-3 reports and five claim-driven content slides | COMPLETE |
+
+`VERIFIED` here means that the stated software/evidence capability passed its
+declared gate. It does not mean the model is calibrated to an HTX site.
 
 ## Task 1 - Data collection
 
-- [ ] Use the supplied short video to determine relevant baseline parameters.
-- [ ] Treat the observed crowd as characteristic only for the modelled baseline
+- [x] Use the supplied short video to determine the accepted directional
+      aggregate and the mapped short-window arrival-rate input.
+- [x] Treat the observed crowd as characteristic only for the modelled baseline
       entrance area, while documenting the extrapolation limitation.
-- [ ] Record inference method, manual audit, estimates, uncertainty, and model use.
+- [x] Record the primary YOLO26m/BoT-SORT candidate path, the licence-friendlier
+      YOLOX-S/Supervision-ByteTrack fallback, human adjudication, estimates,
+      limitations, and model use.
+
+Task 1 is verified at aggregate level. The accepted evidence is not represented
+as a signed event-time ledger, and the 24.922788889-second observed rate is not
+claimed to estimate long-run checkpoint demand.
 
 ## Task 2 - Systems design
 
-- [x] Process-flow diagram in `docs/task2_system_design.md`.
-- [x] Major entities and resources.
-- [x] Configurable inputs and authoritative registry mapping.
-- [x] Outputs, schemas, and metrics.
-- [x] Explicit assumptions, claim boundaries, and exclusions.
+- [x] Version 0.4 maps the brief's five requested items directly to sections
+  A-E in `docs/task2_system_design.md`.
+- [x] Implemented pooled flow, proxy mechanisms, blocked inputs, and deferred
+  extensions are visibly separated.
+- [x] Major entities/resources, reference inputs, and the 15-scenario matrix.
+- [x] Exported v1 outputs, replication estimands, and uncertainty method.
+- [x] Classified assumptions, claim boundary, exclusions, and V&V status.
 
 ## Task 3 - Simulation implementation
 
-- [ ] Executable simulation consistent with Task 2.
+- [x] Native AnyLogic model opens, compiles, and runs in PLE 8.9.9.
+- [x] GUI experiment executes two input samples × three replications.
+- [x] Fixed-schema manifest, entity, and summary CSV export.
+- [x] Explicit seed lineage and distinct replication fingerprints.
+- [x] Byte-identical GUI rerun.
+- [x] Single-file ALP `-r` visible-GUI launch path: `GatePV2x3` uses a tested
+  one-shot timer adapter; `TwoStageDeterministic` uses its native Simulation
+  experiment bypass; both auto-execute to `Finished`.
+- [x] Exact six-traveller deterministic two-stage oracle.
+- [x] Live 6.5-second cutoff snapshot and cutoff-flow conservation.
+- [x] Full drain with exact per-traveller event-time validation.
+- [x] Machine-readable model-run configuration contract with fail-fast
+  readiness validation and no hidden operational defaults.
+- [x] Deterministic-oracle inputs externalised as explicit parameters in both
+  AnyLogic source formats; both post-refactor GUI runs are byte-identical.
+- [x] Split-model HPP arrival-only demand mechanism at 1.364213/s with a live
+  24.922788889-second cutoff, explicit `[0,T)` boundary, and 49000-arrival PLE
+  guard.
+- [x] Fixed-seed (`2026072710`) HPP run with 32 arrivals conserved across the
+  ledger, manifest, Source, Sink, and summary.
+- [x] Two split HPP runs plus the synchronized single-file ALP run with three
+  byte-identical CSV outputs and independent validator `PASS` under the
+  explicit `ARRIVAL_ONLY` readiness scope.
+- [ ] Headless or standalone execution; not claimed by the current evidence.
+- [x] Executable pooled-FCFS two-stage Task 3 mechanism with HPP arrivals,
+  finite resources, a live 300-second cutoff, and full drain.
+- [x] Task 2-to-Task 3 consistency for the implemented v1 pooled flow,
+  technology service multiplier, and counter-held additional-work proxy.
 - [ ] Visual checkpoint layout.
-- [ ] Traveller flow through Security and Immigration.
-- [ ] Queueing at both stages.
-- [ ] Finite resource constraints.
-- [ ] Configurable parameters.
-- [ ] Real-time or post-run metrics dashboard.
-- [ ] Multiple operational scenarios.
+- [x] Traveller flow through Security and Immigration for the deterministic
+  mechanism milestone.
+- [x] Queueing and one-unit finite resource constraints at both stages for the
+  deterministic mechanism milestone.
+- [x] Registered v1 operational assumption parameters externalised in
+  `config/operational_scenarios.csv`, with provenance and fail-closed
+  canonical-hash validation.
+- [x] `OperationalPilot` completed 15 registered scenarios × 10 independent
+  replications: 150/150 runs and 61,218 traveller rows passed strict schema,
+  lineage, seed, event-order, conservation, zero-loss, and full-drain
+  validation. AnyLogic enforces finite-resource operation; an independent
+  per-resource interval-overlap audit has not been performed.
+- [x] Post-run scenario dashboard, replication-level estimates, 95% confidence
+  intervals, and scenario contrasts.
+- [ ] Genuinely separate per-counter queues versus pooled FCFS; v1 implements
+  pooled FCFS only, so no queue-policy effect is claimed.
+- [ ] Traveller-level common-random-number alignment; status is `NOT_TESTED`,
+  so the pilot uses independent Welch intervals.
+- [ ] Rich interactive controls and a live dashboard; the executable GUI is
+  intentionally minimal.
+
+The historical HPP milestone still verifies only the demand mechanism. The
+operational pilot is a separate, not-calibrated assumption sandbox: its
+service times, capacities, queue guards, automation mappings, and risk bounds
+are registered context or transparent sensitivity inputs, not parameters
+identified from the video. Results are therefore comparative and conditional,
+not site forecasts or final staffing recommendations.
+
+Recorded evidence:
+
+- [`Task 3 results report`](task3_results.md)
+- [`results/analysis/operational/README.md`](../results/analysis/operational/README.md)
+- [`operational dashboard`](../results/analysis/operational/operational_dashboard.png)
+- [`strict validation report`](../results/intermediate/operational_results/validation.json)
 
 ## Task 4 - presentation
 
-- [ ] Maximum five content slides.
-- [ ] Problem overview.
-- [ ] Simulation design and assumptions.
-- [ ] Baseline performance.
-- [ ] Scenario comparison.
-- [ ] Recommendations and operational insights.
+- [x] Maximum five content slides.
+- [x] Problem overview.
+- [x] Simulation design and assumptions.
+- [x] Baseline performance.
+- [x] Scenario comparison.
+- [x] Recommendations and operational insights.
+
+Evidence:
+
+- [`HTX_Task4_Operational_Insights.pptx`](../slides/HTX_Task4_Operational_Insights.pptx)
 
 ## Public repository
 
 - [x] Separate public-delivery directory from private working material.
-- [ ] README: setup, engine version, run/build instructions, parameter changes.
-- [ ] All source and project files needed to run.
-- [ ] Task 1 approach/results.
-- [ ] Task 2 requirements/design.
-- [ ] Task 3 simulation logic and key outputs/metrics.
-- [ ] Task 4 slides.
+- [x] README: setup, engine version, run/build instructions, parameter changes.
+- [x] Source and split AnyLogic project files needed for the documented GUI
+  workflow.
+- [x] Task 1 approach/results.
+- [x] Task 2 requirements/design.
+- [x] Task 3 simulation logic and key outputs/metrics.
+- [x] Task 4 slides.
 - [ ] Clean-clone run completes without errors.
 - [ ] Repository URL ready for submission by email.

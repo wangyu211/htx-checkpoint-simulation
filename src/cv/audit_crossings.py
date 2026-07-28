@@ -12,8 +12,10 @@ import platform
 import sys
 import tempfile
 from dataclasses import dataclass, field
+from importlib.metadata import PackageNotFoundError, version as package_version
 from pathlib import Path
-from typing import Iterable
+from types import SimpleNamespace
+from typing import Iterable, Protocol
 
 import cv2
 import numpy as np
@@ -23,12 +25,104 @@ from scipy.optimize import linear_sum_assignment
 from .yolox_onnx import Detection, YoloxOnnx, nms
 
 
+class Detector(Protocol):
+    session: ort.InferenceSession
+
+    def predict(self, frame: np.ndarray) -> list[Detection]:
+        ...
+
+
 def sha256(path: Path, chunk_size: int = 1024 * 1024) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         while chunk := stream.read(chunk_size):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def write_detection_cache(
+    path: Path,
+    frames: list[list[Detection]],
+    metadata: dict[str, object],
+) -> None:
+    """Persist exact post-tile-NMS detections for tracker-only replay."""
+    offsets = [0]
+    boxes: list[np.ndarray] = []
+    scores: list[float] = []
+    class_ids: list[int] = []
+    for detections in frames:
+        for detection in detections:
+            boxes.append(detection.xyxy.astype(np.float32, copy=False))
+            scores.append(detection.score)
+            class_ids.append(detection.class_id)
+        offsets.append(len(boxes))
+
+    box_array = (
+        np.stack(boxes).astype(np.float32, copy=False)
+        if boxes
+        else np.empty((0, 4), dtype=np.float32)
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as stream:
+        np.savez_compressed(
+            stream,
+            offsets=np.asarray(offsets, dtype=np.int64),
+            boxes=box_array,
+            scores=np.asarray(scores, dtype=np.float32),
+            class_ids=np.asarray(class_ids, dtype=np.int16),
+            metadata_json=np.asarray(
+                json.dumps(metadata, sort_keys=True, ensure_ascii=False)
+            ),
+        )
+
+
+def load_detection_cache(
+    path: Path,
+) -> tuple[dict[str, object], np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Load a detector cache without allowing pickle-backed objects."""
+    with np.load(path, allow_pickle=False) as payload:
+        metadata = json.loads(str(payload["metadata_json"].item()))
+        offsets = payload["offsets"].astype(np.int64, copy=True)
+        boxes = payload["boxes"].astype(np.float32, copy=True)
+        scores = payload["scores"].astype(np.float32, copy=True)
+        class_ids = payload["class_ids"].astype(np.int16, copy=True)
+    if (
+        offsets.ndim != 1
+        or boxes.ndim != 2
+        or boxes.shape[1:] != (4,)
+        or scores.ndim != 1
+        or class_ids.ndim != 1
+        or len(boxes) != len(scores)
+        or len(boxes) != len(class_ids)
+        or len(offsets) < 1
+        or offsets[0] != 0
+        or offsets[-1] != len(boxes)
+        or np.any(np.diff(offsets) < 0)
+    ):
+        raise ValueError(f"Malformed detection cache: {path}")
+    return metadata, offsets, boxes, scores, class_ids
+
+
+def detections_for_cached_frame(
+    frame_index: int,
+    offsets: np.ndarray,
+    boxes: np.ndarray,
+    scores: np.ndarray,
+    class_ids: np.ndarray,
+) -> list[Detection]:
+    """Reconstruct one frame's immutable detector output."""
+    if frame_index < 0 or frame_index + 1 >= len(offsets):
+        raise IndexError(f"Frame {frame_index} is not present in detection cache")
+    start = int(offsets[frame_index])
+    end = int(offsets[frame_index + 1])
+    return [
+        Detection(
+            xyxy=boxes[index].copy(),
+            score=float(scores[index]),
+            class_id=int(class_ids[index]),
+        )
+        for index in range(start, end)
+    ]
 
 
 def center(box: np.ndarray) -> np.ndarray:
@@ -298,6 +392,137 @@ class ByteTrackAdapter:
         return active
 
 
+class UltralyticsTrackerAdapter:
+    """Adapter for Ultralytics ByteTrack and BoT-SORT tracker backends.
+
+    The adapter consumes the same already-merged detections as the transparent
+    Hungarian tracker. Ultralytics remains an optional, AGPL-3.0 experimental
+    dependency and is imported only when this backend is selected. This is not
+    the repository's private-deployment baseline; see LICENSING.md.
+    """
+
+    def __init__(
+        self,
+        backend: str,
+        track_high_threshold: float = 0.10,
+        track_low_threshold: float = 0.05,
+        new_track_threshold: float = 0.12,
+        lost_track_buffer: int = 20,
+        matching_threshold: float = 0.8,
+        gmc_method: str = "sparseOptFlow",
+        min_hits: int = 4,
+        frame_rate: float = 30.0,
+    ) -> None:
+        try:
+            from ultralytics.engine.results import Boxes
+            from ultralytics.trackers.bot_sort import BOTSORT
+            from ultralytics.trackers.byte_tracker import BYTETracker
+        except ImportError as exc:
+            raise RuntimeError(
+                "Ultralytics ByteTrack/BoT-SORT is an optional YOLO26 "
+                "sensitivity check. Run it from the isolated experimental "
+                "environment containing ultralytics."
+            ) from exc
+
+        if backend not in {"bytetrack", "botsort"}:
+            raise ValueError(f"Unsupported Ultralytics tracker backend: {backend}")
+        self.Boxes = Boxes
+        tracker_args = SimpleNamespace(
+            tracker_type=backend,
+            track_high_thresh=track_high_threshold,
+            track_low_thresh=track_low_threshold,
+            new_track_thresh=new_track_threshold,
+            track_buffer=lost_track_buffer,
+            match_thresh=matching_threshold,
+            fuse_score=True,
+            gmc_method=gmc_method,
+            proximity_thresh=0.5,
+            appearance_thresh=0.8,
+            with_reid=False,
+            model="auto",
+            device="cpu",
+        )
+        tracker_class = BYTETracker if backend == "bytetrack" else BOTSORT
+        self.tracker = tracker_class(
+            tracker_args,
+            frame_rate=max(1, int(round(frame_rate))),
+        )
+        self.backend = backend
+        self.min_hits = min_hits
+        self.track_states: dict[int, Track] = {}
+        self.tracks: list[Track] = []
+
+    def is_confirmed(self, track: Track) -> bool:
+        return track.hits >= self.min_hits
+
+    def update(
+        self,
+        detections: list[Detection],
+        frame_index: int,
+        time_seconds: float,
+        frame: np.ndarray | None = None,
+    ) -> list[Track]:
+        if frame is None:
+            raise ValueError("Ultralytics trackers require the current frame")
+        if detections:
+            rows = np.array(
+                [
+                    [
+                        *detection.xyxy.tolist(),
+                        detection.score,
+                        detection.class_id,
+                    ]
+                    for detection in detections
+                ],
+                dtype=np.float32,
+            )
+        else:
+            rows = np.empty((0, 6), dtype=np.float32)
+        results = self.Boxes(rows, frame.shape[:2])
+        tracked_rows = self.tracker.update(results, img=frame)
+
+        active: list[Track] = []
+        for row in tracked_rows:
+            box = np.asarray(row[:4], dtype=np.float32)
+            track_id = int(round(float(row[4])))
+            score = float(row[5])
+            point = center(box)
+            if track_id in self.track_states:
+                track = self.track_states[track_id]
+                track.velocity = point - track.centroid
+                track.box = box
+                track.score = score
+                track.hits += 1
+                track.missed = 0
+                track.history.append(
+                    (
+                        frame_index,
+                        time_seconds,
+                        float(point[0]),
+                        float(point[1]),
+                    )
+                )
+            else:
+                track = Track(
+                    track_id=track_id,
+                    box=box,
+                    score=score,
+                    history=[
+                        (
+                            frame_index,
+                            time_seconds,
+                            float(point[0]),
+                            float(point[1]),
+                        )
+                    ],
+                )
+                self.track_states[track_id] = track
+            active.append(track)
+
+        self.tracks = active
+        return active
+
+
 def filter_roi(
     detections: Iterable[Detection],
     roi: tuple[int, int, int, int],
@@ -312,7 +537,7 @@ def filter_roi(
 
 
 def detect_in_roi(
-    detector: YoloxOnnx,
+    detector: Detector,
     frame: np.ndarray,
     roi: tuple[int, int, int, int],
 ) -> list[Detection]:
@@ -333,7 +558,7 @@ def detect_in_roi(
 
 
 def detect_in_tiles(
-    detector: YoloxOnnx,
+    detector: Detector,
     frame: np.ndarray,
     tiles: list[tuple[int, int, int, int]],
     analysis_roi: tuple[int, int, int, int],
@@ -431,7 +656,7 @@ def update_crossing(
 def draw_frame(
     frame: np.ndarray,
     tracks: Iterable[Track],
-    tracker: MultiObjectTracker | ByteTrackAdapter,
+    tracker: MultiObjectTracker | ByteTrackAdapter | UltralyticsTrackerAdapter,
     roi: tuple[int, int, int, int],
     line_x: int,
     counts: dict[str, int],
@@ -515,11 +740,22 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     video_path = args.video.resolve()
-    detector = YoloxOnnx(
-        args.model.resolve(),
-        confidence_threshold=args.confidence_threshold,
-        nms_threshold=args.nms_threshold,
-    )
+    model_path = args.model.resolve()
+    source_sha256 = sha256(video_path)
+    model_sha256 = sha256(model_path)
+    if args.detector == "yolo26":
+        from .yolo26_onnx import Yolo26Onnx
+
+        detector: Detector = Yolo26Onnx(
+            model_path,
+            confidence_threshold=args.confidence_threshold,
+        )
+    else:
+        detector = YoloxOnnx(
+            model_path,
+            confidence_threshold=args.confidence_threshold,
+            nms_threshold=args.nms_threshold,
+        )
     capture = cv2.VideoCapture(str(video_path))
     if not capture.isOpened():
         raise RuntimeError(f"Could not open video: {video_path}")
@@ -528,12 +764,32 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     if args.tracker == "bytetrack":
-        tracker: MultiObjectTracker | ByteTrackAdapter = ByteTrackAdapter(
+        tracker: (
+            MultiObjectTracker
+            | ByteTrackAdapter
+            | UltralyticsTrackerAdapter
+        ) = ByteTrackAdapter(
             frame_rate=fps,
             track_activation_threshold=args.track_activation_threshold,
             lost_track_buffer=args.max_missed,
             minimum_matching_threshold=args.minimum_matching_threshold,
             minimum_consecutive_frames=args.min_hits,
+        )
+    elif args.tracker in {"ultralytics_bytetrack", "botsort"}:
+        tracker = UltralyticsTrackerAdapter(
+            backend=(
+                "bytetrack"
+                if args.tracker == "ultralytics_bytetrack"
+                else "botsort"
+            ),
+            track_high_threshold=args.track_activation_threshold,
+            track_low_threshold=args.confidence_threshold,
+            new_track_threshold=args.new_track_threshold,
+            lost_track_buffer=args.max_missed,
+            matching_threshold=args.minimum_matching_threshold,
+            gmc_method=args.botsort_gmc_method,
+            min_hits=args.min_hits,
+            frame_rate=fps,
         )
     else:
         tracker = MultiObjectTracker(
@@ -554,6 +810,42 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             and 0 <= tile[1] < tile[3] <= height
         ):
             raise ValueError(f"Inference tile {tile} exceeds {width}x{height}")
+
+    cache_metadata = {
+        "schema_version": "1.0",
+        "source_sha256": source_sha256,
+        "model_sha256": model_sha256,
+        "detector": args.detector,
+        "frame_count": frame_count,
+        "roi_xyxy": list(roi),
+        "inference_tiles_xyxy": [list(tile) for tile in tiles],
+        "confidence_threshold": args.confidence_threshold,
+        "cross_tile_nms_threshold": 0.5,
+    }
+    cached_payload: (
+        tuple[dict[str, object], np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        | None
+    ) = None
+    detection_cache_in = (
+        args.detection_cache_in.resolve()
+        if args.detection_cache_in is not None
+        else None
+    )
+    detection_cache_out = (
+        args.detection_cache_out.resolve()
+        if args.detection_cache_out is not None
+        else None
+    )
+    if detection_cache_in is not None:
+        cached_payload = load_detection_cache(detection_cache_in)
+        actual_metadata = cached_payload[0]
+        for key, expected_value in cache_metadata.items():
+            if actual_metadata.get(key) != expected_value:
+                raise ValueError(
+                    f"Detection cache mismatch for {key}: "
+                    f"{actual_metadata.get(key)!r} != {expected_value!r}"
+                )
+    detections_to_cache: list[list[Detection]] = []
 
     annotated_path = output_dir / "annotated_crossings.mp4"
     writer = cv2.VideoWriter(
@@ -578,8 +870,28 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             break
         pts_seconds = float(capture.get(cv2.CAP_PROP_POS_MSEC)) / 1000.0
         time_seconds = resolve_time_seconds(pts_seconds, frame_index, fps)
-        detections = detect_in_tiles(detector, frame, tiles, roi)
-        tracks = tracker.update(detections, frame_index, time_seconds)
+        if cached_payload is None:
+            detections = detect_in_tiles(detector, frame, tiles, roi)
+        else:
+            _, offsets, boxes, scores, class_ids = cached_payload
+            detections = detections_for_cached_frame(
+                frame_index,
+                offsets,
+                boxes,
+                scores,
+                class_ids,
+            )
+        if detection_cache_out is not None:
+            detections_to_cache.append(detections)
+        if isinstance(tracker, UltralyticsTrackerAdapter):
+            tracks = tracker.update(
+                detections,
+                frame_index,
+                time_seconds,
+                frame=frame,
+            )
+        else:
+            tracks = tracker.update(detections, frame_index, time_seconds)
 
         for track in tracks:
             if not tracker.is_confirmed(track) or track.missed > 0:
@@ -634,6 +946,14 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     capture.release()
     writer.release()
     duration_seconds = frame_index / fps
+    if detection_cache_out is not None:
+        output_cache_metadata = dict(cache_metadata)
+        output_cache_metadata["frames_cached"] = len(detections_to_cache)
+        write_detection_cache(
+            detection_cache_out,
+            detections_to_cache,
+            output_cache_metadata,
+        )
 
     crossing_fields = [
         "event_id",
@@ -660,12 +980,62 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     write_csv(output_dir / "crossing_ledger.csv", crossings, crossing_fields)
     write_csv(output_dir / "track_observations.csv", observations, observation_fields)
 
+    if args.tracker == "hungarian":
+        tracker_config: dict[str, object] = {
+            "backend": "constant_velocity_hungarian",
+            "max_center_distance_px": args.max_center_distance,
+            "minimum_new_track_score": args.new_track_threshold,
+            "max_missed_frames": args.max_missed,
+            "minimum_detector_matches": args.min_hits,
+        }
+    elif args.tracker == "bytetrack":
+        try:
+            supervision_version: str | None = package_version("supervision")
+        except PackageNotFoundError:
+            supervision_version = None
+        tracker_config = {
+            "backend": "supervision_bytetrack",
+            "supervision_version": supervision_version,
+            "track_activation_threshold": args.track_activation_threshold,
+            "minimum_matching_threshold": args.minimum_matching_threshold,
+            "lost_track_buffer": args.max_missed,
+            "minimum_consecutive_frames": args.min_hits,
+        }
+    else:
+        try:
+            ultralytics_version: str | None = package_version("ultralytics")
+        except PackageNotFoundError:
+            ultralytics_version = None
+        tracker_config = {
+            "backend": (
+                "ultralytics_bytetrack"
+                if args.tracker == "ultralytics_bytetrack"
+                else "ultralytics_botsort"
+            ),
+            "ultralytics_version": ultralytics_version,
+            "track_high_threshold": args.track_activation_threshold,
+            "track_low_threshold": args.confidence_threshold,
+            "new_track_threshold": args.new_track_threshold,
+            "track_buffer": args.max_missed,
+            "matching_threshold": args.minimum_matching_threshold,
+            "fuse_score": True,
+            "gmc_method": (
+                args.botsort_gmc_method if args.tracker == "botsort" else None
+            ),
+            "with_reid": False if args.tracker == "botsort" else None,
+            "external_min_output_hits": args.min_hits,
+            "external_min_output_hits_note": (
+                "Counts emitted tracker observations, not raw detector matches."
+            ),
+        }
+
     summary: dict[str, object] = {
         "schema_version": "1.0",
         "source_file": video_path.name,
-        "source_sha256": sha256(video_path),
+        "source_sha256": source_sha256,
         "model_file": args.model.name,
-        "model_sha256": sha256(args.model),
+        "model_sha256": model_sha256,
+        "detector": args.detector,
         "runtime": {
             "python": platform.python_version(),
             "platform": platform.platform(),
@@ -675,22 +1045,41 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             "onnx_execution_providers": detector.session.get_providers(),
             "command": [str(value) for value in sys.argv],
         },
+        "detection_cache": {
+            "input_file": (
+                detection_cache_in.name
+                if detection_cache_in is not None
+                else None
+            ),
+            "input_sha256": (
+                sha256(detection_cache_in)
+                if detection_cache_in is not None
+                else None
+            ),
+            "output_file": (
+                detection_cache_out.name
+                if detection_cache_out is not None
+                else None
+            ),
+            "output_sha256": (
+                sha256(detection_cache_out)
+                if detection_cache_out is not None
+                else None
+            ),
+        },
         "frames_processed": frame_index,
         "fps": round(fps, 9),
         "duration_seconds": round(duration_seconds, 9),
         "roi_xyxy": list(roi),
         "inference_tiles_xyxy": [list(tile) for tile in tiles],
+        "cross_tile_nms_threshold": 0.5,
         "count_line_x": args.line_x,
         "count_line_margin_px": args.line_margin,
         "side_confirm_frames": args.side_confirm_frames,
         "minimum_crossing_displacement_px": args.minimum_crossing_displacement,
         "confidence_threshold": args.confidence_threshold,
         "tracker": args.tracker,
-        "track_activation_threshold": args.track_activation_threshold,
-        "minimum_matching_threshold": args.minimum_matching_threshold,
-        "new_track_threshold": args.new_track_threshold,
-        "min_hits": args.min_hits,
-        "max_missed": args.max_missed,
+        "tracker_config": tracker_config,
         "counts": counts,
         "crossing_rate_per_second": {
             direction: round(count / duration_seconds, 6)
@@ -718,6 +1107,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--video", required=True, type=Path)
     parser.add_argument("--model", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument(
+        "--detection-cache-in",
+        type=Path,
+        help="Replay exact post-tile-NMS detections from an NPZ cache.",
+    )
+    parser.add_argument(
+        "--detection-cache-out",
+        type=Path,
+        help="Write exact post-tile-NMS detections to an NPZ cache.",
+    )
+    parser.add_argument(
+        "--detector",
+        choices=("yolox", "yolo26"),
+        default="yolox",
+        help=(
+            "ONNX detector family. Defaults to the reproducible YOLOX baseline; "
+            "YOLO26 models carry the Ultralytics licence boundary."
+        ),
+    )
     parser.add_argument("--roi", default="0,0,1280,310")
     parser.add_argument(
         "--inference-tiles",
@@ -731,11 +1139,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--confidence-threshold", type=float, default=0.05)
     parser.add_argument(
         "--tracker",
-        choices=("bytetrack", "hungarian"),
+        choices=(
+            "bytetrack",
+            "hungarian",
+            "ultralytics_bytetrack",
+            "botsort",
+        ),
         default="hungarian",
+        help=(
+            "Tracker backend. ultralytics_bytetrack and botsort use the "
+            "AGPL-3.0 Ultralytics implementation; see LICENSING.md."
+        ),
     )
     parser.add_argument("--track-activation-threshold", type=float, default=0.10)
     parser.add_argument("--minimum-matching-threshold", type=float, default=0.8)
+    parser.add_argument(
+        "--botsort-gmc-method",
+        choices=("sparseOptFlow", "orb", "sift", "ecc", "none"),
+        default="sparseOptFlow",
+    )
     parser.add_argument("--new-track-threshold", type=float, default=0.12)
     parser.add_argument("--nms-threshold", type=float, default=0.45)
     parser.add_argument("--min-hits", type=int, default=4)
@@ -747,6 +1169,13 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if (
+        args.detection_cache_in is not None
+        and args.detection_cache_out is not None
+    ):
+        raise ValueError(
+            "--detection-cache-in and --detection-cache-out are mutually exclusive"
+        )
     if not 0.0 < args.confidence_threshold <= 1.0:
         raise ValueError("--confidence-threshold must be in (0, 1]")
     if (

@@ -1,0 +1,16 @@
+{
+  "alignment_verified": false,
+  "analysis": "TASK3_REPLICATION_KPI_AND_CI_V1",
+  "ci_level": 0.95,
+  "claim_boundary": "Monte Carlo uncertainty conditional on the assumption scenarios; not input uncertainty or operational calibration.",
+  "contrast_rows": 154,
+  "default_unverified_comparison": "INDEPENDENT_WELCH_T",
+  "estimate_rows": 165,
+  "outputs": [
+    "C:\\Users\\Admin\\Documents\\jobFinding\\HTX\\htx-checkpoint-simulation\\results\\analysis\\operational\\scenario_estimates.csv",
+    "C:\\Users\\Admin\\Documents\\jobFinding\\HTX\\htx-checkpoint-simulation\\results\\analysis\\operational\\scenario_contrasts.csv"
+  ],
+  "primary_estimand": "mean of replication-level total_queue_wait_p95_seconds",
+  "reference_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+  "status": "PASS"
+}

@@ -1,0 +1,2488 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Experiments>
+	<ParamVariationExperiment ActiveObjectClassId="1785082971961">
+		<Id>1785085122430</Id>
+		<Name><![CDATA[GatePV2x3]]></Name>
+		<CommandLineArguments/>
+		<MaximumMemory>512</MaximumMemory>
+		<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+		<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+		<BeforeEachExperimentRunCode>java.io.File probe = new java.io.File(
+	System.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+).getAbsoluteFile();
+while (
+	probe != null
+	&amp;&amp; !new java.io.File( probe, "config/anylogic_gate_manifest.csv" ).isFile()
+) {
+	probe = probe.getParentFile();
+}
+if ( probe == null ) {
+	throw new IllegalStateException(
+		"Cannot locate repository root from user.dir="
+		+ System.getProperty( "user.dir" )
+		+ "; set -Dhtx.repo.root=&lt;repository path&gt;"
+	);
+}
+java.io.File outputDirectory = new java.io.File(
+	probe,
+	"results/raw/anylogic_gate"
+).getAbsoluteFile();
+gate_output_dir = outputDirectory.getPath();
+try {
+	java.nio.file.Files.createDirectories( outputDirectory.toPath() );
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "run_manifest.csv" ).toPath(),
+		(
+			"schema_version,config_hash,model_version,scenario_id,input_sample_id,"
+			+ "replication_id,stream_seed_ids,start_state,arrival_cutoff,drain_end,"
+			+ "engine_version\n"
+		).getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "entity_log.csv" ).toPath(),
+		(
+			"schema_version,scenario_id,input_sample_id,replication_id,stream_seed_ids,"
+			+ "traveller_id,arrival,security_queue_join,security_start,security_end,"
+			+ "immigration_queue_join,immigration_lane,immigration_start,"
+			+ "immigration_primary_end,additional_check_flag,additional_check_end,"
+			+ "technology_flag,exit,security_resource_id,immigration_resource_id,"
+			+ "service_demand\n"
+		).getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "run_summary.csv" ).toPath(),
+		(
+			"schema_version,scenario_id,input_sample_id,replication_id,stream_seed_ids,"
+			+ "arrivals,completed_at_cutoff,wip_at_cutoff,completed_after_drain,"
+			+ "security_wait_mean,security_wait_p95,total_wait_mean,total_wait_p95,"
+			+ "cutoff_backlog,cohort_clear_time\n"
+		).getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+} catch ( java.io.IOException exception ) {
+	throw new RuntimeException( "Cannot initialise AnyLogic gate outputs", exception );
+}</BeforeEachExperimentRunCode>
+		<BeforeSimulationRunCode>int replication = getCurrentReplication();
+long seed =
+	202607270000L
+	+ 100L * ( root.input_sample_index + 1L )
+	+ (long) replication;
+root.replication_id = replication;
+root.run_seed = seed;
+getEngine().getDefaultRandomGenerator().setSeed( seed );</BeforeSimulationRunCode>
+		<AfterSimulationRunCode>if (
+	root.next_traveller_id != root.gate_entity_count
+	|| root.completed_travellers != root.gate_entity_count
+) {
+	throw new IllegalStateException(
+		"Incomplete gate run "
+		+ root.input_sample_id
+		+ " replication "
+		+ root.replication_id
+		+ ": arrivals="
+		+ root.next_traveller_id
+		+ ", completed="
+		+ root.completed_travellers
+	);
+}
+
+java.util.ArrayList&lt;Double&gt; sortedSecurityWaits =
+	new java.util.ArrayList&lt;Double&gt;( root.security_waits );
+java.util.ArrayList&lt;Double&gt; sortedSystemTimes =
+	new java.util.ArrayList&lt;Double&gt;( root.system_times );
+java.util.Collections.sort( sortedSecurityWaits );
+java.util.Collections.sort( sortedSystemTimes );
+
+double securityWaitSum = 0.0;
+for ( double value : sortedSecurityWaits ) {
+	securityWaitSum += value;
+}
+double systemTimeSum = 0.0;
+for ( double value : sortedSystemTimes ) {
+	systemTimeSum += value;
+}
+int securityP95Index = Math.max(
+	0,
+	(int) Math.ceil( 0.95 * sortedSecurityWaits.size() ) - 1
+);
+int systemP95Index = Math.max(
+	0,
+	(int) Math.ceil( 0.95 * sortedSystemTimes.size() ) - 1
+);
+double securityWaitMean = securityWaitSum / sortedSecurityWaits.size();
+double securityWaitP95 = sortedSecurityWaits.get( securityP95Index );
+double systemTimeMean = systemTimeSum / sortedSystemTimes.size();
+double systemTimeP95 = sortedSystemTimes.get( systemP95Index );
+int cutoffBacklog = root.gate_entity_count - root.completed_travellers;
+String streamSeedIds = "default_rng:" + Long.toString( root.run_seed );
+
+String manifestRow = String.join(
+	",",
+	new String[] {
+		"1.0",
+		"285f0694a8512b40b16ca6c61b99f9fb054432233bb98e492856cd9e2be6c91b",
+		"gate-v0.1",
+		root.scenario_id,
+		root.input_sample_id,
+		Integer.toString( root.replication_id ),
+		streamSeedIds,
+		"EMPTY",
+		"60.000000000",
+		"60.000000000",
+		"AnyLogic PLE 8.9.9.202607020720"
+	}
+) + "\n";
+String summaryRow = String.join(
+	",",
+	new String[] {
+		"1.0",
+		root.scenario_id,
+		root.input_sample_id,
+		Integer.toString( root.replication_id ),
+		streamSeedIds,
+		Integer.toString( root.next_traveller_id ),
+		Integer.toString( root.completed_travellers ),
+		Integer.toString( cutoffBacklog ),
+		Integer.toString( root.completed_travellers ),
+		String.format( java.util.Locale.ROOT, "%.9f", securityWaitMean ),
+		String.format( java.util.Locale.ROOT, "%.9f", securityWaitP95 ),
+		String.format( java.util.Locale.ROOT, "%.9f", systemTimeMean ),
+		String.format( java.util.Locale.ROOT, "%.9f", systemTimeP95 ),
+		Integer.toString( cutoffBacklog ),
+		String.format( java.util.Locale.ROOT, "%.9f", root.last_exit )
+	}
+) + "\n";
+String entityRows = String.join( "\n", root.entity_rows ) + "\n";
+
+try {
+	java.nio.file.Files.write(
+		new java.io.File( gate_output_dir, "run_manifest.csv" ).toPath(),
+		manifestRow.getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.APPEND
+	);
+	java.nio.file.Files.write(
+		new java.io.File( gate_output_dir, "entity_log.csv" ).toPath(),
+		entityRows.getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.APPEND
+	);
+	java.nio.file.Files.write(
+		new java.io.File( gate_output_dir, "run_summary.csv" ).toPath(),
+		summaryRow.getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.APPEND
+	);
+} catch ( java.io.IOException exception ) {
+	throw new RuntimeException( "Cannot append AnyLogic gate outputs", exception );
+}</AfterSimulationRunCode>
+		<SeedValue>1</SeedValue>
+		<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+		<VmArgs/>
+		<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+		<Variables>
+			<Variable Class="PlainVariable">
+				<Id>1785086200001</Id>
+				<Name><![CDATA[gate_output_dir]]></Name>
+				<X>40</X>
+				<Y>120</Y>
+				<Label>
+					<X>10</X>
+					<Y>0</Y>
+				</Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>true</PresentationFlag>
+				<ShowLabel>true</ShowLabel>
+				<Properties SaveInSnapshot="false"
+                Constant="false"
+                AccessType="public"
+                StaticVariable="false">
+					<Type><![CDATA[String]]></Type>
+					<InitialValue Class="CodeValue">
+						<Code><![CDATA[""]]></Code>
+					</InitialValue>
+				</Properties>
+			</Variable>
+			<Variable Class="PlainVariable">
+				<Id>1785094554563</Id>
+				<Name><![CDATA[gate_auto_start_timer]]></Name>
+				<X>40</X>
+				<Y>210</Y>
+				<Label>
+					<X>10</X>
+					<Y>0</Y>
+				</Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>false</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<Properties SaveInSnapshot="false"
+                Constant="false"
+                AccessType="private"
+                StaticVariable="false">
+					<Type><![CDATA[javax.swing.Timer]]></Type>
+					<InitialValue Class="CodeValue">
+						<Code><![CDATA[new javax.swing.Timer(300, event -> { ((javax.swing.Timer) event.getSource()).stop(); GatePV2x3.this.run(); }) {{ setRepeats(false); start(); }}]]></Code>
+					</InitialValue>
+				</Properties>
+			</Variable>
+		</Variables>
+		<AllowParallelEvaluations>false</AllowParallelEvaluations>
+		<UseFreeformParameters>true</UseFreeformParameters>
+		<NumberOfRuns>2</NumberOfRuns>
+		<FreeformParamValue>
+			<Id>1785086000001</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["GATE_BASELINE"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785086000011</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "GATE_INPUT_A" : "GATE_INPUT_B"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785086000021</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785086000031</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 1.0 : 0.8]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785086000041</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[12]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785086000101</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785086000111</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[0L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<RangeVariationParamValue>
+			<Id>1785086000001</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785086000011</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785086000021</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785086000031</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785086000041</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785086000101</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785086000111</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<ModelTimeProperties>
+			<StopOption>Stop at specified time</StopOption>
+			<InitialDate>1785024000000</InitialDate>
+			<InitialTime>0.0</InitialTime>
+			<FinalDate>1787702400000</FinalDate>
+			<FinalTime>60.0</FinalTime>
+		</ModelTimeProperties>
+		<PresentationProperties>
+			<EnableZoomAndPanning>true</EnableZoomAndPanning>
+			<Title>HTXCheckpointSimulation : GatePV2x3</Title>
+			<EnableDeveloperPanel>true</EnableDeveloperPanel>
+			<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+		</PresentationProperties>
+		<ReplicationsProperties>
+			<UseReplication>true</UseReplication>
+			<FixedReplicationsNumber>true</FixedReplicationsNumber>
+			<ReplicationPerIteration>3</ReplicationPerIteration>
+			<MinimumReplication>2</MinimumReplication>
+			<MaximumReplication>10</MaximumReplication>
+			<ConfidenceLevel>LEVEL_80</ConfidenceLevel>
+			<ErrorPercent>0.5</ErrorPercent>
+			<ExpressionForConfidenceComputation>0</ExpressionForConfidenceComputation>
+		</ReplicationsProperties>
+	</ParamVariationExperiment>
+	<SimulationExperiment ActiveObjectClassId="1785093000001">
+		<Id>1785093400001</Id>
+		<Name><![CDATA[HppArrivalVerification]]></Name>
+		<CommandLineArguments/>
+		<MaximumMemory>512</MaximumMemory>
+		<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+		<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+		<BeforeSimulationRunCode>if (
+	!"BASELINE_LOCAL_WINDOW_HPP".equals( root.source_config_id )
+	|| !"task1_final_aggregate".equals( root.arrival_evidence_id )
+	|| !"LOCAL_WINDOW_HPP_STATIONARY_INDEPENDENT".equals(
+		root.arrival_assumption
+	)
+	|| root.input_sample_id == null
+	|| root.input_sample_id.trim().isEmpty()
+) {
+	throw new IllegalStateException(
+		"HPP arrival verification lineage is not frozen"
+	);
+}
+if (
+	!Double.isFinite( root.arrival_rate_per_second )
+	|| root.arrival_rate_per_second &lt;= 0.0
+	|| !Double.isFinite( root.arrival_cutoff_seconds )
+	|| root.arrival_cutoff_seconds &lt;= 0.0
+	|| root.arrival_seed &lt;= 0L
+) {
+	throw new IllegalStateException(
+		"HPP arrival verification parameters violate the fail-fast domain"
+	);
+}
+double expectedCount =
+	root.arrival_rate_per_second * root.arrival_cutoff_seconds;
+if (
+	root.ple_max_generated_guard &lt;= 0
+	|| root.ple_max_generated_guard &gt;= 50000
+	|| expectedCount + 10.0 * Math.sqrt( expectedCount )
+		&gt;= root.ple_max_generated_guard
+) {
+	throw new IllegalStateException(
+		"HPP arrival guard is unsafe for the configured exposure"
+	);
+}
+getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );</BeforeSimulationRunCode>
+		<AfterSimulationRunCode>if (
+	!root.arrivals_closed
+	|| root.guard_hit
+	|| root.admitted_at_cutoff != root.arrival_times.size()
+	|| root.completed_at_cutoff != root.completed
+	|| root.completed != root.arrival_times.size()
+	|| root.travellerSource.count() != root.arrival_times.size()
+) {
+	throw new IllegalStateException(
+		"HPP arrival verification failed flow conservation"
+	);
+}
+double previousArrival = -1.0;
+for ( double arrivalTime : root.arrival_times ) {
+	if (
+		!Double.isFinite( arrivalTime )
+		|| arrivalTime &lt; 0.0
+		|| arrivalTime &gt;= root.arrival_cutoff_seconds
+		|| arrivalTime &lt;= previousArrival
+	) {
+		throw new IllegalStateException(
+			"Invalid HPP arrival timestamp: " + arrivalTime
+		);
+	}
+	previousArrival = arrivalTime;
+}
+
+double expectedCount =
+	root.arrival_rate_per_second * root.arrival_cutoff_seconds;
+String manifest =
+	"schema_version,experiment_role,readiness_scope,source_config_id,"
+	+ "input_sample_id,replication_id,arrival_evidence_id,arrival_assumption,"
+	+ "arrival_rate_per_second,arrival_cutoff_seconds,arrival_seed,"
+	+ "expected_count,realized_count,guard_limit,guard_hit,engine_version\n"
+	+ String.join(
+		",",
+		new String[] {
+			"1.0",
+			"DEMAND_MECHANISM_VERIFICATION",
+			"ARRIVAL_ONLY",
+			root.source_config_id,
+			root.input_sample_id,
+			"1",
+			root.arrival_evidence_id,
+			root.arrival_assumption,
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				root.arrival_rate_per_second
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				root.arrival_cutoff_seconds
+			),
+			Long.toString( root.arrival_seed ),
+			String.format( java.util.Locale.ROOT, "%.9f", expectedCount ),
+			Integer.toString( root.arrival_times.size() ),
+			Integer.toString( root.ple_max_generated_guard ),
+			Boolean.toString( root.guard_hit ),
+			"AnyLogic PLE 8.9.9.202607020720"
+		}
+	)
+	+ "\n";
+
+StringBuilder ledger = new StringBuilder(
+	"schema_version,experiment_role,readiness_scope,source_config_id,"
+	+ "input_sample_id,replication_id,arrival_seed,sequence,arrival_time\n"
+);
+for ( int index = 0; index &lt; root.arrival_times.size(); index++ ) {
+	ledger.append(
+		String.join(
+			",",
+			new String[] {
+				"1.0",
+				"DEMAND_MECHANISM_VERIFICATION",
+				"ARRIVAL_ONLY",
+				root.source_config_id,
+				root.input_sample_id,
+				"1",
+				Long.toString( root.arrival_seed ),
+				Integer.toString( index + 1 ),
+				String.format(
+					java.util.Locale.ROOT,
+					"%.9f",
+					root.arrival_times.get( index )
+				)
+			}
+		)
+	).append( "\n" );
+}
+
+String summary =
+	"schema_version,experiment_role,readiness_scope,source_config_id,"
+	+ "input_sample_id,replication_id,arrival_seed,arrival_rate_per_second,"
+	+ "arrival_cutoff_seconds,expected_count,realized_count,"
+	+ "source_count,sink_count,guard_hit\n"
+	+ String.join(
+		",",
+		new String[] {
+			"1.0",
+			"DEMAND_MECHANISM_VERIFICATION",
+			"ARRIVAL_ONLY",
+			root.source_config_id,
+			root.input_sample_id,
+			"1",
+			Long.toString( root.arrival_seed ),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				root.arrival_rate_per_second
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				root.arrival_cutoff_seconds
+			),
+			String.format( java.util.Locale.ROOT, "%.9f", expectedCount ),
+			Integer.toString( root.arrival_times.size() ),
+			Long.toString( root.travellerSource.count() ),
+			Integer.toString( root.completed ),
+			Boolean.toString( root.guard_hit )
+		}
+	)
+	+ "\n";
+
+java.io.File probe = new java.io.File(
+	System.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+).getAbsoluteFile();
+while (
+	probe != null
+	&amp;&amp; !new java.io.File(
+		probe,
+		"config/model_run_configs.csv"
+	).isFile()
+) {
+	probe = probe.getParentFile();
+}
+if ( probe == null ) {
+	throw new IllegalStateException(
+		"Cannot locate repository root for HPP arrival verification"
+	);
+}
+java.io.File outputDirectory = new java.io.File(
+	probe,
+	"results/raw/anylogic_hpp_arrival_verification"
+).getAbsoluteFile();
+try {
+	java.nio.file.Files.createDirectories( outputDirectory.toPath() );
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "run_manifest.csv" ).toPath(),
+		manifest.getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "arrival_ledger.csv" ).toPath(),
+		ledger.toString().getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "run_summary.csv" ).toPath(),
+		summary.getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+} catch ( java.io.IOException exception ) {
+	throw new RuntimeException(
+		"Cannot write HPP arrival verification outputs",
+		exception
+	);
+}</AfterSimulationRunCode>
+		<SeedValue>2026072710</SeedValue>
+		<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+		<VmArgs/>
+		<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+		<Presentation>
+			<Text>
+				<Id>1785093400002</Id>
+				<Name><![CDATA[text]]></Name>
+				<X>50</X>
+				<Y>30</Y>
+				<Label>
+					<X>10</X>
+					<Y>0</Y>
+				</Label>
+				<PublicFlag>true</PublicFlag>
+				<PresentationFlag>true</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+				<EmbeddedIcon>false</EmbeddedIcon>
+				<Z>0</Z>
+				<Rotation>0.0</Rotation>
+				<Color>-12490271</Color>
+				<Text><![CDATA[Synthetic HPP arrival mechanism verification]]></Text>
+				<Font>
+					<Name><![CDATA[SansSerif]]></Name>
+					<Size>24</Size>
+					<Style>0</Style>
+				</Font>
+				<Alignment>LEFT</Alignment>
+			</Text>
+		</Presentation>
+		<Parameters>
+			<Parameter>
+				<ParameterName>source_config_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>arrival_evidence_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>arrival_assumption</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>arrival_rate_per_second</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>arrival_cutoff_seconds</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>arrival_seed</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>input_sample_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>ple_max_generated_guard</ParameterName>
+			</Parameter>
+		</Parameters>
+		<PresentationProperties>
+			<EnableZoomAndPanning>true</EnableZoomAndPanning>
+			<ExecutionMode>virtualTime</ExecutionMode>
+			<Title>HTXCheckpointSimulation : HppArrivalVerification</Title>
+			<EnableDeveloperPanel>true</EnableDeveloperPanel>
+			<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+			<RealTimeScale>1.0</RealTimeScale>
+		</PresentationProperties>
+		<ModelTimeProperties>
+			<StopOption>Never</StopOption>
+			<InitialDate>1785024000000</InitialDate>
+			<InitialTime>0.0</InitialTime>
+			<FinalDate>1787702400000</FinalDate>
+			<FinalTime>30.0</FinalTime>
+		</ModelTimeProperties>
+		<BypassInitialScreen>true</BypassInitialScreen>
+	</SimulationExperiment>
+	<SimulationExperiment ActiveObjectClassId="1785162520364">
+		<Id>1785162602457</Id>
+		<Name><![CDATA[OperationalInteractive]]></Name>
+		<CommandLineArguments/>
+		<MaximumMemory>512</MaximumMemory>
+		<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+		<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+		<BeforeSimulationRunCode>if ( !"1.0".equals( root.schema_version ) )
+	throw new IllegalArgumentException( "schema_version must be 1.0" );
+if ( !root.config_sha256.matches( "[0-9a-f]{64}" ) )
+	throw new IllegalArgumentException( "config_sha256 must be 64 lowercase hex characters" );
+if ( !root.output_collection_id.matches( "[a-z0-9_]+" ) )
+	throw new IllegalArgumentException( "output_collection_id is unsafe" );
+if ( !"HPP".equals( root.arrival_mode ) )
+	throw new IllegalArgumentException( "arrival_mode must be HPP" );
+if ( !( root.arrival_rate_per_second &gt; 0.0 ) || !( root.demand_multiplier &gt; 0.0 ) )
+	throw new IllegalArgumentException( "arrival rate and demand multiplier must be positive" );
+if ( !( root.arrival_cutoff_seconds &gt; 0.0 ) || root.arrival_guard &lt;= 1 )
+	throw new IllegalArgumentException( "arrival cutoff and guard are invalid" );
+if ( root.arrival_rate_per_second * root.demand_multiplier * root.arrival_cutoff_seconds &gt;= root.arrival_guard )
+	throw new IllegalArgumentException( "arrival_guard must exceed expected arrivals" );
+if ( !"FULL_DRAIN".equals( root.drain_rule ) )
+	throw new IllegalArgumentException( "drain_rule must be FULL_DRAIN" );
+if ( root.security_capacity &lt;= 0 || root.immigration_capacity &lt;= 0 )
+	throw new IllegalArgumentException( "resource capacities must be positive" );
+if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
+	throw new IllegalArgumentException( "queue capacities must be positive" );
+if ( !"FIXED".equals( root.security_service_distribution )
+	|| !"FIXED".equals( root.immigration_service_distribution ) )
+	throw new IllegalArgumentException( "v1 supports FIXED primary service only" );
+if ( !( root.security_service_p1_seconds &gt; 0.0 )
+	|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
+	throw new IllegalArgumentException( "primary service demands must be positive" );
+if ( !"pooled".equals( root.queue_policy ) )
+	throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
+if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
+	if ( root.automation_uptake != 0.0 || root.automation_multiplier != 1.0 )
+		throw new IllegalArgumentException( "DISABLED automation requires uptake=0 and multiplier=1" );
+} else if ( "MULTIPLIER".equals( root.automation_mapping_mode ) ) {
+	if ( !( root.automation_uptake &gt; 0.0 &amp;&amp; root.automation_uptake &lt;= 1.0 )
+		|| !( root.automation_multiplier &gt; 0.0 &amp;&amp; root.automation_multiplier &lt; 1.0 ) )
+		throw new IllegalArgumentException( "automation inputs are outside their domains" );
+} else {
+	throw new IllegalArgumentException( "unknown automation_mapping_mode" );
+}
+if ( "NONE".equals( root.additional_check_semantics ) ) {
+	if ( root.additional_check_probability_conventional != 0.0
+		|| root.additional_check_probability_technology != 0.0
+		|| !"UNSET".equals( root.additional_check_service_distribution )
+		|| root.additional_check_service_p1_seconds != 0.0 )
+		throw new IllegalArgumentException( "NONE additional-check contract violated" );
+} else if ( "COUNTER_HELD_RISK_REFERRAL_PROXY".equals( root.additional_check_semantics ) ) {
+	if ( !"FIXED".equals( root.additional_check_service_distribution )
+		|| root.additional_check_probability_conventional &lt; 0.0
+		|| root.additional_check_probability_conventional &gt; 1.0
+		|| root.additional_check_probability_technology &lt; 0.0
+		|| root.additional_check_probability_technology &gt; 1.0
+		|| !( root.additional_check_service_p1_seconds &gt; 0.0 ) )
+		throw new IllegalArgumentException( "risk-proxy inputs are invalid" );
+} else {
+	throw new IllegalArgumentException( "unknown additional_check_semantics" );
+}
+if ( !"EMPTY_AND_IDLE".equals( root.start_state )
+	|| !"NOT_CALIBRATED".equals( root.calibration_status )
+	|| !"COMPARATIVE_WHAT_IF_ONLY".equals( root.claim_ceiling )
+	|| !"NOT_TESTED".equals( root.crn_alignment_status ) )
+	throw new IllegalArgumentException( "claim-boundary fields were weakened" );
+if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+	|| !"anylogic_operational".equals( root.output_collection_id )
+	|| !"OP_REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.config_id )
+	|| !"166e6c918cff63041b08f31ff5c17fbea49008b8cdd3047b1082b326faae3460".equals( root.config_sha256 )
+	|| !"REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.scenario_id )
+	|| !"REFERENCE".equals( root.scenario_family )
+	|| !"REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.reference_scenario_id )
+	|| !"LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	|| root.replication_id != 0
+	|| root.arrival_rate_per_second != 1.364213
+	|| root.demand_multiplier != 1.0
+	|| root.arrival_cutoff_seconds != 300.0
+	|| root.arrival_guard != 5000
+	|| root.security_capacity != 36
+	|| root.security_queue_capacity != 5000
+	|| root.security_service_p1_seconds != 21.818181818
+	|| root.immigration_capacity != 21
+	|| root.immigration_queue_capacity != 5000
+	|| root.immigration_service_p1_seconds != 13.0
+	|| !"DISABLED".equals( root.automation_mapping_mode )
+	|| root.automation_uptake != 0.0
+	|| root.automation_multiplier != 1.0
+	|| !"NONE".equals( root.additional_check_semantics )
+	|| root.additional_check_probability_conventional != 0.0
+	|| root.additional_check_probability_technology != 0.0
+	|| !"UNSET".equals( root.additional_check_service_distribution )
+	|| root.additional_check_service_p1_seconds != 0.0
+	|| root.master_seed != 2026072800L
+	|| root.arrival_seed != 2026072801L
+	|| root.service_seed != 2026072802L
+	|| root.routing_seed != 2026072803L
+	|| root.tie_seed != 2026072804L )
+	throw new IllegalArgumentException(
+		"OperationalInteractive is locked to the canonical reference row; "
+		+ "use the future registry-driven batch experiment for scenario changes"
+	);
+getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );</BeforeSimulationRunCode>
+		<AfterSimulationRunCode>if ( !"COMPLETE".equals( root.run_status ) )
+	throw new IllegalStateException( "operational run did not reach COMPLETE" );
+if ( root.guard_hit || root.rejected_or_dropped_count != 0 )
+	throw new IllegalStateException( "guard, rejection, or drop detected" );
+if ( root.admitted != root.completed )
+	throw new IllegalStateException( "full-drain conservation failed" );
+if ( root.security_queue_count != 0 || root.security_in_service_count != 0
+	|| root.immigration_queue_count != 0 || root.immigration_in_service_count != 0 )
+	throw new IllegalStateException( "non-zero WIP after drain" );
+int wipAtCutoff =
+	root.security_queue_at_cutoff + root.security_in_service_at_cutoff
+	+ root.immigration_queue_at_cutoff + root.immigration_in_service_at_cutoff;
+boolean conservationPass =
+	root.admitted_at_cutoff == root.completed_at_cutoff + wipAtCutoff;
+if ( !conservationPass )
+	throw new IllegalStateException( "cutoff conservation failed" );
+
+java.util.ArrayList&lt;Double&gt; securitySorted =
+	new java.util.ArrayList&lt;Double&gt;( root.security_waits );
+java.util.ArrayList&lt;Double&gt; immigrationSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.immigration_waits );
+java.util.ArrayList&lt;Double&gt; totalSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.total_queue_waits );
+java.util.ArrayList&lt;Double&gt; systemSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.system_times );
+java.util.Collections.sort( securitySorted );
+java.util.Collections.sort( immigrationSorted );
+java.util.Collections.sort( totalSorted );
+java.util.Collections.sort( systemSorted );
+double securitySum = 0.0, immigrationSum = 0.0, totalSum = 0.0, systemSum = 0.0;
+for ( double value : securitySorted ) securitySum += value;
+for ( double value : immigrationSorted ) immigrationSum += value;
+for ( double value : totalSorted ) totalSum += value;
+for ( double value : systemSorted ) systemSum += value;
+int n = root.completed;
+if ( n &lt;= 0 ) throw new IllegalStateException( "operational run generated no travellers" );
+int p95Index = Math.max( 0, (int) Math.ceil( 0.95 * n ) - 1 );
+double drainEnd = Math.max( root.arrival_cutoff_seconds, root.last_exit );
+int cutoffBacklog = root.admitted_at_cutoff - root.completed_at_cutoff;
+double securityUtilization =
+	root.security_busy_seconds / ( root.security_capacity * drainEnd );
+double immigrationUtilization =
+	root.immigration_busy_seconds / ( root.immigration_capacity * drainEnd );
+java.util.function.DoubleFunction&lt;String&gt; number = value -&gt;
+	String.format( java.util.Locale.ROOT, "%.9f", value );
+
+java.io.File probe = new java.io.File(
+	System.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+).getAbsoluteFile();
+while ( probe != null
+	&amp;&amp; !new java.io.File( probe, "config/operational_scenarios.csv" ).isFile() ) {
+	probe = probe.getParentFile();
+}
+if ( probe == null )
+	throw new IllegalStateException( "Cannot locate repository root" );
+java.nio.file.Path runDirectory = new java.io.File(
+	probe,
+	String.format(
+		java.util.Locale.ROOT,
+		"results/raw/%s/%s/%s/replication_%03d",
+		root.output_collection_id,
+		root.scenario_id,
+		root.input_sample_id,
+		root.replication_id
+	)
+).toPath();
+try {
+	java.nio.file.Files.createDirectories( runDirectory );
+	java.util.ArrayList&lt;String&gt; manifest = new java.util.ArrayList&lt;String&gt;();
+	manifest.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "scenario_family,reference_scenario_id,input_sample_id,replication_id,"
+		+ "master_seed,arrival_seed,service_seed,routing_seed,tie_seed,start_state,"
+		+ "arrival_mode,arrival_cutoff_seconds,drain_end_seconds,drain_rule,"
+		+ "engine_name,engine_version,calibration_status,claim_ceiling,"
+		+ "crn_alignment_status,run_status"
+	);
+	manifest.add( String.join( ",", new String[] {
+		root.schema_version, root.config_id, root.config_sha256, root.model_version,
+		root.scenario_id, root.scenario_family, root.reference_scenario_id,
+		root.input_sample_id, Integer.toString( root.replication_id ),
+		Long.toString( root.master_seed ), Long.toString( root.arrival_seed ),
+		Long.toString( root.service_seed ), Long.toString( root.routing_seed ),
+		Long.toString( root.tie_seed ), root.start_state, root.arrival_mode,
+		number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+		root.drain_rule, "AnyLogic", "8.9.9.202607020720",
+		root.calibration_status, root.claim_ceiling, root.crn_alignment_status,
+		root.run_status
+	} ) );
+	java.util.ArrayList&lt;String&gt; entities = new java.util.ArrayList&lt;String&gt;();
+	entities.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "input_sample_id,replication_id,traveller_id,arrival_seconds,"
+		+ "security_service_demand_seconds,"
+		+ "immigration_conventional_service_demand_seconds,automation_u,"
+		+ "additional_check_u,lane_tie_u,security_queue_join_seconds,"
+		+ "security_start_seconds,security_end_seconds,"
+		+ "immigration_queue_join_seconds,immigration_lane_id,"
+		+ "immigration_start_seconds,technology_flag,"
+		+ "immigration_primary_service_demand_seconds,"
+		+ "immigration_primary_end_seconds,additional_check_flag,"
+		+ "additional_check_service_demand_seconds,"
+		+ "additional_check_end_seconds,exit_seconds,security_resource_id,"
+		+ "immigration_resource_id"
+	);
+	entities.addAll( root.entity_log_rows );
+	java.util.ArrayList&lt;String&gt; kpis = new java.util.ArrayList&lt;String&gt;();
+	kpis.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "input_sample_id,replication_id,arrival_cutoff_seconds,"
+		+ "drain_end_seconds,arrivals,completed_at_cutoff,"
+		+ "security_queue_at_cutoff,security_in_service_at_cutoff,"
+		+ "immigration_queue_at_cutoff,immigration_in_service_at_cutoff,"
+		+ "wip_at_cutoff,completed_after_drain,rejected_or_dropped_count,"
+		+ "technology_count,additional_check_count,"
+		+ "security_wait_mean_seconds,security_wait_p95_seconds,"
+		+ "immigration_wait_mean_seconds,immigration_wait_p95_seconds,"
+		+ "total_queue_wait_mean_seconds,total_queue_wait_p95_seconds,"
+		+ "total_queue_wait_exceed_600_rate,total_queue_wait_exceed_900_rate,"
+		+ "total_queue_wait_exceed_1200_rate,system_time_mean_seconds,"
+		+ "system_time_p95_seconds,security_utilization,immigration_utilization,"
+		+ "cutoff_backlog,cutoff_backlog_fraction,"
+		+ "cohort_clear_time_after_cutoff_seconds,conservation_pass,run_status"
+	);
+	kpis.add( String.join( ",", new String[] {
+		root.schema_version, root.config_id, root.config_sha256, root.model_version,
+		root.scenario_id, root.input_sample_id, Integer.toString( root.replication_id ),
+		number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+		Integer.toString( root.admitted ), Integer.toString( root.completed_at_cutoff ),
+		Integer.toString( root.security_queue_at_cutoff ),
+		Integer.toString( root.security_in_service_at_cutoff ),
+		Integer.toString( root.immigration_queue_at_cutoff ),
+		Integer.toString( root.immigration_in_service_at_cutoff ),
+		Integer.toString( wipAtCutoff ), Integer.toString( root.completed ),
+		Integer.toString( root.rejected_or_dropped_count ),
+		Integer.toString( root.technology_count ),
+		Integer.toString( root.additional_check_count ),
+		number.apply( securitySum / n ), number.apply( securitySorted.get( p95Index ) ),
+		number.apply( immigrationSum / n ), number.apply( immigrationSorted.get( p95Index ) ),
+		number.apply( totalSum / n ), number.apply( totalSorted.get( p95Index ) ),
+		number.apply( (double) root.exceed_600_count / n ),
+		number.apply( (double) root.exceed_900_count / n ),
+		number.apply( (double) root.exceed_1200_count / n ),
+		number.apply( systemSum / n ), number.apply( systemSorted.get( p95Index ) ),
+		number.apply( securityUtilization ), number.apply( immigrationUtilization ),
+		Integer.toString( cutoffBacklog ),
+		number.apply( root.admitted_at_cutoff &gt; 0
+			? (double) cutoffBacklog / root.admitted_at_cutoff : 0.0 ),
+		number.apply( Math.max( 0.0, drainEnd - root.arrival_cutoff_seconds ) ),
+		Boolean.toString( conservationPass ), root.run_status
+	} ) );
+	java.nio.file.Files.write(
+		runDirectory.resolve( "run_manifest.csv" ), manifest,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+	java.nio.file.Files.write(
+		runDirectory.resolve( "entity_log.csv" ), entities,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+	java.nio.file.Files.write(
+		runDirectory.resolve( "replication_kpis.csv" ), kpis,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+} catch ( java.io.IOException exception ) {
+	throw new RuntimeException( "Operational CSV export failed", exception );
+}</AfterSimulationRunCode>
+		<SeedValue>2026072801</SeedValue>
+		<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+		<VmArgs/>
+		<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+		<Presentation>
+			<Text>
+				<Id>1785162602459</Id>
+				<Name><![CDATA[text]]></Name>
+				<X>40</X><Y>25</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>true</PublicFlag>
+				<PresentationFlag>true</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+				<EmbeddedIcon>false</EmbeddedIcon>
+				<Z>0</Z><Rotation>0.0</Rotation><Color>-12490271</Color>
+				<Text><![CDATA[Operational assumption sandbox | pooled FCFS | not calibrated]]></Text>
+				<Font><Name><![CDATA[SansSerif]]></Name><Size>22</Size><Style>0</Style></Font>
+				<Alignment>LEFT</Alignment>
+			</Text>
+		</Presentation>
+		<Parameters>
+			<Parameter><ParameterName>schema_version</ParameterName></Parameter>
+			<Parameter><ParameterName>model_version</ParameterName></Parameter>
+			<Parameter><ParameterName>output_collection_id</ParameterName></Parameter>
+			<Parameter><ParameterName>config_id</ParameterName></Parameter>
+			<Parameter><ParameterName>config_sha256</ParameterName></Parameter>
+			<Parameter><ParameterName>scenario_id</ParameterName></Parameter>
+			<Parameter><ParameterName>scenario_family</ParameterName></Parameter>
+			<Parameter><ParameterName>reference_scenario_id</ParameterName></Parameter>
+			<Parameter><ParameterName>input_sample_id</ParameterName></Parameter>
+			<Parameter><ParameterName>replication_id</ParameterName></Parameter>
+			<Parameter><ParameterName>start_state</ParameterName></Parameter>
+			<Parameter><ParameterName>calibration_status</ParameterName></Parameter>
+			<Parameter><ParameterName>claim_ceiling</ParameterName></Parameter>
+			<Parameter><ParameterName>crn_alignment_status</ParameterName></Parameter>
+			<Parameter><ParameterName>arrival_mode</ParameterName></Parameter>
+			<Parameter><ParameterName>arrival_rate_per_second</ParameterName></Parameter>
+			<Parameter><ParameterName>demand_multiplier</ParameterName></Parameter>
+			<Parameter><ParameterName>arrival_cutoff_seconds</ParameterName></Parameter>
+			<Parameter><ParameterName>arrival_guard</ParameterName></Parameter>
+			<Parameter><ParameterName>drain_rule</ParameterName></Parameter>
+			<Parameter><ParameterName>security_capacity</ParameterName></Parameter>
+			<Parameter><ParameterName>security_queue_capacity</ParameterName></Parameter>
+			<Parameter><ParameterName>security_service_distribution</ParameterName></Parameter>
+			<Parameter><ParameterName>security_service_p1_seconds</ParameterName></Parameter>
+			<Parameter><ParameterName>immigration_capacity</ParameterName></Parameter>
+			<Parameter><ParameterName>immigration_queue_capacity</ParameterName></Parameter>
+			<Parameter><ParameterName>immigration_service_distribution</ParameterName></Parameter>
+			<Parameter><ParameterName>immigration_service_p1_seconds</ParameterName></Parameter>
+			<Parameter><ParameterName>queue_policy</ParameterName></Parameter>
+			<Parameter><ParameterName>automation_mapping_mode</ParameterName></Parameter>
+			<Parameter><ParameterName>automation_uptake</ParameterName></Parameter>
+			<Parameter><ParameterName>automation_multiplier</ParameterName></Parameter>
+			<Parameter><ParameterName>additional_check_semantics</ParameterName></Parameter>
+			<Parameter><ParameterName>additional_check_probability_conventional</ParameterName></Parameter>
+			<Parameter><ParameterName>additional_check_probability_technology</ParameterName></Parameter>
+			<Parameter><ParameterName>additional_check_service_distribution</ParameterName></Parameter>
+			<Parameter><ParameterName>additional_check_service_p1_seconds</ParameterName></Parameter>
+			<Parameter><ParameterName>master_seed</ParameterName></Parameter>
+			<Parameter><ParameterName>arrival_seed</ParameterName></Parameter>
+			<Parameter><ParameterName>service_seed</ParameterName></Parameter>
+			<Parameter><ParameterName>routing_seed</ParameterName></Parameter>
+			<Parameter><ParameterName>tie_seed</ParameterName></Parameter>
+		</Parameters>
+		<PresentationProperties>
+			<EnableZoomAndPanning>true</EnableZoomAndPanning>
+			<ExecutionMode>virtualTime</ExecutionMode>
+			<Title>HTXCheckpointSimulation : OperationalInteractive</Title>
+			<EnableDeveloperPanel>true</EnableDeveloperPanel>
+			<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+			<RealTimeScale>1.0</RealTimeScale>
+		</PresentationProperties>
+		<ModelTimeProperties>
+			<StopOption>Never</StopOption>
+			<InitialDate>1785024000000</InitialDate>
+			<InitialTime>0.0</InitialTime>
+			<FinalDate>1787702400000</FinalDate>
+			<FinalTime>300.0</FinalTime>
+		</ModelTimeProperties>
+		<BypassInitialScreen>false</BypassInitialScreen>
+	</SimulationExperiment>
+	<ParamVariationExperiment ActiveObjectClassId="1785162520364">
+		<Id>1785196300833</Id>
+		<Name><![CDATA[OperationalPilot]]></Name>
+		<CommandLineArguments/>
+		<MaximumMemory>512</MaximumMemory>
+		<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+		<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+		<BeforeSimulationRunCode>if ( !"1.0".equals( root.schema_version ) )
+	throw new IllegalArgumentException( "schema_version must be 1.0" );
+if ( !root.config_sha256.matches( "[0-9a-f]{64}" ) )
+	throw new IllegalArgumentException( "config_sha256 must be 64 lowercase hex characters" );
+if ( !root.output_collection_id.matches( "[a-z0-9_]+" ) )
+	throw new IllegalArgumentException( "output_collection_id is unsafe" );
+if ( !"HPP".equals( root.arrival_mode ) )
+	throw new IllegalArgumentException( "arrival_mode must be HPP" );
+if ( !( root.arrival_rate_per_second &gt; 0.0 ) || !( root.demand_multiplier &gt; 0.0 ) )
+	throw new IllegalArgumentException( "arrival rate and demand multiplier must be positive" );
+if ( !( root.arrival_cutoff_seconds &gt; 0.0 ) || root.arrival_guard &lt;= 1 )
+	throw new IllegalArgumentException( "arrival cutoff and guard are invalid" );
+if ( root.arrival_rate_per_second * root.demand_multiplier * root.arrival_cutoff_seconds &gt;= root.arrival_guard )
+	throw new IllegalArgumentException( "arrival_guard must exceed expected arrivals" );
+if ( !"FULL_DRAIN".equals( root.drain_rule ) )
+	throw new IllegalArgumentException( "drain_rule must be FULL_DRAIN" );
+if ( root.security_capacity &lt;= 0 || root.immigration_capacity &lt;= 0 )
+	throw new IllegalArgumentException( "resource capacities must be positive" );
+if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
+	throw new IllegalArgumentException( "queue capacities must be positive" );
+if ( !"FIXED".equals( root.security_service_distribution )
+	|| !"FIXED".equals( root.immigration_service_distribution ) )
+	throw new IllegalArgumentException( "v1 supports FIXED primary service only" );
+if ( !( root.security_service_p1_seconds &gt; 0.0 )
+	|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
+	throw new IllegalArgumentException( "primary service demands must be positive" );
+if ( !"pooled".equals( root.queue_policy ) )
+	throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
+if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
+	if ( root.automation_uptake != 0.0 || root.automation_multiplier != 1.0 )
+		throw new IllegalArgumentException( "DISABLED automation requires uptake=0 and multiplier=1" );
+} else if ( "MULTIPLIER".equals( root.automation_mapping_mode ) ) {
+	if ( !( root.automation_uptake &gt; 0.0 &amp;&amp; root.automation_uptake &lt;= 1.0 )
+		|| !( root.automation_multiplier &gt; 0.0 &amp;&amp; root.automation_multiplier &lt; 1.0 ) )
+		throw new IllegalArgumentException( "automation inputs are outside their domains" );
+} else {
+	throw new IllegalArgumentException( "unknown automation_mapping_mode" );
+}
+if ( "NONE".equals( root.additional_check_semantics ) ) {
+	if ( root.additional_check_probability_conventional != 0.0
+		|| root.additional_check_probability_technology != 0.0
+		|| !"UNSET".equals( root.additional_check_service_distribution )
+		|| root.additional_check_service_p1_seconds != 0.0 )
+		throw new IllegalArgumentException( "NONE additional-check contract violated" );
+} else if ( "COUNTER_HELD_RISK_REFERRAL_PROXY".equals( root.additional_check_semantics ) ) {
+	if ( !"FIXED".equals( root.additional_check_service_distribution )
+		|| root.additional_check_probability_conventional &lt; 0.0
+		|| root.additional_check_probability_conventional &gt; 1.0
+		|| root.additional_check_probability_technology &lt; 0.0
+		|| root.additional_check_probability_technology &gt; 1.0
+		|| !( root.additional_check_service_p1_seconds &gt; 0.0 ) )
+		throw new IllegalArgumentException( "risk-proxy inputs are invalid" );
+} else {
+	throw new IllegalArgumentException( "unknown additional_check_semantics" );
+}
+if ( !"EMPTY_AND_IDLE".equals( root.start_state )
+	|| !"NOT_CALIBRATED".equals( root.calibration_status )
+	|| !"COMPARATIVE_WHAT_IF_ONLY".equals( root.claim_ceiling )
+	|| !"NOT_TESTED".equals( root.crn_alignment_status ) )
+	throw new IllegalArgumentException( "claim-boundary fields were weakened" );
+if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version ) )
+	throw new IllegalArgumentException( "OperationalPilot model_version mismatch" );
+if ( !"anylogic_operational_batch".equals( root.output_collection_id ) )
+	throw new IllegalArgumentException( "OperationalPilot output collection mismatch" );
+String expectedConfigId = null;
+String expectedConfigHash = null;
+int scenarioSeedIndex = -1;
+if ( "REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_REFERENCE_ASSUMPTION_SANDBOX_V1";
+	expectedConfigHash = "166e6c918cff63041b08f31ff5c17fbea49008b8cdd3047b1082b326faae3460";
+	scenarioSeedIndex = 0;
+}
+else if ( "CAPACITY_SECURITY_PLUS_4".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_CAPACITY_SECURITY_PLUS_4";
+	expectedConfigHash = "0ba7db9b3955b498affc337d2c78a22a31eb3d56e6268018546934cfdf4ecdd7";
+	scenarioSeedIndex = 1;
+}
+else if ( "CAPACITY_IMMIGRATION_PLUS_3".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_CAPACITY_IMMIGRATION_PLUS_3";
+	expectedConfigHash = "233f382b7d1d96ec9249325cf693782cdffaf6c2f3f6d07a9f0890a16b344aa2";
+	scenarioSeedIndex = 2;
+}
+else if ( "CAPACITY_BOTH_PLUS".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_CAPACITY_BOTH_PLUS";
+	expectedConfigHash = "68ce8c6f5c6b1f1a277d1d77e35d7939692638238ed1ce0f62fe844e6e340347";
+	scenarioSeedIndex = 3;
+}
+else if ( "DEMAND_LOW_080".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_DEMAND_LOW_080";
+	expectedConfigHash = "26647522e10b35fc53f2602dd72748a5d949614591bcff01ac0a5bc695c82fde";
+	scenarioSeedIndex = 4;
+}
+else if ( "DEMAND_HIGH_120".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_DEMAND_HIGH_120";
+	expectedConfigHash = "b623baa07b816dda367f02418f6ca573805c3d797cfa6a060f278c67b196f9d3";
+	scenarioSeedIndex = 5;
+}
+else if ( "SERVICE_SG_BUS_QR_10S".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_SERVICE_SG_BUS_QR_10S";
+	expectedConfigHash = "cdadcb34db075ece6920b1c6e8c8cef0fe52d63663efa734453e81e364ec2f5d";
+	scenarioSeedIndex = 6;
+}
+else if ( "SERVICE_SG_TRAIN_KIOSK_24S".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_SERVICE_SG_TRAIN_KIOSK_24S";
+	expectedConfigHash = "51c5171980db0f51dcf80799c0bda16b31f16b5b9c0c5622e341254eb6b712d1";
+	scenarioSeedIndex = 7;
+}
+else if ( "SERVICE_SG_TRAIN_MANUAL_45S".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_SERVICE_SG_TRAIN_MANUAL_45S";
+	expectedConfigHash = "88894cc6b5bcffbcc8c95ec7e0983d6a47022176b31e1355d4dcf9721a960fe4";
+	scenarioSeedIndex = 8;
+}
+else if ( "AUTO_HTX_TRIAL_U50_M60".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_AUTO_HTX_TRIAL_U50_M60";
+	expectedConfigHash = "45de50cf67e57f376bebbb9cf9c7ad27be92a165248a238089c015edec8a2549";
+	scenarioSeedIndex = 9;
+}
+else if ( "AUTO_HTX_TRIAL_U100_M60".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_AUTO_HTX_TRIAL_U100_M60";
+	expectedConfigHash = "5ff882ef5e872f1d06b67e27fb6fd91e3b65b3dcb563d1c03eb57a60d083376f";
+	scenarioSeedIndex = 10;
+}
+else if ( "AUTO_ICA_ROLLOUT_U50_M40".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_AUTO_ICA_ROLLOUT_U50_M40";
+	expectedConfigHash = "b4f10b827d98f4ed0815a002ed3e1091b5f908f911cfbcfb145ed87c23a9273f";
+	scenarioSeedIndex = 11;
+}
+else if ( "AUTO_ICA_ROLLOUT_U100_M40".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_AUTO_ICA_ROLLOUT_U100_M40";
+	expectedConfigHash = "0a870280a38567d7537d91950591688601802dd3037092b8a2ac7a999aacc8b7";
+	scenarioSeedIndex = 12;
+}
+else if ( "RISK_EXTERNAL_P02_D900".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_RISK_EXTERNAL_P02_D900";
+	expectedConfigHash = "c13fea5b026ecf69eb459ab293473037346921ed9fde275e61d3388ccfbd5688";
+	scenarioSeedIndex = 13;
+}
+else if ( "RISK_EXTERNAL_P02_D7200".equals( root.scenario_id ) ) {
+	expectedConfigId = "OP_RISK_EXTERNAL_P02_D7200";
+	expectedConfigHash = "a52cf5e3a539d8949e87eb3d23b0b9ef6fa9c4038dd87d37d65f118fa0033d3b";
+	scenarioSeedIndex = 14;
+}
+if ( expectedConfigId == null || expectedConfigHash == null
+	|| scenarioSeedIndex &lt; 0 )
+	throw new IllegalArgumentException( "OperationalPilot received an unknown scenario_id" );
+if ( !expectedConfigId.equals( root.config_id )
+	|| !expectedConfigHash.equals( root.config_sha256 ) )
+	throw new IllegalArgumentException(
+		"OperationalPilot scenario lineage mismatch for " + root.scenario_id
+	);
+int replication = getCurrentReplication();
+if ( replication &lt; 1 || replication &gt; 10 )
+	throw new IllegalArgumentException( "OperationalPilot replication must be 1..10" );
+root.replication_id = replication;
+long streamBase =
+	root.master_seed
+	+ 100000L * (long) scenarioSeedIndex
+	+ 100L * (long) replication;
+root.arrival_seed = streamBase + 1L;
+root.service_seed = streamBase + 2L;
+root.routing_seed = streamBase + 3L;
+root.tie_seed = streamBase + 4L;
+getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );</BeforeSimulationRunCode>
+		<AfterSimulationRunCode>if ( !"COMPLETE".equals( root.run_status ) )
+	throw new IllegalStateException( "operational run did not reach COMPLETE" );
+if ( root.guard_hit || root.rejected_or_dropped_count != 0 )
+	throw new IllegalStateException( "guard, rejection, or drop detected" );
+if ( root.admitted != root.completed )
+	throw new IllegalStateException( "full-drain conservation failed" );
+if ( root.security_queue_count != 0 || root.security_in_service_count != 0
+	|| root.immigration_queue_count != 0 || root.immigration_in_service_count != 0 )
+	throw new IllegalStateException( "non-zero WIP after drain" );
+int wipAtCutoff =
+	root.security_queue_at_cutoff + root.security_in_service_at_cutoff
+	+ root.immigration_queue_at_cutoff + root.immigration_in_service_at_cutoff;
+boolean conservationPass =
+	root.admitted_at_cutoff == root.completed_at_cutoff + wipAtCutoff;
+if ( !conservationPass )
+	throw new IllegalStateException( "cutoff conservation failed" );
+
+java.util.ArrayList&lt;Double&gt; securitySorted =
+	new java.util.ArrayList&lt;Double&gt;( root.security_waits );
+java.util.ArrayList&lt;Double&gt; immigrationSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.immigration_waits );
+java.util.ArrayList&lt;Double&gt; totalSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.total_queue_waits );
+java.util.ArrayList&lt;Double&gt; systemSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.system_times );
+java.util.Collections.sort( securitySorted );
+java.util.Collections.sort( immigrationSorted );
+java.util.Collections.sort( totalSorted );
+java.util.Collections.sort( systemSorted );
+double securitySum = 0.0, immigrationSum = 0.0, totalSum = 0.0, systemSum = 0.0;
+for ( double value : securitySorted ) securitySum += value;
+for ( double value : immigrationSorted ) immigrationSum += value;
+for ( double value : totalSorted ) totalSum += value;
+for ( double value : systemSorted ) systemSum += value;
+int n = root.completed;
+if ( n &lt;= 0 ) throw new IllegalStateException( "operational run generated no travellers" );
+int p95Index = Math.max( 0, (int) Math.ceil( 0.95 * n ) - 1 );
+double drainEnd = Math.max( root.arrival_cutoff_seconds, root.last_exit );
+int cutoffBacklog = root.admitted_at_cutoff - root.completed_at_cutoff;
+double securityUtilization =
+	root.security_busy_seconds / ( root.security_capacity * drainEnd );
+double immigrationUtilization =
+	root.immigration_busy_seconds / ( root.immigration_capacity * drainEnd );
+java.util.function.DoubleFunction&lt;String&gt; number = value -&gt;
+	String.format( java.util.Locale.ROOT, "%.9f", value );
+
+java.io.File probe = new java.io.File(
+	System.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+).getAbsoluteFile();
+while ( probe != null
+	&amp;&amp; !new java.io.File( probe, "config/operational_scenarios.csv" ).isFile() ) {
+	probe = probe.getParentFile();
+}
+if ( probe == null )
+	throw new IllegalStateException( "Cannot locate repository root" );
+java.nio.file.Path runDirectory = new java.io.File(
+	probe,
+	String.format(
+		java.util.Locale.ROOT,
+		"results/raw/%s/%s/%s/replication_%03d",
+		root.output_collection_id,
+		root.scenario_id,
+		root.input_sample_id,
+		root.replication_id
+	)
+).toPath();
+try {
+	java.nio.file.Files.createDirectories( runDirectory );
+	java.util.ArrayList&lt;String&gt; manifest = new java.util.ArrayList&lt;String&gt;();
+	manifest.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "scenario_family,reference_scenario_id,input_sample_id,replication_id,"
+		+ "master_seed,arrival_seed,service_seed,routing_seed,tie_seed,start_state,"
+		+ "arrival_mode,arrival_cutoff_seconds,drain_end_seconds,drain_rule,"
+		+ "engine_name,engine_version,calibration_status,claim_ceiling,"
+		+ "crn_alignment_status,run_status"
+	);
+	manifest.add( String.join( ",", new String[] {
+		root.schema_version, root.config_id, root.config_sha256, root.model_version,
+		root.scenario_id, root.scenario_family, root.reference_scenario_id,
+		root.input_sample_id, Integer.toString( root.replication_id ),
+		Long.toString( root.master_seed ), Long.toString( root.arrival_seed ),
+		Long.toString( root.service_seed ), Long.toString( root.routing_seed ),
+		Long.toString( root.tie_seed ), root.start_state, root.arrival_mode,
+		number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+		root.drain_rule, "AnyLogic", "8.9.9.202607020720",
+		root.calibration_status, root.claim_ceiling, root.crn_alignment_status,
+		root.run_status
+	} ) );
+	java.util.ArrayList&lt;String&gt; entities = new java.util.ArrayList&lt;String&gt;();
+	entities.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "input_sample_id,replication_id,traveller_id,arrival_seconds,"
+		+ "security_service_demand_seconds,"
+		+ "immigration_conventional_service_demand_seconds,automation_u,"
+		+ "additional_check_u,lane_tie_u,security_queue_join_seconds,"
+		+ "security_start_seconds,security_end_seconds,"
+		+ "immigration_queue_join_seconds,immigration_lane_id,"
+		+ "immigration_start_seconds,technology_flag,"
+		+ "immigration_primary_service_demand_seconds,"
+		+ "immigration_primary_end_seconds,additional_check_flag,"
+		+ "additional_check_service_demand_seconds,"
+		+ "additional_check_end_seconds,exit_seconds,security_resource_id,"
+		+ "immigration_resource_id"
+	);
+	entities.addAll( root.entity_log_rows );
+	java.util.ArrayList&lt;String&gt; kpis = new java.util.ArrayList&lt;String&gt;();
+	kpis.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "input_sample_id,replication_id,arrival_cutoff_seconds,"
+		+ "drain_end_seconds,arrivals,completed_at_cutoff,"
+		+ "security_queue_at_cutoff,security_in_service_at_cutoff,"
+		+ "immigration_queue_at_cutoff,immigration_in_service_at_cutoff,"
+		+ "wip_at_cutoff,completed_after_drain,rejected_or_dropped_count,"
+		+ "technology_count,additional_check_count,"
+		+ "security_wait_mean_seconds,security_wait_p95_seconds,"
+		+ "immigration_wait_mean_seconds,immigration_wait_p95_seconds,"
+		+ "total_queue_wait_mean_seconds,total_queue_wait_p95_seconds,"
+		+ "total_queue_wait_exceed_600_rate,total_queue_wait_exceed_900_rate,"
+		+ "total_queue_wait_exceed_1200_rate,system_time_mean_seconds,"
+		+ "system_time_p95_seconds,security_utilization,immigration_utilization,"
+		+ "cutoff_backlog,cutoff_backlog_fraction,"
+		+ "cohort_clear_time_after_cutoff_seconds,conservation_pass,run_status"
+	);
+	kpis.add( String.join( ",", new String[] {
+		root.schema_version, root.config_id, root.config_sha256, root.model_version,
+		root.scenario_id, root.input_sample_id, Integer.toString( root.replication_id ),
+		number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+		Integer.toString( root.admitted ), Integer.toString( root.completed_at_cutoff ),
+		Integer.toString( root.security_queue_at_cutoff ),
+		Integer.toString( root.security_in_service_at_cutoff ),
+		Integer.toString( root.immigration_queue_at_cutoff ),
+		Integer.toString( root.immigration_in_service_at_cutoff ),
+		Integer.toString( wipAtCutoff ), Integer.toString( root.completed ),
+		Integer.toString( root.rejected_or_dropped_count ),
+		Integer.toString( root.technology_count ),
+		Integer.toString( root.additional_check_count ),
+		number.apply( securitySum / n ), number.apply( securitySorted.get( p95Index ) ),
+		number.apply( immigrationSum / n ), number.apply( immigrationSorted.get( p95Index ) ),
+		number.apply( totalSum / n ), number.apply( totalSorted.get( p95Index ) ),
+		number.apply( (double) root.exceed_600_count / n ),
+		number.apply( (double) root.exceed_900_count / n ),
+		number.apply( (double) root.exceed_1200_count / n ),
+		number.apply( systemSum / n ), number.apply( systemSorted.get( p95Index ) ),
+		number.apply( securityUtilization ), number.apply( immigrationUtilization ),
+		Integer.toString( cutoffBacklog ),
+		number.apply( root.admitted_at_cutoff &gt; 0
+			? (double) cutoffBacklog / root.admitted_at_cutoff : 0.0 ),
+		number.apply( Math.max( 0.0, drainEnd - root.arrival_cutoff_seconds ) ),
+		Boolean.toString( conservationPass ), root.run_status
+	} ) );
+	java.nio.file.Files.write(
+		runDirectory.resolve( "run_manifest.csv" ), manifest,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+	java.nio.file.Files.write(
+		runDirectory.resolve( "entity_log.csv" ), entities,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+	java.nio.file.Files.write(
+		runDirectory.resolve( "replication_kpis.csv" ), kpis,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+} catch ( java.io.IOException exception ) {
+	throw new RuntimeException( "Operational CSV export failed", exception );
+}</AfterSimulationRunCode>
+		<SeedValue>1</SeedValue>
+		<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+		<VmArgs/>
+		<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+		<Variables>
+			<Variable Class="PlainVariable">
+				<Id>1785196300835</Id>
+				<Name><![CDATA[operational_pilot_auto_start_timer]]></Name>
+				<X>40</X><Y>120</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>false</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<Properties SaveInSnapshot="false"
+                Constant="false"
+                AccessType="private"
+                StaticVariable="false">
+					<Type><![CDATA[javax.swing.Timer]]></Type>
+					<InitialValue Class="CodeValue">
+						<Code><![CDATA[new javax.swing.Timer(300, event -> { ((javax.swing.Timer) event.getSource()).stop(); OperationalPilot.this.run(); }) {{ setRepeats(false); start(); }}]]></Code>
+					</InitialValue>
+				</Properties>
+			</Variable>
+		</Variables>
+		<AllowParallelEvaluations>false</AllowParallelEvaluations>
+		<UseFreeformParameters>true</UseFreeformParameters>
+		<NumberOfRuns>15</NumberOfRuns>
+		<FreeformParamValue>
+			<Id>1785163110001</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["1.0"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110011</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["TASK3_OPERATIONAL_POOLED_V1"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110021</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["anylogic_operational_batch"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110031</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "OP_REFERENCE_ASSUMPTION_SANDBOX_V1"
+	: index == 1 ? "OP_CAPACITY_SECURITY_PLUS_4"
+	: index == 2 ? "OP_CAPACITY_IMMIGRATION_PLUS_3"
+	: index == 3 ? "OP_CAPACITY_BOTH_PLUS"
+	: index == 4 ? "OP_DEMAND_LOW_080"
+	: index == 5 ? "OP_DEMAND_HIGH_120"
+	: index == 6 ? "OP_SERVICE_SG_BUS_QR_10S"
+	: index == 7 ? "OP_SERVICE_SG_TRAIN_KIOSK_24S"
+	: index == 8 ? "OP_SERVICE_SG_TRAIN_MANUAL_45S"
+	: index == 9 ? "OP_AUTO_HTX_TRIAL_U50_M60"
+	: index == 10 ? "OP_AUTO_HTX_TRIAL_U100_M60"
+	: index == 11 ? "OP_AUTO_ICA_ROLLOUT_U50_M40"
+	: index == 12 ? "OP_AUTO_ICA_ROLLOUT_U100_M40"
+	: index == 13 ? "OP_RISK_EXTERNAL_P02_D900"
+	: "OP_RISK_EXTERNAL_P02_D7200"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110041</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "166e6c918cff63041b08f31ff5c17fbea49008b8cdd3047b1082b326faae3460"
+	: index == 1 ? "0ba7db9b3955b498affc337d2c78a22a31eb3d56e6268018546934cfdf4ecdd7"
+	: index == 2 ? "233f382b7d1d96ec9249325cf693782cdffaf6c2f3f6d07a9f0890a16b344aa2"
+	: index == 3 ? "68ce8c6f5c6b1f1a277d1d77e35d7939692638238ed1ce0f62fe844e6e340347"
+	: index == 4 ? "26647522e10b35fc53f2602dd72748a5d949614591bcff01ac0a5bc695c82fde"
+	: index == 5 ? "b623baa07b816dda367f02418f6ca573805c3d797cfa6a060f278c67b196f9d3"
+	: index == 6 ? "cdadcb34db075ece6920b1c6e8c8cef0fe52d63663efa734453e81e364ec2f5d"
+	: index == 7 ? "51c5171980db0f51dcf80799c0bda16b31f16b5b9c0c5622e341254eb6b712d1"
+	: index == 8 ? "88894cc6b5bcffbcc8c95ec7e0983d6a47022176b31e1355d4dcf9721a960fe4"
+	: index == 9 ? "45de50cf67e57f376bebbb9cf9c7ad27be92a165248a238089c015edec8a2549"
+	: index == 10 ? "5ff882ef5e872f1d06b67e27fb6fd91e3b65b3dcb563d1c03eb57a60d083376f"
+	: index == 11 ? "b4f10b827d98f4ed0815a002ed3e1091b5f908f911cfbcfb145ed87c23a9273f"
+	: index == 12 ? "0a870280a38567d7537d91950591688601802dd3037092b8a2ac7a999aacc8b7"
+	: index == 13 ? "c13fea5b026ecf69eb459ab293473037346921ed9fde275e61d3388ccfbd5688"
+	: "a52cf5e3a539d8949e87eb3d23b0b9ef6fa9c4038dd87d37d65f118fa0033d3b"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110051</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "REFERENCE_ASSUMPTION_SANDBOX_V1"
+	: index == 1 ? "CAPACITY_SECURITY_PLUS_4"
+	: index == 2 ? "CAPACITY_IMMIGRATION_PLUS_3"
+	: index == 3 ? "CAPACITY_BOTH_PLUS"
+	: index == 4 ? "DEMAND_LOW_080"
+	: index == 5 ? "DEMAND_HIGH_120"
+	: index == 6 ? "SERVICE_SG_BUS_QR_10S"
+	: index == 7 ? "SERVICE_SG_TRAIN_KIOSK_24S"
+	: index == 8 ? "SERVICE_SG_TRAIN_MANUAL_45S"
+	: index == 9 ? "AUTO_HTX_TRIAL_U50_M60"
+	: index == 10 ? "AUTO_HTX_TRIAL_U100_M60"
+	: index == 11 ? "AUTO_ICA_ROLLOUT_U50_M40"
+	: index == 12 ? "AUTO_ICA_ROLLOUT_U100_M40"
+	: index == 13 ? "RISK_EXTERNAL_P02_D900"
+	: "RISK_EXTERNAL_P02_D7200"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110061</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "REFERENCE"
+	: index == 1 ? "CAPACITY"
+	: index == 2 ? "CAPACITY"
+	: index == 3 ? "CAPACITY"
+	: index == 4 ? "DEMAND"
+	: index == 5 ? "DEMAND"
+	: index == 6 ? "SERVICE_CONTEXT"
+	: index == 7 ? "SERVICE_CONTEXT"
+	: index == 8 ? "SERVICE_CONTEXT"
+	: index == 9 ? "AUTOMATION"
+	: index == 10 ? "AUTOMATION"
+	: index == 11 ? "AUTOMATION"
+	: index == 12 ? "AUTOMATION"
+	: index == 13 ? "RISK"
+	: "RISK"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110071</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["REFERENCE_ASSUMPTION_SANDBOX_V1"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110081</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 1 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 2 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 3 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 4 ? "LOCAL_WINDOW_HPP_LOW"
+	: index == 5 ? "LOCAL_WINDOW_HPP_HIGH"
+	: index == 6 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 7 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 8 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 9 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 10 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 11 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 12 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 13 ? "LOCAL_WINDOW_HPP_BASE"
+	: "LOCAL_WINDOW_HPP_BASE"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110091</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110101</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["EMPTY_AND_IDLE"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110111</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["NOT_CALIBRATED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110121</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["COMPARATIVE_WHAT_IF_ONLY"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110131</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["NOT_TESTED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110141</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["HPP"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110151</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[1.364213]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110161</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 1.0
+	: index == 1 ? 1.0
+	: index == 2 ? 1.0
+	: index == 3 ? 1.0
+	: index == 4 ? 0.8
+	: index == 5 ? 1.2
+	: index == 6 ? 1.0
+	: index == 7 ? 1.0
+	: index == 8 ? 1.0
+	: index == 9 ? 1.0
+	: index == 10 ? 1.0
+	: index == 11 ? 1.0
+	: index == 12 ? 1.0
+	: index == 13 ? 1.0
+	: 1.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110171</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[300.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110181</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[5000]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110191</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["FULL_DRAIN"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110201</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 36
+	: index == 1 ? 40
+	: index == 2 ? 36
+	: index == 3 ? 40
+	: index == 4 ? 36
+	: index == 5 ? 36
+	: index == 6 ? 36
+	: index == 7 ? 36
+	: index == 8 ? 36
+	: index == 9 ? 36
+	: index == 10 ? 36
+	: index == 11 ? 36
+	: index == 12 ? 36
+	: index == 13 ? 36
+	: 36]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110211</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[5000]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110221</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["FIXED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110231</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[21.818181818]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110241</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 21
+	: index == 1 ? 21
+	: index == 2 ? 24
+	: index == 3 ? 24
+	: index == 4 ? 21
+	: index == 5 ? 21
+	: index == 6 ? 21
+	: index == 7 ? 21
+	: index == 8 ? 21
+	: index == 9 ? 21
+	: index == 10 ? 21
+	: index == 11 ? 21
+	: index == 12 ? 21
+	: index == 13 ? 21
+	: 21]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110251</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[5000]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110261</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["FIXED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110271</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 13.0
+	: index == 1 ? 13.0
+	: index == 2 ? 13.0
+	: index == 3 ? 13.0
+	: index == 4 ? 13.0
+	: index == 5 ? 13.0
+	: index == 6 ? 10.0
+	: index == 7 ? 24.0
+	: index == 8 ? 45.0
+	: index == 9 ? 13.0
+	: index == 10 ? 13.0
+	: index == 11 ? 13.0
+	: index == 12 ? 13.0
+	: index == 13 ? 13.0
+	: 13.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110281</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["pooled"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110291</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "DISABLED"
+	: index == 1 ? "DISABLED"
+	: index == 2 ? "DISABLED"
+	: index == 3 ? "DISABLED"
+	: index == 4 ? "DISABLED"
+	: index == 5 ? "DISABLED"
+	: index == 6 ? "DISABLED"
+	: index == 7 ? "DISABLED"
+	: index == 8 ? "DISABLED"
+	: index == 9 ? "MULTIPLIER"
+	: index == 10 ? "MULTIPLIER"
+	: index == 11 ? "MULTIPLIER"
+	: index == 12 ? "MULTIPLIER"
+	: index == 13 ? "DISABLED"
+	: "DISABLED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110301</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 0.0
+	: index == 1 ? 0.0
+	: index == 2 ? 0.0
+	: index == 3 ? 0.0
+	: index == 4 ? 0.0
+	: index == 5 ? 0.0
+	: index == 6 ? 0.0
+	: index == 7 ? 0.0
+	: index == 8 ? 0.0
+	: index == 9 ? 0.5
+	: index == 10 ? 1.0
+	: index == 11 ? 0.5
+	: index == 12 ? 1.0
+	: index == 13 ? 0.0
+	: 0.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110311</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 1.0
+	: index == 1 ? 1.0
+	: index == 2 ? 1.0
+	: index == 3 ? 1.0
+	: index == 4 ? 1.0
+	: index == 5 ? 1.0
+	: index == 6 ? 1.0
+	: index == 7 ? 1.0
+	: index == 8 ? 1.0
+	: index == 9 ? 0.6
+	: index == 10 ? 0.6
+	: index == 11 ? 0.4
+	: index == 12 ? 0.4
+	: index == 13 ? 1.0
+	: 1.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110321</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "NONE"
+	: index == 1 ? "NONE"
+	: index == 2 ? "NONE"
+	: index == 3 ? "NONE"
+	: index == 4 ? "NONE"
+	: index == 5 ? "NONE"
+	: index == 6 ? "NONE"
+	: index == 7 ? "NONE"
+	: index == 8 ? "NONE"
+	: index == 9 ? "NONE"
+	: index == 10 ? "NONE"
+	: index == 11 ? "NONE"
+	: index == 12 ? "NONE"
+	: index == 13 ? "COUNTER_HELD_RISK_REFERRAL_PROXY"
+	: "COUNTER_HELD_RISK_REFERRAL_PROXY"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110331</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 0.0
+	: index == 1 ? 0.0
+	: index == 2 ? 0.0
+	: index == 3 ? 0.0
+	: index == 4 ? 0.0
+	: index == 5 ? 0.0
+	: index == 6 ? 0.0
+	: index == 7 ? 0.0
+	: index == 8 ? 0.0
+	: index == 9 ? 0.0
+	: index == 10 ? 0.0
+	: index == 11 ? 0.0
+	: index == 12 ? 0.0
+	: index == 13 ? 0.02
+	: 0.02]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110341</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 0.0
+	: index == 1 ? 0.0
+	: index == 2 ? 0.0
+	: index == 3 ? 0.0
+	: index == 4 ? 0.0
+	: index == 5 ? 0.0
+	: index == 6 ? 0.0
+	: index == 7 ? 0.0
+	: index == 8 ? 0.0
+	: index == 9 ? 0.0
+	: index == 10 ? 0.0
+	: index == 11 ? 0.0
+	: index == 12 ? 0.0
+	: index == 13 ? 0.02
+	: 0.02]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110351</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "UNSET"
+	: index == 1 ? "UNSET"
+	: index == 2 ? "UNSET"
+	: index == 3 ? "UNSET"
+	: index == 4 ? "UNSET"
+	: index == 5 ? "UNSET"
+	: index == 6 ? "UNSET"
+	: index == 7 ? "UNSET"
+	: index == 8 ? "UNSET"
+	: index == 9 ? "UNSET"
+	: index == 10 ? "UNSET"
+	: index == 11 ? "UNSET"
+	: index == 12 ? "UNSET"
+	: index == 13 ? "FIXED"
+	: "FIXED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110361</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 0.0
+	: index == 1 ? 0.0
+	: index == 2 ? 0.0
+	: index == 3 ? 0.0
+	: index == 4 ? 0.0
+	: index == 5 ? 0.0
+	: index == 6 ? 0.0
+	: index == 7 ? 0.0
+	: index == 8 ? 0.0
+	: index == 9 ? 0.0
+	: index == 10 ? 0.0
+	: index == 11 ? 0.0
+	: index == 12 ? 0.0
+	: index == 13 ? 900.0
+	: 7200.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110371</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[2026072800L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110381</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[2026072801L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110391</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[2026072802L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110401</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[2026072803L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110411</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[2026072804L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110001</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110011</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110021</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110031</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110041</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110051</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110061</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110071</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110081</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110091</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110101</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110111</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110121</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110131</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110141</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110151</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110161</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110171</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110181</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110191</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110201</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110211</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110221</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110231</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110241</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110251</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110261</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110271</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110281</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110291</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110301</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110311</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110321</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110331</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110341</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110351</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110361</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110371</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110381</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110391</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110401</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110411</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<ModelTimeProperties>
+			<StopOption>Never</StopOption>
+			<InitialDate>1785024000000</InitialDate>
+			<InitialTime>0.0</InitialTime>
+			<FinalDate>1787702400000</FinalDate>
+			<FinalTime>300.0</FinalTime>
+		</ModelTimeProperties>
+		<PresentationProperties>
+			<EnableZoomAndPanning>true</EnableZoomAndPanning>
+			<Title>HTXCheckpointSimulation : OperationalPilot</Title>
+			<EnableDeveloperPanel>true</EnableDeveloperPanel>
+			<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+		</PresentationProperties>
+		<ReplicationsProperties>
+			<UseReplication>true</UseReplication>
+			<FixedReplicationsNumber>true</FixedReplicationsNumber>
+			<ReplicationPerIteration>10</ReplicationPerIteration>
+			<MinimumReplication>10</MinimumReplication>
+			<MaximumReplication>10</MaximumReplication>
+			<ConfidenceLevel>LEVEL_95</ConfidenceLevel>
+			<ErrorPercent>0.05</ErrorPercent>
+			<ExpressionForConfidenceComputation>0</ExpressionForConfidenceComputation>
+		</ReplicationsProperties>
+	</ParamVariationExperiment>
+	<SimulationExperiment ActiveObjectClassId="1785082971961">
+		<Id>1785082971969</Id>
+		<Name><![CDATA[Simulation]]></Name>
+		<CommandLineArguments/>
+		<MaximumMemory>512</MaximumMemory>
+		<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+		<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+		<SeedValue>1</SeedValue>
+		<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+		<VmArgs/>
+		<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+		<Presentation>
+			<Text>
+				<Id>1785082971971</Id>
+				<Name><![CDATA[text]]></Name>
+				<X>50</X>
+				<Y>30</Y>
+				<Label>
+					<X>10</X>
+					<Y>0</Y>
+				</Label>
+				<PublicFlag>true</PublicFlag>
+				<PresentationFlag>true</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+				<EmbeddedIcon>false</EmbeddedIcon>
+				<Z>0</Z>
+				<Rotation>0.0</Rotation>
+				<Color>-12490271</Color>
+				<Text><![CDATA[HTXCheckpointSimulation]]></Text>
+				<Font>
+					<Name><![CDATA[SansSerif]]></Name>
+					<Size>24</Size>
+					<Style>0</Style>
+				</Font>
+				<Alignment>LEFT</Alignment>
+			</Text>
+		</Presentation>
+		<Parameters>
+			<Parameter>
+				<ParameterName>scenario_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>input_sample_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>input_sample_index</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>gate_arrival_scale</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>gate_entity_count</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>replication_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>run_seed</ParameterName>
+			</Parameter>
+		</Parameters>
+		<PresentationProperties>
+			<EnableZoomAndPanning>true</EnableZoomAndPanning>
+			<ExecutionMode>realTimeScaled</ExecutionMode>
+			<Title>HTXCheckpointSimulation : Simulation</Title>
+			<EnableDeveloperPanel>true</EnableDeveloperPanel>
+			<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+			<RealTimeScale>1.0</RealTimeScale>
+		</PresentationProperties>
+		<ModelTimeProperties>
+			<StopOption>Never</StopOption>
+			<InitialDate>1785024000000</InitialDate>
+			<InitialTime>0.0</InitialTime>
+			<FinalDate>1787702400000</FinalDate>
+			<FinalTime>100.0</FinalTime>
+		</ModelTimeProperties>
+		<BypassInitialScreen>true</BypassInitialScreen>
+	</SimulationExperiment>
+	<SimulationExperiment ActiveObjectClassId="1785088000001">
+		<Id>1785088300001</Id>
+		<Name><![CDATA[TwoStageDeterministic]]></Name>
+		<CommandLineArguments/>
+		<MaximumMemory>512</MaximumMemory>
+		<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+		<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+		<AfterSimulationRunCode>if (
+	!"VERIFY_TWO_STAGE_A".equals( root.config_id )
+	|| !"two_stage_six_person_fixture".equals( root.arrival_fixture_id )
+) {
+	throw new IllegalStateException(
+		"Two-stage verification must use the pinned oracle configuration"
+	);
+}
+if (
+	root.max_arrivals &lt; 1
+	|| root.arrival_cutoff_seconds &lt; 0.0
+	|| root.security_capacity &lt; 1
+	|| root.immigration_capacity &lt; 1
+	|| root.security_queue_capacity &lt; 1
+	|| root.immigration_queue_capacity &lt; 1
+	|| root.security_service_p1_seconds &lt;= 0.0
+	|| root.immigration_service_p1_seconds &lt;= 0.0
+	|| root.oracle_first_arrival_seconds &lt; 0.0
+	|| root.oracle_early_interarrival_seconds &lt;= 0.0
+	|| root.oracle_late_interarrival_seconds &lt;= 0.0
+	|| root.oracle_interval_switch_after &lt; 1
+	|| root.oracle_interval_switch_after &gt;= root.max_arrivals
+) {
+	throw new IllegalStateException(
+		"Two-stage verification parameters violate the fail-fast domain"
+	);
+}
+if (
+	root.admitted != root.max_arrivals
+	|| root.completed != root.max_arrivals
+) {
+	throw new IllegalStateException(
+		"Two-stage verification expected "
+		+ root.max_arrivals
+		+ " admitted/completed; admitted="
+		+ root.admitted
+		+ ", completed="
+		+ root.completed
+	);
+}
+if (
+	root.security_queue_count != 0
+	|| root.security_in_service_count != 0
+	|| root.immigration_queue_count != 0
+	|| root.immigration_in_service_count != 0
+) {
+	throw new IllegalStateException( "Two-stage verification did not drain" );
+}
+if (
+	root.completed_at_cutoff != 1
+	|| root.security_queue_at_cutoff != 2
+	|| root.security_in_service_at_cutoff != 1
+	|| root.immigration_queue_at_cutoff != 1
+	|| root.immigration_in_service_at_cutoff != 1
+) {
+	throw new IllegalStateException(
+		"Unexpected cutoff state: completed="
+		+ root.completed_at_cutoff
+		+ ", security_queue="
+		+ root.security_queue_at_cutoff
+		+ ", security_in_service="
+		+ root.security_in_service_at_cutoff
+		+ ", immigration_queue="
+		+ root.immigration_queue_at_cutoff
+		+ ", immigration_in_service="
+		+ root.immigration_in_service_at_cutoff
+	);
+}
+if ( Math.abs( root.last_exit - 20.0 ) &gt; 1e-9 ) {
+	throw new IllegalStateException(
+		"Expected drain end 20.0, found " + root.last_exit
+	);
+}
+if ( root.entity_rows.size() != root.max_arrivals ) {
+	throw new IllegalStateException(
+		"Expected "
+		+ root.max_arrivals
+		+ " entity rows, found "
+		+ root.entity_rows.size()
+	);
+}
+
+java.util.ArrayList&lt;Double&gt; securityWaits =
+	new java.util.ArrayList&lt;Double&gt;( root.security_waits );
+java.util.ArrayList&lt;Double&gt; immigrationWaits =
+	new java.util.ArrayList&lt;Double&gt;( root.immigration_waits );
+java.util.ArrayList&lt;Double&gt; totalQueueWaits =
+	new java.util.ArrayList&lt;Double&gt;( root.total_queue_waits );
+java.util.ArrayList&lt;Double&gt; systemTimes =
+	new java.util.ArrayList&lt;Double&gt;( root.system_times );
+java.util.Collections.sort( securityWaits );
+java.util.Collections.sort( immigrationWaits );
+java.util.Collections.sort( totalQueueWaits );
+java.util.Collections.sort( systemTimes );
+
+double securityWaitSum = 0.0;
+for ( double value : securityWaits ) {
+	securityWaitSum += value;
+}
+double immigrationWaitSum = 0.0;
+for ( double value : immigrationWaits ) {
+	immigrationWaitSum += value;
+}
+double totalQueueWaitSum = 0.0;
+for ( double value : totalQueueWaits ) {
+	totalQueueWaitSum += value;
+}
+double systemTimeSum = 0.0;
+for ( double value : systemTimes ) {
+	systemTimeSum += value;
+}
+int p95Index = Math.max(
+	0,
+	(int) Math.ceil( 0.95 * securityWaits.size() ) - 1
+);
+
+String manifest =
+	"schema_version,verification_contract_hash,model_version,experiment_role,"
+	+ "scenario_id,input_sample_id,replication_id,stream_seed_ids,start_state,"
+	+ "arrival_cutoff,drain_end,engine_version\n"
+	+ String.join(
+		",",
+		new String[] {
+			"1.0",
+			"daf13e43beb453b10855dd69ecbeeef65e05afbaf75da070052ddfca1cf58dcb",
+			"two-stage-verification-v0.1",
+			"SYNTHETIC_MECHANISM_VERIFICATION",
+			root.scenario_id,
+			root.input_sample_id,
+			Integer.toString( root.replication_id ),
+			"fixed_oracle:2026072709",
+			"EMPTY",
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				root.arrival_cutoff_seconds
+			),
+			String.format( java.util.Locale.ROOT, "%.9f", root.last_exit ),
+			"AnyLogic PLE 8.9.9.202607020720"
+		}
+	)
+	+ "\n";
+
+String entityHeader =
+	"schema_version,experiment_role,scenario_id,input_sample_id,replication_id,"
+	+ "stream_seed_ids,traveller_id,arrival,security_queue_join,security_start,"
+	+ "security_end,immigration_queue_join,immigration_lane,immigration_start,"
+	+ "immigration_primary_end,additional_check_flag,additional_check_end,"
+	+ "technology_flag,exit,security_resource_id,immigration_resource_id,"
+	+ "security_service_demand,immigration_service_demand\n";
+String entityLog = entityHeader + String.join( "\n", root.entity_rows ) + "\n";
+
+int wipAtCutoff =
+	root.security_queue_at_cutoff
+	+ root.security_in_service_at_cutoff
+	+ root.immigration_queue_at_cutoff
+	+ root.immigration_in_service_at_cutoff;
+String summary =
+	"schema_version,experiment_role,scenario_id,input_sample_id,replication_id,"
+	+ "stream_seed_ids,arrivals,completed_at_cutoff,security_queue_at_cutoff,"
+	+ "security_in_service_at_cutoff,immigration_queue_at_cutoff,"
+	+ "immigration_in_service_at_cutoff,wip_at_cutoff,completed_after_drain,"
+	+ "security_wait_mean,security_wait_p95,immigration_wait_mean,"
+	+ "immigration_wait_p95,total_queue_wait_mean,total_queue_wait_p95,"
+	+ "system_time_mean,system_time_p95,cutoff_backlog,"
+	+ "cohort_clear_time_after_cutoff\n"
+	+ String.join(
+		",",
+		new String[] {
+			"1.0",
+			"SYNTHETIC_MECHANISM_VERIFICATION",
+			root.scenario_id,
+			root.input_sample_id,
+			Integer.toString( root.replication_id ),
+			"fixed_oracle:2026072709",
+			Integer.toString( root.admitted ),
+			Integer.toString( root.completed_at_cutoff ),
+			Integer.toString( root.security_queue_at_cutoff ),
+			Integer.toString( root.security_in_service_at_cutoff ),
+			Integer.toString( root.immigration_queue_at_cutoff ),
+			Integer.toString( root.immigration_in_service_at_cutoff ),
+			Integer.toString( wipAtCutoff ),
+			Integer.toString( root.completed ),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				securityWaitSum / securityWaits.size()
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				securityWaits.get( p95Index )
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				immigrationWaitSum / immigrationWaits.size()
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				immigrationWaits.get( p95Index )
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				totalQueueWaitSum / totalQueueWaits.size()
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				totalQueueWaits.get( p95Index )
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				systemTimeSum / systemTimes.size()
+			),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				systemTimes.get( p95Index )
+			),
+			Integer.toString( root.admitted - root.completed_at_cutoff ),
+			String.format(
+				java.util.Locale.ROOT,
+				"%.9f",
+				root.last_exit - root.arrival_cutoff_seconds
+			)
+		}
+	)
+	+ "\n";
+
+java.io.File probe = new java.io.File(
+	System.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+).getAbsoluteFile();
+while (
+	probe != null
+	&amp;&amp; !new java.io.File( probe, "config/anylogic_gate_manifest.csv" ).isFile()
+) {
+	probe = probe.getParentFile();
+}
+if ( probe == null ) {
+	throw new IllegalStateException(
+		"Cannot locate repository root for two-stage verification"
+	);
+}
+java.io.File outputDirectory = new java.io.File(
+	probe,
+	"results/raw/anylogic_two_stage_verification"
+).getAbsoluteFile();
+try {
+	java.nio.file.Files.createDirectories( outputDirectory.toPath() );
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "run_manifest.csv" ).toPath(),
+		manifest.getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "entity_log.csv" ).toPath(),
+		entityLog.getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+	java.nio.file.Files.write(
+		new java.io.File( outputDirectory, "run_summary.csv" ).toPath(),
+		summary.getBytes( java.nio.charset.StandardCharsets.UTF_8 ),
+		java.nio.file.StandardOpenOption.CREATE,
+		java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+		java.nio.file.StandardOpenOption.WRITE
+	);
+} catch ( java.io.IOException exception ) {
+	throw new RuntimeException(
+		"Cannot write two-stage verification outputs",
+		exception
+	);
+}</AfterSimulationRunCode>
+		<SeedValue>2026072709</SeedValue>
+		<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+		<VmArgs/>
+		<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+		<Presentation>
+			<Text>
+				<Id>1785088300002</Id>
+				<Name><![CDATA[text]]></Name>
+				<X>50</X>
+				<Y>30</Y>
+				<Label>
+					<X>10</X>
+					<Y>0</Y>
+				</Label>
+				<PublicFlag>true</PublicFlag>
+				<PresentationFlag>true</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+				<EmbeddedIcon>false</EmbeddedIcon>
+				<Z>0</Z>
+				<Rotation>0.0</Rotation>
+				<Color>-12490271</Color>
+				<Text><![CDATA[Synthetic two-stage mechanism verification]]></Text>
+				<Font>
+					<Name><![CDATA[SansSerif]]></Name>
+					<Size>24</Size>
+					<Style>0</Style>
+				</Font>
+				<Alignment>LEFT</Alignment>
+			</Text>
+		</Presentation>
+		<Parameters>
+			<Parameter>
+				<ParameterName>config_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>scenario_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>input_sample_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>replication_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>arrival_fixture_id</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>max_arrivals</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>arrival_cutoff_seconds</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>security_capacity</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>immigration_capacity</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>security_queue_capacity</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>immigration_queue_capacity</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>security_service_p1_seconds</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>immigration_service_p1_seconds</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>oracle_first_arrival_seconds</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>oracle_early_interarrival_seconds</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>oracle_late_interarrival_seconds</ParameterName>
+			</Parameter>
+			<Parameter>
+				<ParameterName>oracle_interval_switch_after</ParameterName>
+			</Parameter>
+		</Parameters>
+		<PresentationProperties>
+			<EnableZoomAndPanning>true</EnableZoomAndPanning>
+			<ExecutionMode>virtualTime</ExecutionMode>
+			<Title>HTXCheckpointSimulation : TwoStageDeterministic</Title>
+			<EnableDeveloperPanel>true</EnableDeveloperPanel>
+			<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+			<RealTimeScale>1.0</RealTimeScale>
+		</PresentationProperties>
+		<ModelTimeProperties>
+			<StopOption>Never</StopOption>
+			<InitialDate>1785024000000</InitialDate>
+			<InitialTime>0.0</InitialTime>
+			<FinalDate>1787702400000</FinalDate>
+			<FinalTime>30.0</FinalTime>
+		</ModelTimeProperties>
+		<BypassInitialScreen>true</BypassInitialScreen>
+	</SimulationExperiment>
+</Experiments>

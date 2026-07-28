@@ -7,9 +7,11 @@ video_width,1280,,,pixels,MEASURED_METADATA,OpenCV decode audit,CV geometry,VERI
 video_height,720,,,pixels,MEASURED_METADATA,OpenCV decode audit,CV geometry,VERIFIED,
 analysis_roi_y_max,310,,,pixels,MEASURED_VIDEO,Visual reflection audit,CV geometry,WORKING,Pixels at y>=310 excluded to avoid glass reflections
 count_line_x,640,620,660,pixels,MEASURED_VIDEO,Counting-rule sensitivity,CV geometry,WORKING,Central reference line with plus or minus 20 px sensitivity
-crossing_count_review_bracket,,35,38,events,MEASURED_VIDEO,Strict candidate audit plus sequential visual sweep,Owner review evidence,WORKING,Not a confidence interval; includes three high-confidence recovered events pending owner sign-off
-bidirectional_rate_review_bracket,,1.404337,1.524709,travellers/second,MEASURED_VIDEO,Crossing count divided by 24.922788889 seconds,Input sensitivity evidence,WORKING,Not a long-run rate interval and not yet an arrival input
-arrival_rate,,,,travellers/second,MEASURED_VIDEO,Audited crossing ledger,Arrival process,TBD,Do not populate before manual reconciliation
+crossing_count_left_to_right,12,12,12,events,MEASURED_VIDEO,Human-adjudicated aggregate,Directional crossing evidence,VERIFIED,Accepted aggregate over 24.922788889 seconds; no signed event-time ledger
+crossing_count_right_to_left,34,34,34,events,MEASURED_VIDEO,Human-adjudicated aggregate,Directional crossing evidence,VERIFIED,Accepted aggregate over 24.922788889 seconds; no signed event-time ledger
+crossing_count_total,46,46,46,events,MEASURED_VIDEO,Human-adjudicated aggregate,Bidirectional crossing evidence,VERIFIED,Accepted aggregate over 24.922788889 seconds; not a long-run demand estimate
+arrival_direction,right_to_left,,,image direction,MEASURED_VIDEO,Assessment entrance mapping,Arrival process,VERIFIED,Operational arrival stream is mapped to image-space right_to_left
+arrival_rate,1.364213,1.364213,1.364213,travellers/second,MEASURED_VIDEO,34 accepted right_to_left crossings divided by 24.922788889 seconds,Arrival process,VERIFIED,Short-window aggregate input; no signed event-time ledger and not a long-run demand estimate
 security_capacity,,,,servers,TRANSPARENT_ASSUMPTION,Task 2 assumption,Decision factor,TBD,No service-resource calibration data supplied
 immigration_capacity,,,,servers,TRANSPARENT_ASSUMPTION,Task 2 assumption,Decision factor,TBD,No service-resource calibration data supplied
 security_service_time,,,,seconds,TRANSPARENT_ASSUMPTION,Sensitivity range,Service process,TBD,Must remain positive

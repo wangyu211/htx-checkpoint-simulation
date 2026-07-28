@@ -3,22 +3,28 @@
 from __future__ import annotations
 
 import math
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 
 from src.cv.audit_crossings import (
     Track,
+    detections_for_cached_frame,
     detect_in_tiles,
     filter_roi,
+    load_detection_cache,
     parse_roi,
     parse_tiles,
     resolve_time_seconds,
     side_of_line,
     update_crossing,
+    write_detection_cache,
 )
 from src.cv.recount_lines import recount
+from src.cv.yolo26_onnx import decode_end_to_end, preprocess_yolo26
 from src.cv.yolox_onnx import Detection, decode_outputs, nms
 
 
@@ -362,6 +368,119 @@ class RoiTileAndNmsTests(unittest.TestCase):
         np.testing.assert_array_equal(decoded[0, 0, :4], [0, 0, 8, 8])
         np.testing.assert_array_equal(decoded[0, 1, :4], [8, 0, 8, 8])
         np.testing.assert_array_equal(decoded[0, 16, :4], [0, 0, 16, 16])
+
+
+class Yolo26AdapterTests(unittest.TestCase):
+    def test_preprocess_uses_centered_rgb_letterbox_and_normalization(self) -> None:
+        image = np.zeros((2, 4, 3), dtype=np.uint8)
+        image[:, :, 0] = 255
+
+        tensor, ratio, padding = preprocess_yolo26(image, (8, 8))
+
+        self.assertEqual(ratio, 2.0)
+        self.assertEqual(padding, (0, 2))
+        self.assertEqual(tensor.shape, (3, 8, 8))
+        self.assertAlmostEqual(float(tensor[2, 2, 0]), 1.0)
+        self.assertAlmostEqual(float(tensor[0, 2, 0]), 0.0)
+        self.assertAlmostEqual(float(tensor[0, 0, 0]), 114.0 / 255.0)
+
+    def test_decode_filters_rows_and_reverses_letterbox_geometry(self) -> None:
+        raw = np.array(
+            [
+                [
+                    [20, 30, 60, 70, 0.90, 0],
+                    [5, 5, 10, 10, 0.99, 2],
+                    [1, 1, 2, 2, 0.01, 0],
+                    [np.nan, 1, 2, 3, 0.99, 0],
+                    [50, 50, 40, 60, 0.99, 0],
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        detections = decode_end_to_end(
+            raw,
+            ratio=2.0,
+            padding=(10, 20),
+            original_shape=(30, 40),
+            confidence_threshold=0.05,
+            person_class_id=0,
+        )
+
+        self.assertEqual(len(detections), 1)
+        np.testing.assert_array_equal(
+            detections[0].xyxy,
+            np.array([5, 5, 25, 25], dtype=np.float32),
+        )
+        self.assertAlmostEqual(detections[0].score, 0.9, places=6)
+
+    def test_decode_rejects_non_end_to_end_output(self) -> None:
+        with self.assertRaisesRegex(ValueError, "end-to-end YOLO26"):
+            decode_end_to_end(
+                np.zeros((1, 84, 8400), dtype=np.float32),
+                ratio=1.0,
+                padding=(0, 0),
+                original_shape=(640, 640),
+                confidence_threshold=0.05,
+                person_class_id=0,
+            )
+
+
+class DetectionCacheTests(unittest.TestCase):
+    def test_cache_round_trip_preserves_float32_detections(self) -> None:
+        frames = [
+            [
+                Detection(
+                    np.array([1.25, 2.5, 30.75, 40.5], dtype=np.float32),
+                    0.812345,
+                    0,
+                )
+            ],
+            [],
+            [
+                Detection(
+                    np.array([5, 6, 7, 8], dtype=np.float32),
+                    0.4,
+                    0,
+                )
+            ],
+        ]
+        metadata = {"source_sha256": "abc", "frame_count": 3}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "detections.npz"
+            write_detection_cache(path, frames, metadata)
+            loaded_metadata, offsets, boxes, scores, class_ids = (
+                load_detection_cache(path)
+            )
+
+        self.assertEqual(loaded_metadata, metadata)
+        self.assertEqual(offsets.tolist(), [0, 1, 1, 2])
+        reconstructed = detections_for_cached_frame(
+            0,
+            offsets,
+            boxes,
+            scores,
+            class_ids,
+        )
+        self.assertEqual(len(reconstructed), 1)
+        np.testing.assert_array_equal(
+            reconstructed[0].xyxy,
+            frames[0][0].xyxy,
+        )
+        self.assertEqual(
+            np.float32(reconstructed[0].score),
+            np.float32(frames[0][0].score),
+        )
+
+    def test_cache_rejects_frame_outside_cached_range(self) -> None:
+        with self.assertRaises(IndexError):
+            detections_for_cached_frame(
+                1,
+                np.array([0, 0], dtype=np.int64),
+                np.empty((0, 4), dtype=np.float32),
+                np.empty((0,), dtype=np.float32),
+                np.empty((0,), dtype=np.int16),
+            )
 
 
 if __name__ == "__main__":
