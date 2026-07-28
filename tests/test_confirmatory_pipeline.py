@@ -257,6 +257,51 @@ class ConfirmatoryAnalysisTests(unittest.TestCase):
             )
         )
 
+    def test_equal_point_estimates_receive_a_shared_rank(self) -> None:
+        rows = self._kpis()
+        low_sample = "LOCAL_WINDOW_HPP_EXACT95_LOW"
+        for row in rows:
+            if (
+                row["input_sample_id"] == low_sample
+                and row["scenario_id"]
+                in {
+                    "CAPACITY_BOTH_PLUS",
+                    "CAPACITY_IMMIGRATION_PLUS_3",
+                }
+            ):
+                row["total_queue_wait_p95_seconds"] = "0"
+
+        analysis = build_confirmatory_analysis(
+            rows,
+            self.design,
+            alignment_verified=True,
+        )
+        low_rows = {
+            row["scenario_id"]: row
+            for row in analysis["rankings"]
+            if row["arrival_level_id"] == "EXACT95_LOW"
+        }
+        self.assertEqual(
+            low_rows["CAPACITY_BOTH_PLUS"]["point_estimate_rank"],
+            1,
+        )
+        self.assertEqual(
+            low_rows["CAPACITY_IMMIGRATION_PLUS_3"][
+                "point_estimate_rank"
+            ],
+            1,
+        )
+        self.assertFalse(
+            analysis["stability"]["point_order_stable_across_rates"]
+        )
+        self.assertEqual(
+            analysis["stability"]["tie_groups_by_level"]["EXACT95_LOW"][0],
+            [
+                "CAPACITY_BOTH_PLUS",
+                "CAPACITY_IMMIGRATION_PLUS_3",
+            ],
+        )
+
     def test_alignment_gate_rejects_stale_artifact_hash(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

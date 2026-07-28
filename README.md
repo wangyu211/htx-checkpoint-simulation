@@ -387,11 +387,11 @@ docs/         Task 1-3 reports and result-blind analysis plan
 simulation/   selected simulation-engine project
 src/          CV, input modelling, experiment, and analysis code
 tests/        deterministic verification checks
-results/      reproducible tables and figures
+results/      reproducible pilot and confirmatory evidence packages
 slides/       Task 4 presentation
 ```
 
-The public release will also contain the Task 1 approach/results, Task 2 short
-design document, Task 3 logic/metrics documentation, and the Task 4 slide deck.
+The public release contains the Task 1 approach/results, Task 2 system design,
+Task 3 design, execution and results documentation, and the Task 4 slide deck.
 The completed five-slide deck is
 [`slides/HTX_Task4_Operational_Insights.pptx`](slides/HTX_Task4_Operational_Insights.pptx).

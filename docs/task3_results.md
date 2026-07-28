@@ -66,11 +66,10 @@ For interpretability, the supporting reference-minus-joint improvements are:
 | Point estimate / base | `2.678732` | `[2.296573, 3.060892]` |
 | Exact 95% high | `33.158314` | `[31.410389, 34.906238]` |
 
-The total-queue-wait-P95 point order was joint, Immigration +3, Security +4,
-then reference at all three registered rates. That stable point order is
-descriptive. Some other pairwise intervals remain unresolved, and pairwise
-point-direction stability across rates is false, so the study does not show
-general option dominance.
+For total queue-wait P95, joint was lowest at the base and high rates and
+tied with Immigration +3 at `0.000 s` at the low endpoint. Some other
+pairwise intervals remain unresolved, and strict point-order stability across
+rates is therefore false. The study does not show general option dominance.
 
 Tracked evidence:
 
@@ -200,9 +199,8 @@ ICA operations.
 - The confirmatory claim is limited to the pre-specified base-rate
   joint-minus-reference contrast; the low/high contrasts and rankings are
   supporting.
-- The confirmatory point order is stable, but unresolved pairwise intervals
-  and false pairwise point-direction stability preclude a general dominance
-  claim.
+- Joint is lowest at base/high and tied-lowest with Immigration +3 at the low
+  endpoint; unresolved pairwise intervals preclude a general dominance claim.
 - Ten replications are a pilot count; pilot contrasts remain exploratory and
   must not inherit the confirmatory study's paired status.
 - Confidence intervals quantify Monte Carlo error conditional on fixed

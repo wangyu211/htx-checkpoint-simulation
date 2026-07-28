@@ -209,11 +209,11 @@ supporting rate-specific improvements were:
 | Point estimate / base | `2.678732` | `[2.296573, 3.060892]` |
 | Exact 95% high | `33.158314` | `[31.410389, 34.906238]` |
 
-The total-queue-wait-P95 point order was joint, Immigration +3, Security +4,
-then reference at all three rates. This is supporting point-estimate
-stability, not proof of option dominance: some other pairwise intervals
-remain unresolved, and pairwise point-direction stability across rates is
-false.
+For total queue-wait P95, joint was lowest at the base and high rates and
+tied with Immigration +3 at `0.000 s` at the low endpoint. This is
+supporting, rate-specific evidence—not proof of option dominance. The
+low-endpoint tie and other unresolved pairwise intervals mean strict
+point-order stability across rates is false.
 
 The tracked compact analysis package contains the auditable result:
 

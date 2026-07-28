@@ -55,17 +55,11 @@ direction, the base-rate improvement is `2.678732 s` with paired 95% CI
 | Point estimate / base | `2.678732` | `[2.296573, 3.060892]` |
 | Exact 95% high | `33.158314` | `[31.410389, 34.906238]` |
 
-For total queue-wait P95, the lower-is-better point order is the same at all
-three rates:
-
-1. joint `Security +4 / Immigration +3`;
-2. Immigration +3;
-3. Security +4; and
-4. reference.
-
-This identical point order is supporting descriptive evidence, not proof that
-one option dominates all others. Some other pairwise intervals remain
-unresolved, and pairwise point-direction stability across rates is false.
+For total queue-wait P95, joint is lowest at the base and high rates. At the
+low endpoint, joint and Immigration +3 are tied at `0.000 s`; Security +4 and
+reference follow. This is supporting descriptive evidence, not proof that one
+option dominates all others. The low-endpoint tie and other unresolved
+pairwise intervals mean strict point-order stability across rates is false.
 
 ## Package contents
 

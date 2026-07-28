@@ -264,6 +264,7 @@ def build_confirmatory_analysis(
     }
     rank_by_input: dict[str, dict[str, int]] = {}
     signatures: dict[str, list[str]] = {}
+    tie_groups: dict[str, list[list[str]]] = {}
     for input_sample_id in levels:
         order = sorted(
             CAPACITY_SCENARIO_IDS,
@@ -272,17 +273,36 @@ def build_confirmatory_analysis(
                 scenario_id,
             ),
         )
-        signatures[levels[input_sample_id]] = order
-        rank_by_input[input_sample_id] = {
-            scenario_id: rank for rank, scenario_id in enumerate(order, start=1)
-        }
+        level_id = levels[input_sample_id]
+        signatures[level_id] = order
+        level_groups: list[list[str]] = []
+        level_ranks: dict[str, int] = {}
+        previous_mean: float | None = None
+        for position, scenario_id in enumerate(order, start=1):
+            mean = float(
+                estimate_lookup[(scenario_id, input_sample_id)]["mean"]
+            )
+            if previous_mean is None or not math.isclose(
+                mean,
+                previous_mean,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            ):
+                level_groups.append([scenario_id])
+                current_rank = position
+            else:
+                level_groups[-1].append(scenario_id)
+            level_ranks[scenario_id] = current_rank
+            previous_mean = mean
+        tie_groups[level_id] = level_groups
+        rank_by_input[input_sample_id] = level_ranks
     base_ranks = rank_by_input[primary_input]
-    base_signature = signatures[primary_level_id]
+    base_tie_groups = tie_groups[primary_level_id]
     ranking_rows: list[dict[str, object]] = []
     for input_sample_id, level_id in sorted(
         levels.items(), key=lambda item: item[1]
     ):
-        same_order = signatures[level_id] == base_signature
+        same_order = tie_groups[level_id] == base_tie_groups
         for scenario_id in signatures[level_id]:
             estimate = estimate_lookup[(scenario_id, input_sample_id)]
             rank = rank_by_input[input_sample_id][scenario_id]
@@ -373,8 +393,15 @@ def build_confirmatory_analysis(
         "metric": PRIMARY_METRIC,
         "analysis_role": "SUPPORTING_POINT_ESTIMATE_RANKING",
         "rank_signature_by_level": signatures,
+        "tie_groups_by_level": tie_groups,
         "point_order_stable_across_rates": (
-            len({tuple(value) for value in signatures.values()}) == 1
+            len(
+                {
+                    tuple(tuple(group) for group in groups)
+                    for groups in tie_groups.values()
+                }
+            )
+            == 1
         ),
         "pairwise_point_direction_stable_across_rates": point_direction_stable,
         "resolved_direction_stable_across_rates": resolved_direction_stable,
@@ -384,8 +411,8 @@ def build_confirmatory_analysis(
             for status in statuses
         ),
         "claim_boundary": (
-            "Ranking is descriptive and rate-specific; identical point order "
-            "does not establish statistically resolved option dominance."
+            "Ranking is descriptive and rate-specific; ties and unresolved "
+            "intervals preclude statistically resolved option dominance."
         ),
     }
     return {

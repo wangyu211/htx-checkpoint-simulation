@@ -237,10 +237,11 @@ The confirmatory result supports the narrow statement that, under the
 registered fixed-service-time pooled-FCFS assumptions, joint capacity reduced
 the base-rate mean replication-level total queue-wait P95 relative to the
 reference by `2.678732 s` (reference minus joint, paired 95% CI
-`[2.296573, 3.060892]`). The supporting point order is joint, Immigration +3,
-Security +4, then reference at low, base, and high rates. It must not be
-reported as option dominance: some other pairwise intervals are unresolved
-and pairwise point-direction stability across rates is false.
+`[2.296573, 3.060892]`). In the supporting rate analysis, joint is lowest at
+the base and high endpoints and tied with Immigration +3 at `0.000 s` at the
+low endpoint. It must not be reported as option dominance: the low-endpoint
+tie and other unresolved pairwise intervals mean that a strict point order is
+not stable across rates.
 
 No option is labelled an operational optimum or final recommendation. All
 results are conditional on a non-calibrated, fixed-service-time pooled-FCFS

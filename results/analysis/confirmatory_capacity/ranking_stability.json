@@ -1,10 +1,10 @@
 {
   "analysis_role": "SUPPORTING_POINT_ESTIMATE_RANKING",
   "any_unresolved_pairwise_interval": true,
-  "claim_boundary": "Ranking is descriptive and rate-specific; identical point order does not establish statistically resolved option dominance.",
+  "claim_boundary": "Ranking is descriptive and rate-specific; ties and unresolved intervals preclude statistically resolved option dominance.",
   "metric": "total_queue_wait_p95_seconds",
   "pairwise_point_direction_stable_across_rates": false,
-  "point_order_stable_across_rates": true,
+  "point_order_stable_across_rates": false,
   "rank_signature_by_level": {
     "EXACT95_HIGH": [
       "CAPACITY_BOTH_PLUS",
@@ -27,5 +27,47 @@
   },
   "resolved_direction_stable_across_rates": true,
   "schema_version": "1.0",
-  "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1"
+  "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+  "tie_groups_by_level": {
+    "EXACT95_HIGH": [
+      [
+        "CAPACITY_BOTH_PLUS"
+      ],
+      [
+        "CAPACITY_IMMIGRATION_PLUS_3"
+      ],
+      [
+        "CAPACITY_SECURITY_PLUS_4"
+      ],
+      [
+        "REFERENCE_ASSUMPTION_SANDBOX_V1"
+      ]
+    ],
+    "EXACT95_LOW": [
+      [
+        "CAPACITY_BOTH_PLUS",
+        "CAPACITY_IMMIGRATION_PLUS_3"
+      ],
+      [
+        "CAPACITY_SECURITY_PLUS_4"
+      ],
+      [
+        "REFERENCE_ASSUMPTION_SANDBOX_V1"
+      ]
+    ],
+    "MLE_BASE": [
+      [
+        "CAPACITY_BOTH_PLUS"
+      ],
+      [
+        "CAPACITY_IMMIGRATION_PLUS_3"
+      ],
+      [
+        "CAPACITY_SECURITY_PLUS_4"
+      ],
+      [
+        "REFERENCE_ASSUMPTION_SANDBOX_V1"
+      ]
+    ]
+  }
 }

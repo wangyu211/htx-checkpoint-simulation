@@ -1,8 +1,13 @@
-# Task 3 operational results
+# Task 3 exploratory operational pilot results
 
 **Status:** 150/150 AnyLogic runs and 61,218 entity records passed strict schema, lineage, seed, conservation, and full-drain validation.
 
 **Claim boundary:** Monte Carlo uncertainty conditional on the registered assumption scenarios. These results are not calibrated HTX performance, a site forecast, or a staffing recommendation.
+
+**Role after confirmatory execution:** historical exploratory pilot retained
+for diagnostics, variance planning, and broad sensitivity screening. The
+capacity conclusion is superseded by the frozen 600-run confirmatory study;
+pilot contrasts remain unpaired `n=10` exploratory results.
 
 ![Operational scenario dashboard](operational_dashboard.png)
 
@@ -16,7 +21,7 @@
 | Security utilization | 74.00% | 71.33–76.67% |
 | Immigration utilization | 75.58% | 72.86–78.31% |
 
-## Primary scenario contrast
+## Exploratory scenario contrasts
 
 The primary estimand is the mean of the 10 replication-level traveller queue-wait P95 values. Differences below are scenario minus reference.
 
