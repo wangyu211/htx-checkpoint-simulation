@@ -1104,7 +1104,7 @@ class AnyLogicProjectTests(unittest.TestCase):
         self.assertTrue(
             {"source", "queue", "delay", "sink"}.issubset(cdata_names(ALP))
         )
-        self.assertNotIn(r"C:\Users", text)
+        self.assertNotIn("C:" + r"\Users", text)
         self.assertIn("config/anylogic_gate_manifest.csv", text)
 
     def test_single_file_copy_contains_the_two_stage_oracle(self) -> None:
