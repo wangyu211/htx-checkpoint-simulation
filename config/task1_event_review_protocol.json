@@ -1,0 +1,195 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_id": "TASK1_CROSSING_EVENT_REVIEW_X640_V1",
+  "preregistered_date": "2026-07-29",
+  "status": "REVIEW_REQUIRED",
+  "purpose": "Create a project-owner-signed event-time ledger without selecting tracker candidates to reproduce a historical aggregate.",
+  "source_video": {
+    "filename": "TestVidTask.mov",
+    "sha256": "4e2adef6a7c11ff4bac604a034229a08dfd53747360862cc53d0098f53bc7a2c",
+    "decoded_frame_count": 748,
+    "nominal_fps": 30.012692533517964,
+    "nominal_duration_seconds": 24.92278888888889,
+    "width_px": 1280,
+    "height_px": 720
+  },
+  "measurement_geometry": {
+    "roi_xyxy": [0, 0, 1280, 310],
+    "line_x": 640,
+    "deadband_px": 0,
+    "image_directions": ["left_to_right", "right_to_left"],
+    "operational_stream_mapping": {
+      "right_to_left": "arrival",
+      "left_to_right": "opposing_flow"
+    },
+    "mapping_status": "ASSESSMENT_ASSUMPTION_REQUIRES_SITE_VALIDATION"
+  },
+  "review_design": {
+    "primary_stage": "COUNT_BLIND_ALL_FRAME_ENUMERATION",
+    "minimum_full_video_passes": 2,
+    "allow_same_human_for_both_passes": true,
+    "same_human_disclosure": "SINGLE_REVIEWER_DOUBLE_PASS",
+    "candidate_ids_visible_during_enumeration": false,
+    "tracker_names_visible_during_enumeration": false,
+    "running_totals_visible_during_enumeration": false,
+    "historical_aggregate_as_acceptance_target": false,
+    "reviewer_prior_knowledge": "The project owner knows the historical aggregate; hiding totals and completing both passes mitigates operational target fitting but is not claimed to erase prior knowledge.",
+    "required_frame_coverage": {
+      "first_frame_index": 0,
+      "last_frame_index": 747,
+      "allow_dropped_decoded_frames": false
+    }
+  },
+  "event_definition": {
+    "unit": "unique physical traveller crossing the count line once",
+    "identity_basis": "visible physical continuity, never tracker ID",
+    "event_time_rule": "After stable movement across the line, use the PTS of the first decoded frame in which the visible body-centre proxy is on the destination side.",
+    "occlusion_precision_rule": "When the exact frame is not defensible, record lower and upper PTS bounds and mark the time as interval-censored.",
+    "start_boundary_rule": "A traveller already on the destination side at frame 0 is LEFT_CENSORED_AT_START and is not counted as an observed crossing.",
+    "end_boundary_rule": "An incomplete crossing at frame 747 is RIGHT_CENSORED_AT_END and is not forced into the point estimate.",
+    "duplicate_rule": "Multiple detector fragments for one physical crossing resolve to one accepted event; preserve rejected duplicate review items."
+  },
+  "decisions": ["ACCEPT", "REJECT", "UNCERTAIN"],
+  "reason_codes": {
+    "ACCEPT": [
+      "CLEAR_CONTINUOUS_CROSSING",
+      "OCCLUDED_CONTINUITY_RESOLVED",
+      "ROI_BOUNDARY_PARTIAL_BUT_CLEAR"
+    ],
+    "REJECT": [
+      "ALREADY_PAST_LINE_AT_START",
+      "INCOMPLETE_AT_END",
+      "NO_CROSSING",
+      "APPROACH_ONLY",
+      "ID_SWITCH_OR_TRACK_JUMP",
+      "DUPLICATE_FRAGMENT",
+      "REFLECTION_OR_EXCLUDED_REGION"
+    ],
+    "UNCERTAIN": [
+      "OCCLUSION_UNRESOLVED",
+      "BOUNDARY_TRUNCATED_UNRESOLVED"
+    ]
+  },
+  "candidate_reconciliation": {
+    "starts_only_after_manual_enumeration_is_frozen": true,
+    "automatic_match_is_not_a_ground_truth_decision": true,
+    "same_direction_required": true,
+    "maximum_time_difference_seconds": 0.5,
+    "maximum_y_difference_px": 40,
+    "matching_cardinality": "ONE_TO_ONE_FOR_CLUSTER_PROPOSAL_ONLY",
+    "all_unmatched_or_ambiguous_clusters_require_human_review": true,
+    "frozen_local_candidate_sha256": {
+      "yolo26m_botsort": "57c73af8c27e9b1998e4960ddae533719ef32f94273b0d4da1012b50687d4ffc",
+      "yolo26m_bytetrack": "a0c4586fc38d844ae23341d2c12d4c6ecee1a590ccb7c2c3830c0242dcead322",
+      "yolo26m_hungarian": "3f61dbd20f7c807d9bfb3e21a75b1b52b70f1432bf9c400e125a4c8e65c43ae1",
+      "yolo26m_hungarian_min_hits_1": "35a33b3cecbad70adae61d16e1e432a668add3fdd579068cd779f513c2bdda62",
+      "yolox_s_bytetrack": "69a813f7f6ff6ae91c309ef3affe16c33bf8feb2a37484ca7a2f4eb68197afd9",
+      "classical_cv_alerts": "1c8c12a35cecf7349a2cd5de4ed0bcab59edf2a8d67de7012d38ffe29bd5eff9",
+      "sequential_sweep_recall_challenges": "2d45b0afda144743ba412b218ad16bfb50f360f52e3403d8ba9db50a50e40805"
+    }
+  },
+  "signoff_requirements": {
+    "all_review_items_resolved": true,
+    "accepted_events_unique": true,
+    "reviewer_id_required": true,
+    "reviewed_at_utc_required": true,
+    "reason_code_required": true,
+    "expected_total_for_validation": null,
+    "counts_revealed_only_after_review_completion": true,
+    "detached_hash_manifest_required": true
+  },
+  "public_ledger_contract": {
+    "accepted_rows_only": true,
+    "fields_in_order": [
+      "schema_version",
+      "ledger_version",
+      "event_id",
+      "source_video_sha256",
+      "frame_index",
+      "pts_seconds",
+      "time_lower_seconds",
+      "time_upper_seconds",
+      "time_resolution",
+      "image_direction",
+      "operational_stream_mapping",
+      "crossing_y_px",
+      "line_x",
+      "roi_xyxy",
+      "continuity_class",
+      "boundary_flags",
+      "evidence_packet_id",
+      "decision",
+      "decision_reason_code",
+      "reviewer_id",
+      "reviewed_at_utc"
+    ],
+    "time_resolution_values": [
+      "EXACT_FRAME",
+      "INTERVAL_CENSORED"
+    ],
+    "time_rules": {
+      "EXACT_FRAME": "frame_index and pts_seconds are required; lower and upper bounds must equal pts_seconds.",
+      "INTERVAL_CENSORED": "frame_index and pts_seconds are blank; finite lower and upper bounds are required with lower < upper."
+    },
+    "continuity_class_values": [
+      "CLEAR_CONTINUOUS",
+      "OCCLUDED_RESOLVED",
+      "ROI_BOUNDARY_PARTIAL_RESOLVED"
+    ],
+    "boundary_flag_values": [
+      "NONE",
+      "ROI_BOUNDARY_PARTIAL"
+    ],
+    "decision_value": "ACCEPT",
+    "event_id_is_not_a_person_identifier": true
+  },
+  "review_item_contract": {
+    "fields_in_order": [
+      "review_item_id",
+      "enumeration_pass_id",
+      "approx_pts_seconds",
+      "proposed_direction",
+      "approx_crossing_y_px",
+      "proposal_sources",
+      "source_local_ids",
+      "evidence_packet_id",
+      "final_decision",
+      "reason_code",
+      "duplicate_of_event_id",
+      "reviewer_id",
+      "reviewed_at_utc",
+      "reviewer_notes"
+    ],
+    "preserve_rejected_and_uncertain_rows": true
+  },
+  "detached_signoff_contract": {
+    "fields": [
+      "schema_version",
+      "ledger_version",
+      "protocol_sha256",
+      "source_video_sha256",
+      "review_items_sha256",
+      "signed_event_ledger_sha256",
+      "evidence_manifest_sha256",
+      "accepted_counts_by_direction",
+      "uncertain_count",
+      "reviewer_id",
+      "signed_at_utc",
+      "attestation"
+    ],
+    "attestation": "I completed the registered review, resolved every review item without an expected-count acceptance target, and approve this non-pixel event ledger."
+  },
+  "public_release_boundary": {
+    "publish_raw_video_or_pixel_evidence": false,
+    "publish_appearance_features_or_embeddings": false,
+    "publish_permanent_person_identifiers": false,
+    "publish_non_pixel_ledger_after_signoff": true,
+    "publish_protocol_and_hashes": true
+  },
+  "interpretation_limits": [
+    "The short clip does not establish stationarity or time-of-day demand.",
+    "Signed trace replay is an observed-window mechanism study, not a long-horizon demand forecast.",
+    "Tracker agreement is a recall challenge and does not define ground truth.",
+    "If signed counts differ from the historical aggregate, preserve both versions and publish the discrepancy."
+  ]
+}

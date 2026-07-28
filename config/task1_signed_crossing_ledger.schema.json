@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/htx/task1_signed_crossing_ledger.schema.json",
+  "title": "Task 1 accepted crossing-event ledger",
+  "description": "JSON representation of the public accepted-event CSV contract registered by task1_event_review_protocol.json. Rejected and uncertain rows remain in the separately hash-bound review-item history. No expected event total is encoded.",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "$ref": "#/$defs/acceptedEvent"
+  },
+  "$defs": {
+    "opaqueToken": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "reviewerAlias": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+      "description": "A non-PII role alias, not a name or email address."
+    },
+    "acceptedEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "ledger_version",
+        "event_id",
+        "source_video_sha256",
+        "frame_index",
+        "pts_seconds",
+        "time_lower_seconds",
+        "time_upper_seconds",
+        "time_resolution",
+        "image_direction",
+        "operational_stream_mapping",
+        "crossing_y_px",
+        "line_x",
+        "roi_xyxy",
+        "continuity_class",
+        "boundary_flags",
+        "evidence_packet_id",
+        "decision",
+        "decision_reason_code",
+        "reviewer_id",
+        "reviewed_at_utc"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "TASK1_SIGNED_CROSSING_LEDGER_V1"
+        },
+        "ledger_version": {
+          "$ref": "#/$defs/opaqueToken"
+        },
+        "event_id": {
+          "$ref": "#/$defs/opaqueToken",
+          "description": "A ledger-local event token, not a permanent person identifier."
+        },
+        "source_video_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "frame_index": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "string",
+              "maxLength": 0
+            }
+          ]
+        },
+        "pts_seconds": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string",
+              "maxLength": 0
+            }
+          ]
+        },
+        "time_lower_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "time_upper_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "time_resolution": {
+          "enum": [
+            "EXACT_FRAME",
+            "INTERVAL_CENSORED"
+          ]
+        },
+        "image_direction": {
+          "enum": [
+            "left_to_right",
+            "right_to_left"
+          ]
+        },
+        "operational_stream_mapping": {
+          "enum": [
+            "arrival",
+            "opposing_flow"
+          ]
+        },
+        "crossing_y_px": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 310
+        },
+        "line_x": {
+          "const": 640
+        },
+        "roi_xyxy": {
+          "const": "0,0,1280,310"
+        },
+        "continuity_class": {
+          "enum": [
+            "CLEAR_CONTINUOUS",
+            "OCCLUDED_RESOLVED",
+            "ROI_BOUNDARY_PARTIAL_RESOLVED"
+          ]
+        },
+        "boundary_flags": {
+          "enum": [
+            "NONE",
+            "ROI_BOUNDARY_PARTIAL"
+          ]
+        },
+        "evidence_packet_id": {
+          "$ref": "#/$defs/opaqueToken"
+        },
+        "decision": {
+          "const": "ACCEPT"
+        },
+        "decision_reason_code": {
+          "enum": [
+            "CLEAR_CONTINUOUS_CROSSING",
+            "OCCLUDED_CONTINUITY_RESOLVED",
+            "ROI_BOUNDARY_PARTIAL_BUT_CLEAR"
+          ]
+        },
+        "reviewer_id": {
+          "$ref": "#/$defs/reviewerAlias"
+        },
+        "reviewed_at_utc": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "time_resolution": {
+                "const": "INTERVAL_CENSORED"
+              }
+            },
+            "required": [
+              "time_resolution"
+            ]
+          },
+          "then": {
+            "properties": {
+              "frame_index": {
+                "const": ""
+              },
+              "pts_seconds": {
+                "const": ""
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "x-csv-columns-in-order": [
+    "schema_version",
+    "ledger_version",
+    "event_id",
+    "source_video_sha256",
+    "frame_index",
+    "pts_seconds",
+    "time_lower_seconds",
+    "time_upper_seconds",
+    "time_resolution",
+    "image_direction",
+    "operational_stream_mapping",
+    "crossing_y_px",
+    "line_x",
+    "roi_xyxy",
+    "continuity_class",
+    "boundary_flags",
+    "evidence_packet_id",
+    "decision",
+    "decision_reason_code",
+    "reviewer_id",
+    "reviewed_at_utc"
+  ],
+  "x-contract-authority": "config/task1_event_review_protocol.json",
+  "x-public-artifact-constraints": [
+    "Accepted physical crossings only",
+    "No expected event total",
+    "No source pixels",
+    "No evidence file paths",
+    "No tracker IDs or permanent person identifiers",
+    "No free-text notes",
+    "No personal names or email addresses"
+  ]
+}
