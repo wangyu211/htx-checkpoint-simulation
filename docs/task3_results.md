@@ -1,46 +1,96 @@
-# Task 3 replicated operational pilot results
+# Task 3 replicated operational results
 
-**Status:** strict result gate `PASS` — 150/150 AnyLogic runs, 61,218 traveller
-records, zero dropped/rejected travellers, and complete drain in every run.
+**Status:** frozen confirmatory capacity study executed — 600/600 AnyLogic
+runs, 253,756 entity rows, strict result validation `PASS`, CRN alignment
+`PASS`, and primary precision target met. The earlier 150-run pilot remains
+valid exploratory and engineering evidence.
 
-**Claim boundary:** a non-calibrated, pooled-FCFS assumption sandbox. Results
-are comparative Monte Carlo evidence conditional on the registered inputs;
-they are not measured HTX performance, a site forecast, or a staffing
-recommendation.
+**Claim boundary:** a non-calibrated, fixed-service-time pooled-FCFS
+assumption sandbox. Results are comparative Monte Carlo evidence conditional
+on the registered inputs; they are not measured HTX performance, a calibrated
+baseline, a site forecast, a staffing answer, or an economic recommendation.
 
 ## Executive finding
 
 The most defensible result is a **mechanism finding**, not a winning policy:
 
-> Under the registered pilot assumptions, changing only one stage mostly
-> transfers the active constraint, while balanced capacity reduces total tail
-> waiting most clearly. Demand, Immigration service time, and rare long
-> counter-held work dominate small capacity and automation effects.
+> Under the frozen confirmatory assumptions, joint `Security +4 /
+> Immigration +3` capacity reduced the base-rate mean replication-level total
+> queue-wait P95 by `2.678732 s` relative to reference. The supporting
+> low/base/high results show that the magnitude is rate-dependent; they do not
+> establish a universally dominant option.
 
 This is exactly why the pipeline retains stage timestamps, cutoff state, full
 drain, replication-level KPIs, configuration lineage, and confidence
 intervals. Animation alone would not show bottleneck migration or hidden
 clearance risk.
 
-## Evidence health
+## Confirmatory evidence health
 
 | Gate | Recorded outcome |
 |---|---:|
-| Registered scenarios | 15 |
-| Independent replications per scenario | 10 |
-| Exact run coverage | 150 / 150 |
-| Traveller rows | 61,218 |
-| Dropped/rejected | 0 |
-| Conservation and full drain | 150 / 150 pass |
+| Registered grid | 4 capacity alternatives × 3 arrival rates = 12 cells |
+| Replications per cell | 50 |
+| Exact run coverage | 600 / 600 |
+| Entity rows | 253,756 |
 | Strict result validator | `PASS`, 0 errors |
-| Scenario estimates / contrasts | 165 / 154 rows |
-| CRN alignment | `NOT_TESTED` |
-| Contrast method | independent Welch |
+| CRN alignment | `PASS` |
+| Within-rate CRN groups | 150 |
+| Compared branch-invariant draws | 1,141,902 |
+| Primary contrast method | paired Student-t |
+| Primary paired sample | 50 replication pairs |
+| Precision target | half-width `0.382159515 s <= 1.0 s` |
 
-The statistical sample is the 10 replication-level KPI values per scenario,
-not the traveller rows.
+The statistical sample for the primary result is 50 paired replication-level
+KPI differences, not the entity rows.
 
-## Reference assumption sandbox
+## Confirmatory primary result
+
+The pre-specified primary direction was joint capacity minus reference at the
+base arrival rate:
+
+```text
+-2.678732146 s, 95% CI [-3.060891661, -2.296572631]
+paired n = 50; half-width = 0.382159515 s
+```
+
+The interval excludes zero and meets the registered `1.0 s` half-width
+target. This confirms a reduction in the modelled metric under the frozen
+assumptions; it does not establish a staffing or economic recommendation.
+
+For interpretability, the supporting reference-minus-joint improvements are:
+
+| Registered arrival rate | Improvement (s) | Paired 95% CI (s) |
+|---|---:|---:|
+| Exact 95% low | `0.066904` | `[0.006751, 0.127058]` |
+| Point estimate / base | `2.678732` | `[2.296573, 3.060892]` |
+| Exact 95% high | `33.158314` | `[31.410389, 34.906238]` |
+
+The total-queue-wait-P95 point order was joint, Immigration +3, Security +4,
+then reference at all three registered rates. That stable point order is
+descriptive. Some other pairwise intervals remain unresolved, and pairwise
+point-direction stability across rates is false, so the study does not show
+general option dominance.
+
+Tracked evidence:
+
+- [compact analysis package](../results/analysis/confirmatory_capacity/README.md)
+- [strict validation report](../results/analysis/confirmatory_capacity/validation.json)
+- [CRN alignment report](../results/analysis/confirmatory_capacity/crn_alignment.json)
+- [primary result](../results/analysis/confirmatory_capacity/primary_result.json)
+- [rate rankings](../results/analysis/confirmatory_capacity/rate_rankings.csv)
+- [pairwise contrasts](../results/analysis/confirmatory_capacity/within_rate_pairwise_contrasts.csv)
+- [ranking stability](../results/analysis/confirmatory_capacity/ranking_stability.json)
+
+## Pilot evidence retained
+
+The earlier `15 × 10 = 150` run pilot remains useful for pipeline verification,
+variance estimation, broad sensitivity screening, and engineering diagnosis.
+Its contrasts remain exploratory independent-Welch results because pilot CRN
+alignment was `NOT_TESTED`; the confirmatory `PASS` does not apply
+retroactively.
+
+## Pilot reference assumption sandbox
 
 `REFERENCE_ASSUMPTION_SANDBOX_V1` uses the accepted Task 1 rate
 `1.364213/s`, HPP arrivals for 300 seconds, 36 Security resources at fixed
@@ -63,7 +113,7 @@ wait is unsurprising: the reference was deliberately capacity-derived with
 headroom, uses fixed service times, and starts empty and idle. It must not be
 described as observed baseline performance.
 
-## Capacity and bottleneck migration
+## Pilot capacity and bottleneck migration
 
 | Scenario | Security P95 | Immigration P95 | Utilization S / I | Total P95 |
 |---|---:|---:|---:|---:|
@@ -84,7 +134,7 @@ other stage active. The joint case best expresses the balanced serial-system
 mechanism; it is not an economic optimum because costs and roster constraints
 are absent.
 
-## Dominant sensitivities
+## Pilot dominant sensitivities
 
 | Scenario | Total queue-wait P95 | Not exited at cutoff | Clear after cutoff |
 |---|---:|---:|---:|
@@ -110,7 +160,7 @@ queue wait excludes the additional service duration, different random
 samples are used, and there are only 10 pilot replications. Full-drain clear
 time correctly exposes the extreme operational consequence.
 
-## Automation scenarios
+## Pilot automation scenarios
 
 All automation variants reduce Immigration utilization and make Security the
 residual tail. Primary-P95 contrasts are:
@@ -128,7 +178,7 @@ The apparent non-monotonic HTX 50%/100% point estimates are sampling noise,
 not evidence that more uptake is worse. Fine rankings are provisional because
 CRN alignment is not verified and `n=10`.
 
-## Why the draft guardrails cannot be used as a traffic light
+## Why the pilot guardrails cannot be used as a traffic light
 
 Every scenario is below the illustrative 900-second upper-CI rule for the
 primary queue-wait P95, so that rule does not discriminate this pilot.
@@ -147,7 +197,14 @@ ICA operations.
 
 ## Interpretation limits
 
-- Ten replications are a pilot count, not confirmatory precision.
+- The confirmatory claim is limited to the pre-specified base-rate
+  joint-minus-reference contrast; the low/high contrasts and rankings are
+  supporting.
+- The confirmatory point order is stable, but unresolved pairwise intervals
+  and false pairwise point-direction stability preclude a general dominance
+  claim.
+- Ten replications are a pilot count; pilot contrasts remain exploratory and
+  must not inherit the confirmatory study's paired status.
 - Confidence intervals quantify Monte Carlo error conditional on fixed
   assumptions; they omit input uncertainty and model-form error.
 - The 154 contrasts are exploratory and have no multiplicity adjustment.
@@ -167,8 +224,14 @@ ICA operations.
 
 ## Reproduce
 
-Run `OperationalPilot: OperationalCheckpointModel` in AnyLogic PLE and wait
-for `Finished`, then:
+The frozen confirmatory replay procedure is recorded in the
+[confirmatory design and execution record](task3_confirmatory_design.md).
+Its checked-in outputs are documented in the
+[tracked compact analysis package](../results/analysis/confirmatory_capacity/README.md).
+
+To reproduce the retained pilot, run
+`OperationalPilot: OperationalCheckpointModel` in AnyLogic PLE and wait for
+`Finished`, then:
 
 ```powershell
 .\.venv\Scripts\python.exe -m src.analysis.validate_operational_contract
@@ -179,9 +242,9 @@ for `Finished`, then:
 .\.venv\Scripts\python.exe -m src.analysis.build_operational_dashboard
 ```
 
-Evidence:
+Tracked pilot evidence:
 
-- [strict validation report](../results/intermediate/operational_results/validation.json)
+- [strict validation report](../results/analysis/operational/validation.json)
 - [analysis manifest](../results/analysis/operational/analysis_manifest.json)
 - [scenario estimates](../results/analysis/operational/scenario_estimates.csv)
 - [scenario contrasts](../results/analysis/operational/scenario_contrasts.csv)

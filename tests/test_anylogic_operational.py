@@ -8,6 +8,10 @@ import xml.etree.ElementTree as ET
 from decimal import Decimal
 from pathlib import Path
 
+from src.analysis.confirmatory_design import (
+    build_confirmatory_scenario_rows,
+    load_confirmatory_seed_rows,
+)
 from src.analysis.validate_operational_contract import (
     scenario_config_sha256,
 )
@@ -93,6 +97,21 @@ def _operational_pilot() -> ET.Element:
     if len(matches) != 1:
         raise AssertionError(
             f"Expected one OperationalPilot experiment, got {len(matches)}"
+        )
+    return matches[0]
+
+
+def _confirmatory_experiment() -> ET.Element:
+    experiments = ET.parse(EXPERIMENTS).getroot()
+    matches = [
+        item
+        for item in experiments.findall("ParamVariationExperiment")
+        if item.findtext("Name") == "CapacityRobustnessConfirmatory"
+    ]
+    if len(matches) != 1:
+        raise AssertionError(
+            "Expected one CapacityRobustnessConfirmatory experiment, "
+            f"got {len(matches)}"
         )
     return matches[0]
 
@@ -423,7 +442,9 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertEqual(variables[name], "Double.NaN")
 
-    def test_experiment_is_fail_fast_and_exposes_every_parameter(self) -> None:
+    def test_experiment_is_fail_fast_and_exposes_only_effective_controls(
+        self,
+    ) -> None:
         experiment = _operational_experiment()
         self.assertEqual(experiment.findtext("BypassInitialScreen"), "false")
         self.assertEqual(
@@ -437,11 +458,20 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
             "claim-boundary fields were weakened",
             "arrival_guard must exceed expected arrivals",
             "COUNTER_HELD_RISK_REFERRAL_PROXY",
-            "OperationalInteractive is locked to the canonical reference row",
-            "166e6c918cff63041b08f31ff5c17fbea49008b8cdd3047b1082b326faae3460",
+            "five exposed exploratory inputs",
+            "OP_INTERACTIVE_AD_HOC_V1",
+            "INTERACTIVE_EXPLORATORY",
+            "INTERACTIVE_D%03d_SEC%03d_IMM%03d_U%03d_M%03d",
+            "demand_multiplier must be between 0.5 and 2.0",
+            "interactive capacities must be integers between 1 and 200",
+            "automation_uptake must be between 0 and 1",
         ):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, before)
+        self.assertNotIn(
+            "OperationalInteractive is locked to the canonical reference row",
+            before,
+        )
         for fragment in (
             "full-drain conservation failed",
             "cutoff conservation failed",
@@ -458,8 +488,83 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
         }
         self.assertEqual(
             exposed,
-            set(_variables(OP_MODEL_VARIABLES, "Parameter")),
+            {
+                "demand_multiplier",
+                "security_capacity",
+                "immigration_capacity",
+                "automation_uptake",
+                "automation_multiplier",
+            },
         )
+        self.assertNotIn("queue_policy", exposed)
+        presentation_text = " ".join(
+            text.findtext("Text", "")
+            for text in experiment.findall("Presentation/Text")
+        )
+        self.assertIn("ad-hoc exploratory", presentation_text)
+        self.assertIn("Pooled FCFS is the only implemented", presentation_text)
+
+    def test_operational_presentation_has_clear_zones_and_live_state(
+        self,
+    ) -> None:
+        model = ET.parse(OP_MODEL_AOC).getroot()
+        rectangles = {
+            item.findtext("Name", ""): item
+            for item in model.findall("Presentation/Rectangle")
+        }
+        self.assertEqual(
+            set(rectangles),
+            {
+                "arrival_zone",
+                "security_zone",
+                "immigration_zone",
+                "exit_zone",
+                "live_kpi_panel",
+            },
+        )
+        labels = {
+            item.findtext("Name", ""): item.findtext("Text", "")
+            for item in model.findall("Presentation/Text")
+        }
+        for name in (
+            "view_title",
+            "view_subtitle",
+            "arrival_zone_title",
+            "security_zone_title",
+            "immigration_zone_title",
+            "exit_zone_title",
+            "live_kpi_title",
+            "control_note",
+        ):
+            with self.subTest(label=name):
+                self.assertIn(name, labels)
+        self.assertIn("pooled FCFS only", labels["view_subtitle"])
+        self.assertIn("Queue policy is not exposed", labels["control_note"])
+
+        variables_root = ET.parse(OP_MODEL_VARIABLES).getroot()
+        visible = {
+            item.findtext("Name", "")
+            for item in variables_root.findall("Variable")
+            if (
+                item.attrib.get("Class") == "PlainVariable"
+                and item.findtext("PresentationFlag") == "true"
+            )
+        }
+        self.assertTrue(
+            {
+                "admitted",
+                "completed",
+                "security_queue_count",
+                "security_in_service_count",
+                "immigration_queue_count",
+                "immigration_in_service_count",
+                "technology_count",
+                "additional_check_count",
+                "run_status",
+            }.issubset(visible)
+        )
+        self.assertNotIn("security_queue_at_cutoff", visible)
+        self.assertNotIn("immigration_queue_at_cutoff", visible)
 
     def test_operational_pilot_is_exact_serial_15_by_10_batch(self) -> None:
         pilot = _operational_pilot()
@@ -608,6 +713,165 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
         )
         self.assertIn("OperationalPilot.this.run()", timer)
 
+    def test_confirmatory_experiment_is_exact_serial_12_by_50_batch(
+        self,
+    ) -> None:
+        experiment = _confirmatory_experiment()
+        rows = build_confirmatory_scenario_rows()
+        seed_rows = load_confirmatory_seed_rows()
+        self.assertEqual(
+            experiment.attrib["ActiveObjectClassId"],
+            ET.parse(OP_MODEL_AOC).getroot().findtext("Id"),
+        )
+        self.assertEqual(experiment.findtext("Id"), "1785162900001")
+        self.assertEqual(
+            experiment.findtext("AllowParallelEvaluations"),
+            "false",
+        )
+        self.assertEqual(experiment.findtext("UseFreeformParameters"), "true")
+        self.assertEqual(experiment.findtext("NumberOfRuns"), "12")
+        self.assertEqual(
+            experiment.findtext("ModelTimeProperties/StopOption"),
+            "Never",
+        )
+        replications = experiment.find("ReplicationsProperties")
+        self.assertIsNotNone(replications)
+        assert replications is not None
+        self.assertEqual(replications.findtext("UseReplication"), "true")
+        self.assertEqual(
+            replications.findtext("FixedReplicationsNumber"),
+            "true",
+        )
+        for field in (
+            "ReplicationPerIteration",
+            "MinimumReplication",
+            "MaximumReplication",
+        ):
+            self.assertEqual(replications.findtext(field), "50")
+
+        parameter_root = ET.parse(OP_MODEL_VARIABLES).getroot()
+        parameter_ids = {
+            item.findtext("Name", "").strip(): item.findtext("Id", "").strip()
+            for item in parameter_root.findall("Variable")
+            if item.attrib.get("Class") == "Parameter"
+        }
+        freeform = {
+            item.findtext("Id", "").strip(): item.findtext(
+                "Expression/Code", ""
+            ).strip()
+            for item in experiment.findall("FreeformParamValue")
+        }
+        fixed = {
+            item.findtext("Id", "").strip()
+            for item in experiment.findall("RangeVariationParamValue")
+            if item.findtext("Type") == "FIXED"
+        }
+        self.assertEqual(set(freeform), set(parameter_ids.values()))
+        self.assertEqual(fixed, set(parameter_ids.values()))
+        for name in (
+            "scenario_id",
+            "input_sample_id",
+            "config_id",
+            "config_sha256",
+            "arrival_rate_per_second",
+            "security_capacity",
+            "immigration_capacity",
+        ):
+            values = _indexed_values(
+                freeform[parameter_ids[name]],
+                len(rows),
+            )
+            if name == "config_sha256":
+                expected = [
+                    json.dumps(scenario_config_sha256(row)) for row in rows
+                ]
+            else:
+                parameter_type = next(
+                    item.findtext("Properties/Type", "").strip()
+                    for item in parameter_root.findall("Variable")
+                    if item.findtext("Name", "").strip() == name
+                )
+                expected = [
+                    _java_test_literal(parameter_type, row[name])
+                    for row in rows
+                ]
+            with self.subTest(confirmatory_parameter=name):
+                self.assertEqual(values, expected)
+
+        self.assertEqual(
+            freeform[parameter_ids["output_collection_id"]],
+            '"confirmatory_capacity"',
+        )
+        self.assertEqual(
+            freeform[parameter_ids["crn_alignment_status"]],
+            '"PENDING_VALIDATION"',
+        )
+        first_seed_by_sample = {
+            row["input_sample_id"]: row
+            for row in seed_rows
+            if row["replication_id"] == "1"
+        }
+        for name in (
+            "arrival_seed",
+            "service_seed",
+            "routing_seed",
+            "tie_seed",
+        ):
+            actual = _indexed_values(
+                freeform[parameter_ids[name]],
+                len(rows),
+            )
+            expected = [
+                f"{first_seed_by_sample[row['input_sample_id']][name]}L"
+                for row in rows
+            ]
+            with self.subTest(confirmatory_seed_parameter=name):
+                self.assertEqual(actual, expected)
+
+        before = experiment.findtext("BeforeSimulationRunCode", "")
+        self.assertIn(
+            "CapacityRobustnessConfirmatory received an unknown "
+            "scenario/input cell",
+            before,
+        )
+        self.assertIn(
+            "CapacityRobustnessConfirmatory replication must be 1..50",
+            before,
+        )
+        self.assertEqual(before.count("seedGroupMatched = true;"), 150)
+        for seed_row in seed_rows:
+            with self.subTest(
+                seed_group=seed_row["pairing_group_id"],
+            ):
+                self.assertIn(
+                    f"root.arrival_seed = {seed_row['arrival_seed']}L;",
+                    before,
+                )
+                self.assertIn(
+                    f"root.tie_seed = {seed_row['tie_seed']}L;",
+                    before,
+                )
+
+        timers = [
+            item
+            for item in experiment.findall("Variables/Variable")
+            if item.findtext("Name") == "confirmatory_auto_start_timer"
+        ]
+        self.assertEqual(len(timers), 1)
+        timer = timers[0]
+        self.assertEqual(timer.findtext("PresentationFlag"), "false")
+        self.assertEqual(timer.findtext("ShowLabel"), "false")
+        self.assertEqual(
+            timer.findtext("Properties/Type"),
+            "javax.swing.Timer",
+        )
+        timer_code = timer.findtext("Properties/InitialValue/Code", "")
+        self.assertEqual(
+            timer_code.count("CapacityRobustnessConfirmatory.this.run();"),
+            1,
+        )
+        self.assertEqual(timer_code.count("setRepeats(false);"), 1)
+
     def test_export_headers_match_the_registered_contract_exactly(self) -> None:
         after = _operational_experiment().findtext(
             "AfterSimulationRunCode", ""
@@ -669,6 +933,37 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
                 ("securityService", "travellerSource"),
                 ("immigrationService", "securityService"),
                 ("checkpointSink", "immigrationService"),
+            ],
+        )
+        block_positions = {
+            name: (
+                int(item.findtext("X", "0")),
+                int(item.findtext("Y", "0")),
+            )
+            for name, item in _embedded().items()
+        }
+        self.assertEqual(block_positions["travellerSource"], (90, 280))
+        self.assertEqual(block_positions["securityService"], (300, 270))
+        self.assertEqual(block_positions["securityResources"], (310, 350))
+        self.assertEqual(block_positions["immigrationService"], (580, 270))
+        self.assertEqual(block_positions["immigrationResources"], (590, 350))
+        self.assertEqual(block_positions["checkpointSink"], (850, 280))
+        connector_points = [
+            [
+                (
+                    int(point.findtext("X", "0")),
+                    int(point.findtext("Y", "0")),
+                )
+                for point in connector.findall("Points/Point")
+            ]
+            for connector in connectors
+        ]
+        self.assertEqual(
+            connector_points,
+            [
+                [(120, 290), (300, 290)],
+                [(360, 290), (580, 290)],
+                [(640, 290), (850, 290)],
             ],
         )
 

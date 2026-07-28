@@ -60,6 +60,28 @@ The reviewer-facing interpretation, including the bottleneck-migration result
 and guardrail diagnosis, is in
 [`docs/task3_results.md`](docs/task3_results.md).
 
+The result-blind confirmatory capacity study has now also completed. Four
+capacity alternatives were crossed with the exact low/base/high
+count-rate levels, with 50 replications per cell: 600/600 runs and 253,756
+traveller rows passed strict validation. Traveller-level common-random-number
+alignment passed across all 150 within-rate replication groups, so the
+pre-specified paired analysis was authorised. At the base rate, joint
+`Security +4 / Immigration +3` minus reference changed the mean
+replication-level total queue-wait P95 by `-2.678732 s` (paired 95% CI
+`[-3.060892, -2.296573]`, `n=50`); the achieved half-width was `0.382160 s`,
+within the frozen `1.0 s` target. This is conditional capacity-mechanism
+evidence, not a calibrated staffing result. See the
+[`confirmatory design`](docs/task3_confirmatory_design.md) and
+[`compact audit package`](results/analysis/confirmatory_capacity/README.md).
+
+`OperationalInteractive` provides the reviewer-facing simulation surface:
+four labelled Arrival → Security → Immigration → Exit zones, live queue and
+in-service state, run status, and exactly five genuine pre-run controls
+(demand multiplier, both capacities, automation uptake, and automation
+multiplier). Pooled FCFS remains the only implemented queue policy; no
+non-functional policy selector is shown. Interactive runs are exploratory and
+are excluded from reportable replicated evidence.
+
 ## Licensing and deployment boundary
 
 The licence-friendlier public evidence pipeline does not require Ultralytics.
@@ -283,7 +305,38 @@ made. The primary outputs are the
 [`scenario estimates`](results/analysis/operational/scenario_estimates.csv),
 [`scenario contrasts`](results/analysis/operational/scenario_contrasts.csv),
 [`dashboard`](results/analysis/operational/operational_dashboard.png), and
-[`strict validation report`](results/intermediate/operational_results/validation.json).
+[`strict validation report`](results/analysis/operational/validation.json).
+
+Run the frozen confirmatory capacity study:
+
+1. Open the split project in AnyLogic PLE 8.9.9 and run
+   `CapacityRobustnessConfirmatory: OperationalCheckpointModel`. The visible
+   Parameter Variation window starts the serial study automatically; wait for
+   `Finished`. The fixed contract is 12 cells × 50 replications.
+2. Consolidate, validate the exact 600-run coverage, enforce the
+   traveller-level CRN gate, and analyse the registered contrast:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.analysis.consolidate_operational_results `
+  --confirmatory
+.\.venv\Scripts\python.exe -m src.analysis.validate_operational_results `
+  --results-dir results\raw\confirmatory_capacity_consolidated `
+  --require-confirmatory-coverage `
+  --report results\intermediate\confirmatory_capacity\validation.json
+.\.venv\Scripts\python.exe -m src.analysis.analyse_confirmatory_capacity
+```
+
+The checked-in compact package records 600/600 valid runs, 253,756 entities,
+CRN `PASS`, the primary paired interval, and supporting rate rankings. The
+large consolidated entity ledger is not tracked; its SHA-256 and row count are
+recorded in the
+[`audit manifest`](results/analysis/confirmatory_capacity/audit_manifest.json).
+
+Run the release gate:
+
+```powershell
+.\.venv\Scripts\python.exe tools\precheck.py --run-tests
+```
 
 ## Build instructions
 
@@ -300,14 +353,18 @@ launching, not a standalone application.
 - Edit `config/operational_scenarios.csv` and
   `config/scenario_provenance.csv` to define controlled operational-assumption
   scenarios and their provenance.
+- Treat `config/confirmatory_capacity_study.json` and
+  `config/confirmatory_seed_manifest.csv` as a frozen confirmatory contract;
+  changing either creates a new study version and requires a full rerun.
 - Treat `config/anylogic_gate_manifest.csv` only as a synthetic test oracle;
   it is not an approved operational parameter set.
 - Do not hard-code decision parameters in Python or the simulation model.
 - Regenerate the split AnyLogic fragments with
   `.\.venv\Scripts\python.exe scripts\generate_operational_anylogic.py` after
   an approved contract change, then rerun the contract and result gates.
-- The current interactive GUI is intentionally minimal. It is not evidence of
-  a polished control panel, visual checkpoint layout, or standalone product.
+- The interactive GUI is a four-zone mechanism demonstrator with live state
+  and five real controls. It is not a calibrated physical checkpoint layout,
+  spatial crowd model, digital twin, or standalone product.
 
 ## Restricted input
 

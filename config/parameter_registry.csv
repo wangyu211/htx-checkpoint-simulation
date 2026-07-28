@@ -11,7 +11,7 @@ crossing_count_left_to_right,12,12,12,events,MEASURED_VIDEO,Human-adjudicated ag
 crossing_count_right_to_left,34,34,34,events,MEASURED_VIDEO,Human-adjudicated aggregate,Directional crossing evidence,VERIFIED,Accepted aggregate over 24.922788889 seconds; no signed event-time ledger
 crossing_count_total,46,46,46,events,MEASURED_VIDEO,Human-adjudicated aggregate,Bidirectional crossing evidence,VERIFIED,Accepted aggregate over 24.922788889 seconds; not a long-run demand estimate
 arrival_direction,right_to_left,,,image direction,MEASURED_VIDEO,Assessment entrance mapping,Arrival process,VERIFIED,Operational arrival stream is mapped to image-space right_to_left
-arrival_rate,1.364213,1.364213,1.364213,travellers/second,MEASURED_VIDEO,34 accepted right_to_left crossings divided by 24.922788889 seconds,Arrival process,VERIFIED,Short-window aggregate input; no signed event-time ledger and not a long-run demand estimate
+arrival_rate,1.364213,0.944757366,1.906351344,travellers/second,MEASURED_VIDEO,34 accepted right_to_left crossings divided by 24.922788889 seconds,Arrival process,VERIFIED,Point estimate plus exact 95% Garwood HPP count interval conditional on the accepted aggregate; excludes adjudication error time-of-day variation and model-form error
 security_capacity,,,,servers,TRANSPARENT_ASSUMPTION,Task 2 assumption,Decision factor,TBD,No service-resource calibration data supplied
 immigration_capacity,,,,servers,TRANSPARENT_ASSUMPTION,Task 2 assumption,Decision factor,TBD,No service-resource calibration data supplied
 security_service_time,,,,seconds,TRANSPARENT_ASSUMPTION,Sensitivity range,Service process,TBD,Must remain positive

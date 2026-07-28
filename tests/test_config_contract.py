@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import unittest
 from pathlib import Path
 
@@ -73,6 +74,27 @@ class ParameterRegistryTests(unittest.TestCase):
             34 / 24.922788889,
             places=6,
         )
+        confirmatory = json.loads(
+            (
+                PROJECT_ROOT / "config" / "confirmatory_capacity_study.json"
+            ).read_text(encoding="utf-8")
+        )
+        levels = {
+            row["level_id"]: row["arrival_rate_per_second"]
+            for row in confirmatory["arrival_rate_uncertainty"]["levels"]
+        }
+        self.assertAlmostEqual(
+            float(arrival["lower"]),
+            float(levels["EXACT95_LOW"]),
+            places=9,
+        )
+        self.assertAlmostEqual(
+            float(arrival["upper"]),
+            float(levels["EXACT95_HIGH"]),
+            places=9,
+        )
+        self.assertLess(float(arrival["lower"]), float(arrival["value"]))
+        self.assertGreater(float(arrival["upper"]), float(arrival["value"]))
 
 
 class ScenarioRegistryTests(unittest.TestCase):

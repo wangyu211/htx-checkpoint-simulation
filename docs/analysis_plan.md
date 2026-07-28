@@ -1,19 +1,28 @@
-# Task 3 Pilot Analysis Plan and Execution Record
+# Task 3 Analysis Plan and Execution Record
 
-**Status:** pilot design executed; not a frozen confirmatory analysis plan
+**Status:** exploratory pilot and frozen confirmatory capacity study executed;
+confirmatory validation and CRN gates `PASS`
 
-**Version:** 0.3, 2026-07-28
+**Version:** 0.4, 2026-07-28
 
 The original result-blind draft established the primary estimand, claim
 boundary, and rule that paired common-random-number (CRN) analysis could be
 used only after alignment verification. The 15-scenario × 10-replication
 `OperationalPilot` has now been run and inspected. This document therefore
 records the executed pilot analysis; it is not retrospective
-preregistration and must not be presented as confirmatory.
+preregistration and must not be presented as confirmatory. The pilot is
+retained as exploratory and engineering evidence.
 
 The engine/orchestration gate, deterministic two-stage oracle, operational
 contract, 150-run batch, strict result validation, replication analysis, and
 post-run dashboard all pass their declared software/evidence gates.
+
+The separate
+[`TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1`](task3_confirmatory_design.md)
+design froze a narrow base-rate joint-capacity contrast, a 12-cell
+low/base/high rate grid, 50 replications per cell, a `1.0 s` precision target,
+and a fail-closed CRN rule before its outcomes were inspected. That 600-run
+study has now been executed and is the confirmatory evidence in this record.
 
 ## Decision question
 
@@ -30,6 +39,12 @@ The pilot identifies conditional sensitivities and candidates for further
 study. Without calibrated site inputs, cost, implementation-risk, or
 staffing-value data, it does not identify an economic optimum or a final
 operational recommendation.
+
+The confirmatory question is narrower: at the registered point-estimate
+arrival rate, what is the joint `Security +4 / Immigration +3` minus
+reference difference in the mean replication-level total queue-wait P95?
+Low/high exact count-interval rates and the two single-stage arms are
+supporting mechanism analyses.
 
 ## Hypotheses and implementation boundary
 
@@ -85,16 +100,28 @@ choice, or transparent assumption in the provenance registries. The
 2-second/3-second `TwoStageDeterministic` oracle remains ineligible for
 operational performance reporting.
 
-## Primary estimand
+## Analysis roles and primary estimands
 
 For replication `r`, calculate the admitted arrival-cohort P95 total queue
-waiting time, `Q95_r`. For each scenario, report the mean of its 10
-replication-level `Q95_r` values with a 95% confidence interval.
+waiting time, `Q95_r`.
 
-Each scenario contrast is scenario minus
-`REFERENCE_ASSUMPTION_SANDBOX_V1`. Because traveller/draw alignment was not
-verified, the executed default is an independent Welch interval. No paired-CRN
-precision claim is made.
+For the exploratory pilot, each scenario mean uses 10 replication-level
+values. Each contrast is scenario minus
+`REFERENCE_ASSUMPTION_SANDBOX_V1`; traveller/draw alignment was not verified,
+so those executed contrasts use independent Welch intervals. No paired-CRN
+precision claim is made for the pilot.
+
+For the confirmatory study, the single primary contrast is
+`CAPACITY_BOTH_PLUS` minus `REFERENCE_ASSUMPTION_SANDBOX_V1` at
+`LOCAL_WINDOW_HPP_BASE`. Its registered comparison method is paired
+Student-t only after a current full CRN `PASS`, otherwise independent Welch.
+The full gate passed, so the executed primary analysis used 50 paired
+replication differences:
+
+```text
+-2.678732146 s, 95% CI [-3.060891661, -2.296572631]
+half-width = 0.382159515 s <= 1.0 s target
+```
 
 Secondary outputs include:
 
@@ -135,19 +162,25 @@ not estimates of ICA referral frequency, handling, or staffing.
 
 ## Replication and statistical gates
 
-- The executed batch uses 10 replications per scenario. Ten is a pilot count
+- The exploratory batch uses 10 replications per scenario. Ten is a pilot count
   for variance and pipeline evidence, not a confirmatory precision claim.
-- Exact registered scenario × replication coverage is required: 150 runs,
+- Its exact registered scenario × replication coverage is 150 runs,
   with no duplicate or missing keys.
-- Seeds are scenario-specific and reproducible.
-- `crn_alignment_status` is `NOT_TESTED`; independent Welch contrasts are
+- Pilot seeds are scenario-specific and reproducible.
+- Pilot `crn_alignment_status` is `NOT_TESTED`; independent Welch contrasts are
   therefore required.
+- The confirmatory design fixed 12 cells × 50 replications = 600 runs before
+  outcome inspection. All 600 runs and 253,756 entity rows passed strict
+  validation.
+- Confirmatory CRN alignment is `PASS` across 150 within-rate replication
+  groups and 1,141,902 compared branch-invariant draw values. Paired analysis
+  is therefore permitted for within-rate contrasts.
+- The primary confirmatory half-width is `0.382159515 s`, satisfying the
+  registered `<= 1.0 s` target without adding runs post hoc.
 - Monte Carlo confidence intervals are conditional on the registered input
   assumptions. They do not quantify input uncertainty or model-form error.
-- A future confirmatory design must select its replication count and exact
-  contrasts before inspecting new confirmatory outcomes.
 
-## Run, validate, analyse, and visualise
+## Executed evidence and reproduction
 
 Run `OperationalPilot: OperationalCheckpointModel` in AnyLogic PLE and wait
 for `Finished`, then execute:
@@ -168,13 +201,31 @@ Recorded execution:
 - strict validation `PASS`; and
 - 165 scenario-estimate rows and 154 contrast rows.
 
-Primary evidence:
+Tracked pilot evidence:
 
-- [`strict validation report`](../results/intermediate/operational_results/validation.json)
+- [`strict validation report`](../results/analysis/operational/validation.json)
 - [`analysis manifest`](../results/analysis/operational/analysis_manifest.json)
 - [`scenario estimates`](../results/analysis/operational/scenario_estimates.csv)
 - [`scenario contrasts`](../results/analysis/operational/scenario_contrasts.csv)
 - [`dashboard and result interpretation`](../results/analysis/operational/README.md)
+
+Confirmatory execution:
+
+- 12 cells × 50 replications = 600/600 runs;
+- 253,756 entity rows;
+- strict result validation `PASS`;
+- CRN alignment `PASS` across 150 groups and 1,141,902 compared draw values;
+  and
+- paired primary precision target met at `n = 50`.
+
+Tracked confirmatory evidence:
+
+- [`compact package guide`](../results/analysis/confirmatory_capacity/README.md)
+- [`audit manifest`](../results/analysis/confirmatory_capacity/audit_manifest.json)
+- [`strict validation report`](../results/analysis/confirmatory_capacity/validation.json)
+- [`CRN alignment report`](../results/analysis/confirmatory_capacity/crn_alignment.json)
+- [`primary result`](../results/analysis/confirmatory_capacity/primary_result.json)
+- [`ranking stability`](../results/analysis/confirmatory_capacity/ranking_stability.json)
 
 ## Decision output and claim rule
 
@@ -182,8 +233,18 @@ The pilot may report direction, magnitude, uncertainty, and which assumptions
 dominate the observed scenario response. Fine rankings with overlapping
 intervals remain unresolved at `n=10`.
 
-No option is labelled an operational optimum or final recommendation. At most,
-an option may be described as a conditional candidate for a better-calibrated
-pilot under explicit assumptions. Separate-queue evaluation, field
-calibration, richer input distributions, confirmed CRN alignment, and
-confirmatory replication sizing remain future work.
+The confirmatory result supports the narrow statement that, under the
+registered fixed-service-time pooled-FCFS assumptions, joint capacity reduced
+the base-rate mean replication-level total queue-wait P95 relative to the
+reference by `2.678732 s` (reference minus joint, paired 95% CI
+`[2.296573, 3.060892]`). The supporting point order is joint, Immigration +3,
+Security +4, then reference at low, base, and high rates. It must not be
+reported as option dominance: some other pairwise intervals are unresolved
+and pairwise point-direction stability across rates is false.
+
+No option is labelled an operational optimum or final recommendation. All
+results are conditional on a non-calibrated, fixed-service-time pooled-FCFS
+sandbox. Separate-queue evaluation, field calibration, richer input
+distributions, costs, implementation risk, and roster constraints remain
+outside scope; the study does not provide a calibrated baseline, staffing
+answer, or economic claim.

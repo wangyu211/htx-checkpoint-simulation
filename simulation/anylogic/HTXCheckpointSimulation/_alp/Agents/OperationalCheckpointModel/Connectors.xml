@@ -33,14 +33,8 @@
 			<ItemName>in</ItemName>
 		</TargetConnectableItemReference>
 		<Points>
-			<Point>
-				<X>70</X>
-				<Y>110</Y>
-			</Point>
-			<Point>
-				<X>150</X>
-				<Y>110</Y>
-			</Point>
+			<Point><X>120</X><Y>290</Y></Point>
+			<Point><X>300</X><Y>290</Y></Point>
 		</Points>
 	</Connector>
 	<Connector>
@@ -76,14 +70,8 @@
 			<ItemName>in</ItemName>
 		</TargetConnectableItemReference>
 		<Points>
-			<Point>
-				<X>210</X>
-				<Y>110</Y>
-			</Point>
-			<Point>
-				<X>330</X>
-				<Y>110</Y>
-			</Point>
+			<Point><X>360</X><Y>290</Y></Point>
+			<Point><X>580</X><Y>290</Y></Point>
 		</Points>
 	</Connector>
 	<Connector>
@@ -119,14 +107,8 @@
 			<ItemName>in</ItemName>
 		</TargetConnectableItemReference>
 		<Points>
-			<Point>
-				<X>390</X>
-				<Y>110</Y>
-			</Point>
-			<Point>
-				<X>500</X>
-				<Y>110</Y>
-			</Point>
+			<Point><X>640</X><Y>290</Y></Point>
+			<Point><X>850</X><Y>290</Y></Point>
 		</Points>
 	</Connector>
 </Connectors>

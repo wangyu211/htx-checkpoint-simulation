@@ -7,9 +7,11 @@ from pathlib import Path
 
 from src.analysis.analyse_operational_replications import (
     METRICS,
+    PROJECT_ROOT,
     alignment_report_passes,
     analyse_replication_rows,
     one_sample_summary,
+    portable_path,
 )
 from src.analysis.validate_operational_results import (
     DEFAULT_SCHEMA_REGISTRY,
@@ -38,6 +40,14 @@ def analysis_row(
 
 
 class ReplicationAnalysisTests(unittest.TestCase):
+    def test_manifest_paths_are_portable_inside_the_repository(self) -> None:
+        path = PROJECT_ROOT / "results" / "analysis" / "operational" / "x.csv"
+
+        self.assertEqual(
+            portable_path(path),
+            "results/analysis/operational/x.csv",
+        )
+
     def test_student_t_summary_uses_replications(self) -> None:
         summary = one_sample_summary([1.0, 2.0, 3.0])
 

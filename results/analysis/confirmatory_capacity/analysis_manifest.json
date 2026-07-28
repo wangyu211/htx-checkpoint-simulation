@@ -1,0 +1,82 @@
+{
+  "analysis": "TASK3_CAPACITY_CONFIRMATORY_ANALYSIS_V1",
+  "artifact_hashes": {
+    "design_sha256": "1bbc30f2320d908e9ecc0fcb57f85a7ab6e5bfac5b258c318f7f0a7e32bb6422",
+    "entity_log_sha256": "7fea0ee6215f277b1ef48cd9d2dab18ea1b761158b66a037fbd9012f644b2657",
+    "replication_kpis_sha256": "699994dba748501ece7ca07f8a2f915954c05ac1cc58ec9f9ed22d5e75e33b3a",
+    "run_manifest_sha256": "7dd80e38f9e7704b046b6e673647532f0eced50599712df2517f904906750ddb",
+    "seed_manifest_sha256": "3f2901c49ef6771a542e5edef9e94e53027f52351178be2cb18d70369ba8f377"
+  },
+  "claim_boundary": "CONDITIONAL_CAPACITY_MECHANISM_EVIDENCE_ONLY",
+  "comparison_method": "PAIRED_STUDENT_T",
+  "crn_alignment_status": "PASS",
+  "outputs": [
+    "results/analysis/confirmatory_capacity/scenario_estimates.csv",
+    "results/analysis/confirmatory_capacity/scenario_contrasts.csv",
+    "results/analysis/confirmatory_capacity/primary_result.json",
+    "results/analysis/confirmatory_capacity/rate_rankings.csv",
+    "results/analysis/confirmatory_capacity/within_rate_pairwise_contrasts.csv",
+    "results/analysis/confirmatory_capacity/ranking_stability.json",
+    "results/analysis/confirmatory_capacity/validation.json",
+    "results/analysis/confirmatory_capacity/crn_alignment.json"
+  ],
+  "primary": {
+    "achieved_half_width_seconds": 0.3821595147049792,
+    "alignment_status": "PASS",
+    "analysis_status": "COMPLETE",
+    "ci_high_seconds": -2.2965726312950205,
+    "ci_level": 0.95,
+    "ci_low_seconds": -3.060891660704979,
+    "claim_ceiling": "CONDITIONAL_CAPACITY_MECHANISM_EVIDENCE_ONLY",
+    "comparison_method": "PAIRED_STUDENT_T",
+    "degrees_of_freedom": 49.0,
+    "difference_mean_seconds": -2.6787321459999998,
+    "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "metric": "total_queue_wait_p95_seconds",
+    "n_reference": 50,
+    "n_scenario": 50,
+    "precision_target_met": true,
+    "reference_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+    "scenario_id": "CAPACITY_BOTH_PLUS",
+    "schema_version": "1.0",
+    "standard_error_seconds": 0.19016929928481296,
+    "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+    "target_half_width_seconds": 1.0
+  },
+  "ranking_stability": {
+    "analysis_role": "SUPPORTING_POINT_ESTIMATE_RANKING",
+    "any_unresolved_pairwise_interval": true,
+    "claim_boundary": "Ranking is descriptive and rate-specific; identical point order does not establish statistically resolved option dominance.",
+    "metric": "total_queue_wait_p95_seconds",
+    "pairwise_point_direction_stable_across_rates": false,
+    "point_order_stable_across_rates": true,
+    "rank_signature_by_level": {
+      "EXACT95_HIGH": [
+        "CAPACITY_BOTH_PLUS",
+        "CAPACITY_IMMIGRATION_PLUS_3",
+        "CAPACITY_SECURITY_PLUS_4",
+        "REFERENCE_ASSUMPTION_SANDBOX_V1"
+      ],
+      "EXACT95_LOW": [
+        "CAPACITY_BOTH_PLUS",
+        "CAPACITY_IMMIGRATION_PLUS_3",
+        "CAPACITY_SECURITY_PLUS_4",
+        "REFERENCE_ASSUMPTION_SANDBOX_V1"
+      ],
+      "MLE_BASE": [
+        "CAPACITY_BOTH_PLUS",
+        "CAPACITY_IMMIGRATION_PLUS_3",
+        "CAPACITY_SECURITY_PLUS_4",
+        "REFERENCE_ASSUMPTION_SANDBOX_V1"
+      ]
+    },
+    "resolved_direction_stable_across_rates": true,
+    "schema_version": "1.0",
+    "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1"
+  },
+  "schema_version": "1.0",
+  "status": "PASS",
+  "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+  "validation_status": "PASS",
+  "welch_fallback_reason": null
+}

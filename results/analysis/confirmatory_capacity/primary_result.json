@@ -1,0 +1,23 @@
+{
+  "achieved_half_width_seconds": 0.3821595147049792,
+  "alignment_status": "PASS",
+  "analysis_status": "COMPLETE",
+  "ci_high_seconds": -2.2965726312950205,
+  "ci_level": 0.95,
+  "ci_low_seconds": -3.060891660704979,
+  "claim_ceiling": "CONDITIONAL_CAPACITY_MECHANISM_EVIDENCE_ONLY",
+  "comparison_method": "PAIRED_STUDENT_T",
+  "degrees_of_freedom": 49.0,
+  "difference_mean_seconds": -2.6787321459999998,
+  "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+  "metric": "total_queue_wait_p95_seconds",
+  "n_reference": 50,
+  "n_scenario": 50,
+  "precision_target_met": true,
+  "reference_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+  "scenario_id": "CAPACITY_BOTH_PLUS",
+  "schema_version": "1.0",
+  "standard_error_seconds": 0.19016929928481296,
+  "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+  "target_half_width_seconds": 1.0
+}

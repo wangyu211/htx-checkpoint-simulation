@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "audit_package": "TASK3_CAPACITY_CONFIRMATORY_COMPACT_AUDIT_V1",
+  "status": "PASS",
+  "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+  "run_count": 600,
+  "entity_count": 253756,
+  "pairing_group_count": 150,
+  "comparison_method": "PAIRED_STUDENT_T",
+  "primary_precision_target_met": true,
+  "source_entity_log": {
+    "tracked": false,
+    "reason": "The 125,104,924-byte consolidated entity log exceeds the public repository file-size gate. Its hash and row count are retained so the tracked compact package remains auditable.",
+    "row_count": 253756,
+    "sha256": "7fea0ee6215f277b1ef48cd9d2dab18ea1b761158b66a037fbd9012f644b2657"
+  },
+  "tracked_artifacts": {
+    "analysis_manifest.json": "86370d9be3363c138e8b81ffffba7a3e4a5095b0aa6ac485cb9d97c567106466",
+    "primary_result.json": "3bc5b1414c79dccae233f2bf942c303f3d7e833966e720e56078804e0b5634a1",
+    "ranking_stability.json": "c08b4f95c13e4b73267feec1fa02a1540a37c384fb770fb8262366c0b9ff2dfd",
+    "rate_rankings.csv": "32a4e92714b98a1939b40b34a96c5ff35ea3fac4c64a4bc7832a0c95066ba2bf",
+    "scenario_contrasts.csv": "f06f2617f8531e750e7af8bfc2e55d0346704efe66b5eeb9e01149cb6f00f5ec",
+    "scenario_estimates.csv": "13be3b632c49ecfe6f8029a5574e17c7d8dc0970a9d8ce3933ec87b7f0856842",
+    "within_rate_pairwise_contrasts.csv": "2021a9cac619dc3f11a918c47d6a7f7800d87bcf1da5f4aec07914b7f5386e70",
+    "run_manifest.csv": "7dd80e38f9e7704b046b6e673647532f0eced50599712df2517f904906750ddb",
+    "replication_kpis.csv": "699994dba748501ece7ca07f8a2f915954c05ac1cc58ec9f9ed22d5e75e33b3a",
+    "validation.json": "2f734f4b2d680245432eaf9f71d73974a6e35b04617e86aa2e9d3c9e53c8cf81",
+    "crn_alignment.json": "7751e9a1731b2d4c3d0266cd700368ba563cd02472f94d64966c14e194801393"
+  },
+  "claim_boundary": "Conditional capacity-mechanism evidence under registered pooled-FCFS, fixed-service-time, empty-start and full-drain assumptions; not a calibrated HTX baseline, staffing answer or costed deployment decision."
+}

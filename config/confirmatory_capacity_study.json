@@ -1,0 +1,221 @@
+{
+  "schema_version": "1.0",
+  "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+  "design_status": "FROZEN_PRE_RUN",
+  "frozen_on": "2026-07-28",
+  "claim_ceiling": "CONDITIONAL_CAPACITY_MECHANISM_EVIDENCE_ONLY",
+  "arrival_rate_uncertainty": {
+    "observation_model": "N ~ Poisson(lambda * exposure_seconds)",
+    "accepted_count": 34,
+    "exposure_seconds": 24.922788889,
+    "point_estimator": "count / exposure_seconds",
+    "interval_method": "GARWOOD_EXACT_CHI_SQUARE",
+    "confidence_level": 0.95,
+    "uncertainty_scope": "HPP_COUNTING_PROCESS_ONLY",
+    "explicit_exclusions": [
+      "HUMAN_ADJUDICATION_ERROR",
+      "TRACKER_MODEL_SELECTION_ERROR",
+      "TIME_OF_DAY_VARIATION",
+      "NONSTATIONARITY",
+      "MODEL_FORM_ERROR"
+    ],
+    "levels": [
+      {
+        "level_id": "EXACT95_LOW",
+        "input_sample_id": "LOCAL_WINDOW_HPP_EXACT95_LOW",
+        "arrival_rate_per_second": 0.9447573660171154,
+        "role": "EXACT_COUNT_INTERVAL_LOWER_ENDPOINT"
+      },
+      {
+        "level_id": "MLE_BASE",
+        "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+        "arrival_rate_per_second": 1.3642132969720073,
+        "role": "COUNT_OVER_EXPOSURE_POINT_ESTIMATE"
+      },
+      {
+        "level_id": "EXACT95_HIGH",
+        "input_sample_id": "LOCAL_WINDOW_HPP_EXACT95_HIGH",
+        "arrival_rate_per_second": 1.90635134401724,
+        "role": "EXACT_COUNT_INTERVAL_UPPER_ENDPOINT"
+      }
+    ]
+  },
+  "primary_analysis": {
+    "input_level_id": "MLE_BASE",
+    "scenario_id": "CAPACITY_BOTH_PLUS",
+    "reference_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+    "estimand": "scenario-minus-reference difference in the mean of replication-level total_queue_wait_p95_seconds",
+    "difference_direction": "CAPACITY_BOTH_PLUS_MINUS_REFERENCE",
+    "confidence_level": 0.95,
+    "default_method": "INDEPENDENT_WELCH_T",
+    "verified_crn_method": "PAIRED_STUDENT_T_ONLY_AFTER_ALIGNMENT_PASS",
+    "decision_rule": "Report estimate and interval; do not convert a statistically resolved mechanism into a staffing recommendation."
+  },
+  "secondary_analysis": {
+    "base_level_mechanism_arms": [
+      "CAPACITY_SECURITY_PLUS_4",
+      "CAPACITY_IMMIGRATION_PLUS_3"
+    ],
+    "arrival_boundary_robustness": [
+      "EXACT95_LOW",
+      "EXACT95_HIGH"
+    ],
+    "arrival_boundary_scenarios": [
+      "REFERENCE_ASSUMPTION_SANDBOX_V1",
+      "CAPACITY_SECURITY_PLUS_4",
+      "CAPACITY_IMMIGRATION_PLUS_3",
+      "CAPACITY_BOTH_PLUS"
+    ],
+    "status": "SUPPORTING_AND_DESCRIPTIVE",
+    "multiplicity_rule": "No confirmatory claim from secondary or boundary ranking contrasts; report effect sizes and 95% intervals."
+  },
+  "precision_plan": {
+    "metric": "total_queue_wait_p95_seconds",
+    "confidence_level": 0.95,
+    "target_two_sided_ci_half_width_seconds": 1.0,
+    "variance_basis": "INDEPENDENT_WORST_PILOT_ARM",
+    "pilot_primary_metric_standard_deviations_seconds": {
+      "REFERENCE_ASSUMPTION_SANDBOX_V1": 0.83537132403,
+      "CAPACITY_SECURITY_PLUS_4": 1.18519002494,
+      "CAPACITY_IMMIGRATION_PLUS_3": 2.44782200108,
+      "CAPACITY_BOTH_PLUS": 1.95566500568
+    },
+    "independent_standard_deviation_envelope_seconds": 2.44782200108,
+    "minimum_equal_arm_replications_from_t_envelope": 48,
+    "planned_replications_per_cell": 50,
+    "planned_independent_half_width_seconds": 0.9715246191146171,
+    "precision_scope": "PRIMARY_BASE_RATE_CONTRAST",
+    "if_target_is_missed": "Report the achieved interval and precision miss; do not add post-hoc runs."
+  },
+  "study_cells": [
+    {
+      "cell_id": "LOW_REFERENCE",
+      "arrival_level_id": "EXACT95_LOW",
+      "scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+      "security_capacity": 36,
+      "immigration_capacity": 21,
+      "analysis_role": "ARRIVAL_BOUNDARY"
+    },
+    {
+      "cell_id": "LOW_SECURITY_ONLY",
+      "arrival_level_id": "EXACT95_LOW",
+      "scenario_id": "CAPACITY_SECURITY_PLUS_4",
+      "security_capacity": 40,
+      "immigration_capacity": 21,
+      "analysis_role": "RANKING_STABILITY"
+    },
+    {
+      "cell_id": "LOW_IMMIGRATION_ONLY",
+      "arrival_level_id": "EXACT95_LOW",
+      "scenario_id": "CAPACITY_IMMIGRATION_PLUS_3",
+      "security_capacity": 36,
+      "immigration_capacity": 24,
+      "analysis_role": "RANKING_STABILITY"
+    },
+    {
+      "cell_id": "LOW_JOINT",
+      "arrival_level_id": "EXACT95_LOW",
+      "scenario_id": "CAPACITY_BOTH_PLUS",
+      "security_capacity": 40,
+      "immigration_capacity": 24,
+      "analysis_role": "ARRIVAL_BOUNDARY"
+    },
+    {
+      "cell_id": "BASE_REFERENCE",
+      "arrival_level_id": "MLE_BASE",
+      "scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+      "security_capacity": 36,
+      "immigration_capacity": 21,
+      "analysis_role": "PRIMARY_REFERENCE"
+    },
+    {
+      "cell_id": "BASE_SECURITY_ONLY",
+      "arrival_level_id": "MLE_BASE",
+      "scenario_id": "CAPACITY_SECURITY_PLUS_4",
+      "security_capacity": 40,
+      "immigration_capacity": 21,
+      "analysis_role": "MECHANISM_SECONDARY"
+    },
+    {
+      "cell_id": "BASE_IMMIGRATION_ONLY",
+      "arrival_level_id": "MLE_BASE",
+      "scenario_id": "CAPACITY_IMMIGRATION_PLUS_3",
+      "security_capacity": 36,
+      "immigration_capacity": 24,
+      "analysis_role": "MECHANISM_SECONDARY"
+    },
+    {
+      "cell_id": "BASE_JOINT",
+      "arrival_level_id": "MLE_BASE",
+      "scenario_id": "CAPACITY_BOTH_PLUS",
+      "security_capacity": 40,
+      "immigration_capacity": 24,
+      "analysis_role": "PRIMARY_ALTERNATIVE"
+    },
+    {
+      "cell_id": "HIGH_REFERENCE",
+      "arrival_level_id": "EXACT95_HIGH",
+      "scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+      "security_capacity": 36,
+      "immigration_capacity": 21,
+      "analysis_role": "ARRIVAL_BOUNDARY"
+    },
+    {
+      "cell_id": "HIGH_SECURITY_ONLY",
+      "arrival_level_id": "EXACT95_HIGH",
+      "scenario_id": "CAPACITY_SECURITY_PLUS_4",
+      "security_capacity": 40,
+      "immigration_capacity": 21,
+      "analysis_role": "RANKING_STABILITY"
+    },
+    {
+      "cell_id": "HIGH_IMMIGRATION_ONLY",
+      "arrival_level_id": "EXACT95_HIGH",
+      "scenario_id": "CAPACITY_IMMIGRATION_PLUS_3",
+      "security_capacity": 36,
+      "immigration_capacity": 24,
+      "analysis_role": "RANKING_STABILITY"
+    },
+    {
+      "cell_id": "HIGH_JOINT",
+      "arrival_level_id": "EXACT95_HIGH",
+      "scenario_id": "CAPACITY_BOTH_PLUS",
+      "security_capacity": 40,
+      "immigration_capacity": 24,
+      "analysis_role": "ARRIVAL_BOUNDARY"
+    }
+  ],
+  "seed_policy": {
+    "master_seed": 202607290000,
+    "alignment_intent": "COMMON_EXOGENOUS_STREAMS_WITHIN_ARRIVAL_LEVEL_AND_REPLICATION",
+    "alignment_claim_status": "PENDING_TRAVELLER_LEVEL_VALIDATION",
+    "level_offsets": {
+      "EXACT95_LOW": 1000000,
+      "MLE_BASE": 2000000,
+      "EXACT95_HIGH": 3000000
+    },
+    "replication_stride": 10,
+    "stream_offsets": {
+      "arrival": 1,
+      "service": 2,
+      "routing": 3,
+      "tie": 4
+    },
+    "paired_analysis_gate": "validate_crn_alignment.py must return explicit PASS"
+  },
+  "run_cap": {
+    "study_cell_count": 12,
+    "replications_per_cell": 50,
+    "total_runs": 600,
+    "adaptive_extension_allowed": false
+  },
+  "calibration_boundary": {
+    "service_times": "UNCHANGED_REGISTERED_ASSUMPTIONS",
+    "queue_policy": "POOLED_FCFS_ONLY",
+    "start_state": "EMPTY_AND_IDLE",
+    "arrival_cutoff_seconds": 300,
+    "drain_rule": "FULL_DRAIN",
+    "site_forecast_claim": false,
+    "staffing_recommendation_claim": false
+  }
+}

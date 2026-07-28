@@ -1,0 +1,24 @@
+{
+  "claim_boundary": "Compact public audit package for the executed pilot; the restricted-source video and the full 27.9 MB traveller ledger are not redistributed.",
+  "contract": "TASK3_OPERATIONAL_PUBLIC_AUDIT_PACKAGE_V1",
+  "entity_log": {
+    "path_when_regenerated": "results/raw/operational/entity_log.csv",
+    "row_count": 61218,
+    "sha256": "592549657a5070cfb3f50f942663f5c00ab02b9c8395eeab00c338f06718921e",
+    "tracked": false
+  },
+  "replication_kpis": {
+    "path": "results/analysis/operational/replication_kpis.csv",
+    "row_count": 150,
+    "sha256": "a3636dcda3b619e029da054c454b43c8d32d85bb9a7b1de417ac919c18696e13",
+    "tracked": true
+  },
+  "run_manifest": {
+    "path": "results/analysis/operational/run_manifest.csv",
+    "row_count": 150,
+    "sha256": "fe40e4ba4dafa84f9faba6aa404639b09d35d7dbe1ad7b3606048b7e219e5bc4",
+    "tracked": true
+  },
+  "status": "PASS",
+  "validation_report": "results/analysis/operational/validation.json"
+}

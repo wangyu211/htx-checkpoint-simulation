@@ -1,0 +1,34 @@
+{
+  "actual_run_count": 600,
+  "actual_run_key_sha256": "d563125d8a6f93d7f814b88e5fb05318990dcf494fc8c1b7b868d39c50f13715",
+  "artifact_hashes": {
+    "design_sha256": "1bbc30f2320d908e9ecc0fcb57f85a7ab6e5bfac5b258c318f7f0a7e32bb6422",
+    "entity_log_sha256": "7fea0ee6215f277b1ef48cd9d2dab18ea1b761158b66a037fbd9012f644b2657",
+    "run_manifest_sha256": "7dd80e38f9e7704b046b6e673647532f0eced50599712df2517f904906750ddb",
+    "seed_manifest_sha256": "3f2901c49ef6771a542e5edef9e94e53027f52351178be2cb18d70369ba8f377"
+  },
+  "branch_invariant_draws_pass": true,
+  "claim_rule": "Paired CRN analysis is permitted only when status, seed alignment, traveller-level alignment, and branch-invariant draws all PASS.",
+  "compared_draw_values": 1141902,
+  "compared_traveller_pairs": 190317,
+  "coverage_pass": true,
+  "draw_fields": [
+    "arrival_seconds",
+    "security_service_demand_seconds",
+    "immigration_conventional_service_demand_seconds",
+    "automation_u",
+    "additional_check_u",
+    "lane_tie_u"
+  ],
+  "entity_row_count": 253756,
+  "errors": [],
+  "expected_run_count": 600,
+  "expected_run_key_sha256": "d563125d8a6f93d7f814b88e5fb05318990dcf494fc8c1b7b868d39c50f13715",
+  "numeric_tolerance": 1e-09,
+  "pairing_group_count": 150,
+  "seed_alignment_pass": true,
+  "status": "PASS",
+  "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+  "traveller_level_alignment_pass": true,
+  "validation": "CONFIRMATORY_CAPACITY_CRN_ALIGNMENT_V1"
+}

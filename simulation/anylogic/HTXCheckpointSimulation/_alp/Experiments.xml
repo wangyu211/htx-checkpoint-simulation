@@ -629,7 +629,74 @@ try {
 		<MaximumMemory>512</MaximumMemory>
 		<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
 		<CustomGeneratorCode>new Random()</CustomGeneratorCode>
-		<BeforeSimulationRunCode>if ( !"1.0".equals( root.schema_version ) )
+		<BeforeSimulationRunCode>if ( root.demand_multiplier &lt; 0.5 || root.demand_multiplier &gt; 2.0 )
+	throw new IllegalArgumentException(
+		"demand_multiplier must be between 0.5 and 2.0"
+	);
+if ( root.security_capacity &lt; 1 || root.security_capacity &gt; 200
+	|| root.immigration_capacity &lt; 1 || root.immigration_capacity &gt; 200 )
+	throw new IllegalArgumentException(
+		"interactive capacities must be integers between 1 and 200"
+	);
+if ( root.automation_uptake &lt; 0.0 || root.automation_uptake &gt; 1.0 )
+	throw new IllegalArgumentException(
+		"automation_uptake must be between 0 and 1"
+	);
+if ( root.automation_uptake == 0.0 ) {
+	root.automation_mapping_mode = "DISABLED";
+	root.automation_multiplier = 1.0;
+} else {
+	if ( !( root.automation_multiplier &gt; 0.0
+		&amp;&amp; root.automation_multiplier &lt; 1.0 ) )
+		throw new IllegalArgumentException(
+			"automation_multiplier must be between 0 and 1 when uptake is positive"
+		);
+	root.automation_mapping_mode = "MULTIPLIER";
+}
+root.output_collection_id = "anylogic_operational";
+root.config_id = "OP_INTERACTIVE_AD_HOC_V1";
+root.scenario_family = "INTERACTIVE_EXPLORATORY";
+root.reference_scenario_id = "REFERENCE_ASSUMPTION_SANDBOX_V1";
+root.input_sample_id = "LOCAL_WINDOW_HPP_BASE";
+root.replication_id = 0;
+root.scenario_id = String.format(
+	java.util.Locale.ROOT,
+	"INTERACTIVE_D%03d_SEC%03d_IMM%03d_U%03d_M%03d",
+	(int) Math.round( 100.0 * root.demand_multiplier ),
+	root.security_capacity,
+	root.immigration_capacity,
+	(int) Math.round( 100.0 * root.automation_uptake ),
+	(int) Math.round( 100.0 * root.automation_multiplier )
+);
+String interactiveCanonical = String.format(
+	java.util.Locale.ROOT,
+	"model=TASK3_OPERATIONAL_POOLED_V1|queue=pooled|"
+	+ "demand=%.9f|security_capacity=%d|immigration_capacity=%d|"
+	+ "automation_mode=%s|automation_uptake=%.9f|"
+	+ "automation_multiplier=%.9f",
+	root.demand_multiplier,
+	root.security_capacity,
+	root.immigration_capacity,
+	root.automation_mapping_mode,
+	root.automation_uptake,
+	root.automation_multiplier
+);
+try {
+	java.security.MessageDigest digest =
+		java.security.MessageDigest.getInstance( "SHA-256" );
+	byte[] hash = digest.digest(
+		interactiveCanonical.getBytes( java.nio.charset.StandardCharsets.UTF_8 )
+	);
+	StringBuilder hexadecimal = new StringBuilder();
+	for ( byte value : hash )
+		hexadecimal.append(
+			String.format( java.util.Locale.ROOT, "%02x", value &amp; 0xff )
+		);
+	root.config_sha256 = hexadecimal.toString();
+} catch ( java.security.NoSuchAlgorithmException exception ) {
+	throw new RuntimeException( "SHA-256 is unavailable", exception );
+}
+if ( !"1.0".equals( root.schema_version ) )
 	throw new IllegalArgumentException( "schema_version must be 1.0" );
 if ( !root.config_sha256.matches( "[0-9a-f]{64}" ) )
 	throw new IllegalArgumentException( "config_sha256 must be 64 lowercase hex characters" );
@@ -687,30 +754,18 @@ if ( "NONE".equals( root.additional_check_semantics ) ) {
 if ( !"EMPTY_AND_IDLE".equals( root.start_state )
 	|| !"NOT_CALIBRATED".equals( root.calibration_status )
 	|| !"COMPARATIVE_WHAT_IF_ONLY".equals( root.claim_ceiling )
-	|| !"NOT_TESTED".equals( root.crn_alignment_status ) )
+	|| !( "NOT_TESTED".equals( root.crn_alignment_status )
+		|| "PENDING_VALIDATION".equals( root.crn_alignment_status ) ) )
 	throw new IllegalArgumentException( "claim-boundary fields were weakened" );
 if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
-	|| !"anylogic_operational".equals( root.output_collection_id )
-	|| !"OP_REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.config_id )
-	|| !"166e6c918cff63041b08f31ff5c17fbea49008b8cdd3047b1082b326faae3460".equals( root.config_sha256 )
-	|| !"REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.scenario_id )
-	|| !"REFERENCE".equals( root.scenario_family )
-	|| !"REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.reference_scenario_id )
-	|| !"LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
-	|| root.replication_id != 0
 	|| root.arrival_rate_per_second != 1.364213
-	|| root.demand_multiplier != 1.0
 	|| root.arrival_cutoff_seconds != 300.0
 	|| root.arrival_guard != 5000
-	|| root.security_capacity != 36
 	|| root.security_queue_capacity != 5000
 	|| root.security_service_p1_seconds != 21.818181818
-	|| root.immigration_capacity != 21
 	|| root.immigration_queue_capacity != 5000
 	|| root.immigration_service_p1_seconds != 13.0
-	|| !"DISABLED".equals( root.automation_mapping_mode )
-	|| root.automation_uptake != 0.0
-	|| root.automation_multiplier != 1.0
+	|| !"pooled".equals( root.queue_policy )
 	|| !"NONE".equals( root.additional_check_semantics )
 	|| root.additional_check_probability_conventional != 0.0
 	|| root.additional_check_probability_technology != 0.0
@@ -722,8 +777,8 @@ if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
 	|| root.routing_seed != 2026072803L
 	|| root.tie_seed != 2026072804L )
 	throw new IllegalArgumentException(
-		"OperationalInteractive is locked to the canonical reference row; "
-		+ "use the future registry-driven batch experiment for scenario changes"
+		"OperationalInteractive permits only the five exposed exploratory inputs; "
+		+ "all other mechanism and lineage fields must remain fixed"
 	);
 getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );</BeforeSimulationRunCode>
 		<AfterSimulationRunCode>if ( !"COMPLETE".equals( root.run_status ) )
@@ -908,59 +963,67 @@ try {
 				<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
 				<EmbeddedIcon>false</EmbeddedIcon>
 				<Z>0</Z><Rotation>0.0</Rotation><Color>-12490271</Color>
-				<Text><![CDATA[Operational assumption sandbox | pooled FCFS | not calibrated]]></Text>
+				<Text><![CDATA[OperationalInteractive — editable exploratory run]]></Text>
 				<Font><Name><![CDATA[SansSerif]]></Name><Size>22</Size><Style>0</Style></Font>
+				<Alignment>LEFT</Alignment>
+			</Text>
+			<Text>
+				<Id>1785218100001</Id>
+				<Name><![CDATA[editable_parameters_note]]></Name>
+				<X>40</X><Y>65</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>true</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+				<EmbeddedIcon>false</EmbeddedIcon>
+				<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+				<Text><![CDATA[Edit only the five fields shown below before Run: demand multiplier, Security capacity, Immigration capacity, automation uptake, and automation multiplier.]]></Text>
+				<Font><Name><![CDATA[SansSerif]]></Name><Size>13</Size><Style>0</Style></Font>
+				<Alignment>LEFT</Alignment>
+			</Text>
+			<Text>
+				<Id>1785218100011</Id>
+				<Name><![CDATA[automation_control_note]]></Name>
+				<X>40</X><Y>92</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>true</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+				<EmbeddedIcon>false</EmbeddedIcon>
+				<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+				<Text><![CDATA[Automation: uptake = 0 disables the mixture; uptake > 0 requires a multiplier strictly between 0 and 1. Pooled FCFS is the only implemented queue policy.]]></Text>
+				<Font><Name><![CDATA[SansSerif]]></Name><Size>12</Size><Style>0</Style></Font>
+				<Alignment>LEFT</Alignment>
+			</Text>
+			<Text>
+				<Id>1785218100021</Id>
+				<Name><![CDATA[run_control_note]]></Name>
+				<X>40</X><Y>118</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>true</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+				<EmbeddedIcon>false</EmbeddedIcon>
+				<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+				<Text><![CDATA[After Run, use AnyLogic's built-in Pause / Resume / Stop controls. Stop and reopen this experiment to reset structural inputs. Outputs are labelled ad-hoc exploratory and not calibrated.]]></Text>
+				<Font><Name><![CDATA[SansSerif]]></Name><Size>12</Size><Style>0</Style></Font>
 				<Alignment>LEFT</Alignment>
 			</Text>
 		</Presentation>
 		<Parameters>
-			<Parameter><ParameterName>schema_version</ParameterName></Parameter>
-			<Parameter><ParameterName>model_version</ParameterName></Parameter>
-			<Parameter><ParameterName>output_collection_id</ParameterName></Parameter>
-			<Parameter><ParameterName>config_id</ParameterName></Parameter>
-			<Parameter><ParameterName>config_sha256</ParameterName></Parameter>
-			<Parameter><ParameterName>scenario_id</ParameterName></Parameter>
-			<Parameter><ParameterName>scenario_family</ParameterName></Parameter>
-			<Parameter><ParameterName>reference_scenario_id</ParameterName></Parameter>
-			<Parameter><ParameterName>input_sample_id</ParameterName></Parameter>
-			<Parameter><ParameterName>replication_id</ParameterName></Parameter>
-			<Parameter><ParameterName>start_state</ParameterName></Parameter>
-			<Parameter><ParameterName>calibration_status</ParameterName></Parameter>
-			<Parameter><ParameterName>claim_ceiling</ParameterName></Parameter>
-			<Parameter><ParameterName>crn_alignment_status</ParameterName></Parameter>
-			<Parameter><ParameterName>arrival_mode</ParameterName></Parameter>
-			<Parameter><ParameterName>arrival_rate_per_second</ParameterName></Parameter>
 			<Parameter><ParameterName>demand_multiplier</ParameterName></Parameter>
-			<Parameter><ParameterName>arrival_cutoff_seconds</ParameterName></Parameter>
-			<Parameter><ParameterName>arrival_guard</ParameterName></Parameter>
-			<Parameter><ParameterName>drain_rule</ParameterName></Parameter>
 			<Parameter><ParameterName>security_capacity</ParameterName></Parameter>
-			<Parameter><ParameterName>security_queue_capacity</ParameterName></Parameter>
-			<Parameter><ParameterName>security_service_distribution</ParameterName></Parameter>
-			<Parameter><ParameterName>security_service_p1_seconds</ParameterName></Parameter>
 			<Parameter><ParameterName>immigration_capacity</ParameterName></Parameter>
-			<Parameter><ParameterName>immigration_queue_capacity</ParameterName></Parameter>
-			<Parameter><ParameterName>immigration_service_distribution</ParameterName></Parameter>
-			<Parameter><ParameterName>immigration_service_p1_seconds</ParameterName></Parameter>
-			<Parameter><ParameterName>queue_policy</ParameterName></Parameter>
-			<Parameter><ParameterName>automation_mapping_mode</ParameterName></Parameter>
 			<Parameter><ParameterName>automation_uptake</ParameterName></Parameter>
 			<Parameter><ParameterName>automation_multiplier</ParameterName></Parameter>
-			<Parameter><ParameterName>additional_check_semantics</ParameterName></Parameter>
-			<Parameter><ParameterName>additional_check_probability_conventional</ParameterName></Parameter>
-			<Parameter><ParameterName>additional_check_probability_technology</ParameterName></Parameter>
-			<Parameter><ParameterName>additional_check_service_distribution</ParameterName></Parameter>
-			<Parameter><ParameterName>additional_check_service_p1_seconds</ParameterName></Parameter>
-			<Parameter><ParameterName>master_seed</ParameterName></Parameter>
-			<Parameter><ParameterName>arrival_seed</ParameterName></Parameter>
-			<Parameter><ParameterName>service_seed</ParameterName></Parameter>
-			<Parameter><ParameterName>routing_seed</ParameterName></Parameter>
-			<Parameter><ParameterName>tie_seed</ParameterName></Parameter>
 		</Parameters>
 		<PresentationProperties>
 			<EnableZoomAndPanning>true</EnableZoomAndPanning>
 			<ExecutionMode>virtualTime</ExecutionMode>
-			<Title>HTXCheckpointSimulation : OperationalInteractive</Title>
+			<Title>HTXCheckpointSimulation : OperationalInteractive (exploratory)</Title>
 			<EnableDeveloperPanel>true</EnableDeveloperPanel>
 			<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
 			<RealTimeScale>1.0</RealTimeScale>
@@ -1039,7 +1102,8 @@ if ( "NONE".equals( root.additional_check_semantics ) ) {
 if ( !"EMPTY_AND_IDLE".equals( root.start_state )
 	|| !"NOT_CALIBRATED".equals( root.calibration_status )
 	|| !"COMPARATIVE_WHAT_IF_ONLY".equals( root.claim_ceiling )
-	|| !"NOT_TESTED".equals( root.crn_alignment_status ) )
+	|| !( "NOT_TESTED".equals( root.crn_alignment_status )
+		|| "PENDING_VALIDATION".equals( root.crn_alignment_status ) ) )
 	throw new IllegalArgumentException( "claim-boundary fields were weakened" );
 if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version ) )
 	throw new IllegalArgumentException( "OperationalPilot model_version mismatch" );
@@ -2485,4 +2549,2137 @@ try {
 		</ModelTimeProperties>
 		<BypassInitialScreen>true</BypassInitialScreen>
 	</SimulationExperiment>
+	<ParamVariationExperiment ActiveObjectClassId="1785162520364">
+		<Id>1785162900001</Id>
+		<Name><![CDATA[CapacityRobustnessConfirmatory]]></Name>
+		<CommandLineArguments/>
+		<MaximumMemory>512</MaximumMemory>
+		<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+		<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+		<BeforeSimulationRunCode>if ( !"1.0".equals( root.schema_version ) )
+	throw new IllegalArgumentException( "schema_version must be 1.0" );
+if ( !root.config_sha256.matches( "[0-9a-f]{64}" ) )
+	throw new IllegalArgumentException( "config_sha256 must be 64 lowercase hex characters" );
+if ( !root.output_collection_id.matches( "[a-z0-9_]+" ) )
+	throw new IllegalArgumentException( "output_collection_id is unsafe" );
+if ( !"HPP".equals( root.arrival_mode ) )
+	throw new IllegalArgumentException( "arrival_mode must be HPP" );
+if ( !( root.arrival_rate_per_second &gt; 0.0 ) || !( root.demand_multiplier &gt; 0.0 ) )
+	throw new IllegalArgumentException( "arrival rate and demand multiplier must be positive" );
+if ( !( root.arrival_cutoff_seconds &gt; 0.0 ) || root.arrival_guard &lt;= 1 )
+	throw new IllegalArgumentException( "arrival cutoff and guard are invalid" );
+if ( root.arrival_rate_per_second * root.demand_multiplier * root.arrival_cutoff_seconds &gt;= root.arrival_guard )
+	throw new IllegalArgumentException( "arrival_guard must exceed expected arrivals" );
+if ( !"FULL_DRAIN".equals( root.drain_rule ) )
+	throw new IllegalArgumentException( "drain_rule must be FULL_DRAIN" );
+if ( root.security_capacity &lt;= 0 || root.immigration_capacity &lt;= 0 )
+	throw new IllegalArgumentException( "resource capacities must be positive" );
+if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
+	throw new IllegalArgumentException( "queue capacities must be positive" );
+if ( !"FIXED".equals( root.security_service_distribution )
+	|| !"FIXED".equals( root.immigration_service_distribution ) )
+	throw new IllegalArgumentException( "v1 supports FIXED primary service only" );
+if ( !( root.security_service_p1_seconds &gt; 0.0 )
+	|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
+	throw new IllegalArgumentException( "primary service demands must be positive" );
+if ( !"pooled".equals( root.queue_policy ) )
+	throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
+if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
+	if ( root.automation_uptake != 0.0 || root.automation_multiplier != 1.0 )
+		throw new IllegalArgumentException( "DISABLED automation requires uptake=0 and multiplier=1" );
+} else if ( "MULTIPLIER".equals( root.automation_mapping_mode ) ) {
+	if ( !( root.automation_uptake &gt; 0.0 &amp;&amp; root.automation_uptake &lt;= 1.0 )
+		|| !( root.automation_multiplier &gt; 0.0 &amp;&amp; root.automation_multiplier &lt; 1.0 ) )
+		throw new IllegalArgumentException( "automation inputs are outside their domains" );
+} else {
+	throw new IllegalArgumentException( "unknown automation_mapping_mode" );
+}
+if ( "NONE".equals( root.additional_check_semantics ) ) {
+	if ( root.additional_check_probability_conventional != 0.0
+		|| root.additional_check_probability_technology != 0.0
+		|| !"UNSET".equals( root.additional_check_service_distribution )
+		|| root.additional_check_service_p1_seconds != 0.0 )
+		throw new IllegalArgumentException( "NONE additional-check contract violated" );
+} else if ( "COUNTER_HELD_RISK_REFERRAL_PROXY".equals( root.additional_check_semantics ) ) {
+	if ( !"FIXED".equals( root.additional_check_service_distribution )
+		|| root.additional_check_probability_conventional &lt; 0.0
+		|| root.additional_check_probability_conventional &gt; 1.0
+		|| root.additional_check_probability_technology &lt; 0.0
+		|| root.additional_check_probability_technology &gt; 1.0
+		|| !( root.additional_check_service_p1_seconds &gt; 0.0 ) )
+		throw new IllegalArgumentException( "risk-proxy inputs are invalid" );
+} else {
+	throw new IllegalArgumentException( "unknown additional_check_semantics" );
+}
+if ( !"EMPTY_AND_IDLE".equals( root.start_state )
+	|| !"NOT_CALIBRATED".equals( root.calibration_status )
+	|| !"COMPARATIVE_WHAT_IF_ONLY".equals( root.claim_ceiling )
+	|| !( "NOT_TESTED".equals( root.crn_alignment_status )
+		|| "PENDING_VALIDATION".equals( root.crn_alignment_status ) ) )
+	throw new IllegalArgumentException( "claim-boundary fields were weakened" );
+if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version ) )
+	throw new IllegalArgumentException(
+		"CapacityRobustnessConfirmatory model_version mismatch"
+	);
+if ( !"confirmatory_capacity".equals( root.output_collection_id ) )
+	throw new IllegalArgumentException(
+		"CapacityRobustnessConfirmatory output collection mismatch"
+	);
+if ( root.master_seed != 202607290000L )
+	throw new IllegalArgumentException(
+		"CapacityRobustnessConfirmatory master seed mismatch"
+	);
+String expectedConfigId = null;
+String expectedConfigHash = null;
+if ( "REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_EXACT95_LOW_REFERENCE_ASSUMPTION_SANDBOX_V1";
+	expectedConfigHash = "32b9044b5bbd75968a07e8c7fc390d8c3419cadcce37bf0965896dd768445e2b";
+}
+else if ( "CAPACITY_SECURITY_PLUS_4".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_EXACT95_LOW_CAPACITY_SECURITY_PLUS_4";
+	expectedConfigHash = "a74f1c43d1e7330dabf9ae37612321af21799b456bd27f56db170446d229217d";
+}
+else if ( "CAPACITY_IMMIGRATION_PLUS_3".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_EXACT95_LOW_CAPACITY_IMMIGRATION_PLUS_3";
+	expectedConfigHash = "d154b0dba54f481e612a360ff3e08fee334b279d1c08b2168c3ce51b4a1313bc";
+}
+else if ( "CAPACITY_BOTH_PLUS".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_EXACT95_LOW_CAPACITY_BOTH_PLUS";
+	expectedConfigHash = "45f53fc3706fbd4413cadc5030b851fb533d4189450a73803837ccdf0a203f22";
+}
+else if ( "REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_MLE_BASE_REFERENCE_ASSUMPTION_SANDBOX_V1";
+	expectedConfigHash = "369372d7e06066baf12416f63c9b12a0af11b1ef17459431e126a703ba4c7eae";
+}
+else if ( "CAPACITY_SECURITY_PLUS_4".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_MLE_BASE_CAPACITY_SECURITY_PLUS_4";
+	expectedConfigHash = "0efc30229024df398b0a79670c550ea3869c5337e3f66926aa0fac683945864d";
+}
+else if ( "CAPACITY_IMMIGRATION_PLUS_3".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_MLE_BASE_CAPACITY_IMMIGRATION_PLUS_3";
+	expectedConfigHash = "52e5a50942acb0714e5eb93930edb571a9de4facb82099f63da0ea7457690a70";
+}
+else if ( "CAPACITY_BOTH_PLUS".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_MLE_BASE_CAPACITY_BOTH_PLUS";
+	expectedConfigHash = "f15e7bca3caf7928d1cc85c7f0769cc39601b6e161afce3edf97023561e4ab66";
+}
+else if ( "REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_EXACT95_HIGH_REFERENCE_ASSUMPTION_SANDBOX_V1";
+	expectedConfigHash = "eed4ac1694a3cbb110169bff620757a2aa7b14be5e0738f9318b5c1a3c59b08f";
+}
+else if ( "CAPACITY_SECURITY_PLUS_4".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_EXACT95_HIGH_CAPACITY_SECURITY_PLUS_4";
+	expectedConfigHash = "a9364c0ce0bb791d9df3e0ce27f0dbff6f9ec2b51a813d48d21b79e2344018d1";
+}
+else if ( "CAPACITY_IMMIGRATION_PLUS_3".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_EXACT95_HIGH_CAPACITY_IMMIGRATION_PLUS_3";
+	expectedConfigHash = "a60e5a4329e682c893b5dc0c2f697a051c839ed5a4bd9949951a26ad3245d023";
+}
+else if ( "CAPACITY_BOTH_PLUS".equals( root.scenario_id )
+	&amp;&amp; "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id ) ) {
+	expectedConfigId = "OP_CONFIRM_EXACT95_HIGH_CAPACITY_BOTH_PLUS";
+	expectedConfigHash = "ef79d952f469f00fe5912eaa570ac3bdd1cd57c6609deb809b46ed4021e3ce3a";
+}
+if ( expectedConfigId == null || expectedConfigHash == null )
+	throw new IllegalArgumentException(
+		"CapacityRobustnessConfirmatory received an unknown scenario/input cell"
+	);
+if ( !expectedConfigId.equals( root.config_id )
+	|| !expectedConfigHash.equals( root.config_sha256 ) )
+	throw new IllegalArgumentException(
+		"CapacityRobustnessConfirmatory lineage mismatch for "
+		+ root.scenario_id + "/" + root.input_sample_id
+	);
+int replication = getCurrentReplication();
+if ( replication &lt; 1 || replication &gt; 50 )
+	throw new IllegalArgumentException(
+		"CapacityRobustnessConfirmatory replication must be 1..50"
+	);
+root.replication_id = replication;
+boolean seedGroupMatched = false;
+if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 1 ) {
+	root.arrival_seed = 202608290011L;
+	root.service_seed = 202608290012L;
+	root.routing_seed = 202608290013L;
+	root.tie_seed = 202608290014L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 2 ) {
+	root.arrival_seed = 202608290021L;
+	root.service_seed = 202608290022L;
+	root.routing_seed = 202608290023L;
+	root.tie_seed = 202608290024L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 3 ) {
+	root.arrival_seed = 202608290031L;
+	root.service_seed = 202608290032L;
+	root.routing_seed = 202608290033L;
+	root.tie_seed = 202608290034L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 4 ) {
+	root.arrival_seed = 202608290041L;
+	root.service_seed = 202608290042L;
+	root.routing_seed = 202608290043L;
+	root.tie_seed = 202608290044L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 5 ) {
+	root.arrival_seed = 202608290051L;
+	root.service_seed = 202608290052L;
+	root.routing_seed = 202608290053L;
+	root.tie_seed = 202608290054L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 6 ) {
+	root.arrival_seed = 202608290061L;
+	root.service_seed = 202608290062L;
+	root.routing_seed = 202608290063L;
+	root.tie_seed = 202608290064L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 7 ) {
+	root.arrival_seed = 202608290071L;
+	root.service_seed = 202608290072L;
+	root.routing_seed = 202608290073L;
+	root.tie_seed = 202608290074L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 8 ) {
+	root.arrival_seed = 202608290081L;
+	root.service_seed = 202608290082L;
+	root.routing_seed = 202608290083L;
+	root.tie_seed = 202608290084L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 9 ) {
+	root.arrival_seed = 202608290091L;
+	root.service_seed = 202608290092L;
+	root.routing_seed = 202608290093L;
+	root.tie_seed = 202608290094L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 10 ) {
+	root.arrival_seed = 202608290101L;
+	root.service_seed = 202608290102L;
+	root.routing_seed = 202608290103L;
+	root.tie_seed = 202608290104L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 11 ) {
+	root.arrival_seed = 202608290111L;
+	root.service_seed = 202608290112L;
+	root.routing_seed = 202608290113L;
+	root.tie_seed = 202608290114L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 12 ) {
+	root.arrival_seed = 202608290121L;
+	root.service_seed = 202608290122L;
+	root.routing_seed = 202608290123L;
+	root.tie_seed = 202608290124L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 13 ) {
+	root.arrival_seed = 202608290131L;
+	root.service_seed = 202608290132L;
+	root.routing_seed = 202608290133L;
+	root.tie_seed = 202608290134L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 14 ) {
+	root.arrival_seed = 202608290141L;
+	root.service_seed = 202608290142L;
+	root.routing_seed = 202608290143L;
+	root.tie_seed = 202608290144L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 15 ) {
+	root.arrival_seed = 202608290151L;
+	root.service_seed = 202608290152L;
+	root.routing_seed = 202608290153L;
+	root.tie_seed = 202608290154L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 16 ) {
+	root.arrival_seed = 202608290161L;
+	root.service_seed = 202608290162L;
+	root.routing_seed = 202608290163L;
+	root.tie_seed = 202608290164L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 17 ) {
+	root.arrival_seed = 202608290171L;
+	root.service_seed = 202608290172L;
+	root.routing_seed = 202608290173L;
+	root.tie_seed = 202608290174L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 18 ) {
+	root.arrival_seed = 202608290181L;
+	root.service_seed = 202608290182L;
+	root.routing_seed = 202608290183L;
+	root.tie_seed = 202608290184L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 19 ) {
+	root.arrival_seed = 202608290191L;
+	root.service_seed = 202608290192L;
+	root.routing_seed = 202608290193L;
+	root.tie_seed = 202608290194L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 20 ) {
+	root.arrival_seed = 202608290201L;
+	root.service_seed = 202608290202L;
+	root.routing_seed = 202608290203L;
+	root.tie_seed = 202608290204L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 21 ) {
+	root.arrival_seed = 202608290211L;
+	root.service_seed = 202608290212L;
+	root.routing_seed = 202608290213L;
+	root.tie_seed = 202608290214L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 22 ) {
+	root.arrival_seed = 202608290221L;
+	root.service_seed = 202608290222L;
+	root.routing_seed = 202608290223L;
+	root.tie_seed = 202608290224L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 23 ) {
+	root.arrival_seed = 202608290231L;
+	root.service_seed = 202608290232L;
+	root.routing_seed = 202608290233L;
+	root.tie_seed = 202608290234L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 24 ) {
+	root.arrival_seed = 202608290241L;
+	root.service_seed = 202608290242L;
+	root.routing_seed = 202608290243L;
+	root.tie_seed = 202608290244L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 25 ) {
+	root.arrival_seed = 202608290251L;
+	root.service_seed = 202608290252L;
+	root.routing_seed = 202608290253L;
+	root.tie_seed = 202608290254L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 26 ) {
+	root.arrival_seed = 202608290261L;
+	root.service_seed = 202608290262L;
+	root.routing_seed = 202608290263L;
+	root.tie_seed = 202608290264L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 27 ) {
+	root.arrival_seed = 202608290271L;
+	root.service_seed = 202608290272L;
+	root.routing_seed = 202608290273L;
+	root.tie_seed = 202608290274L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 28 ) {
+	root.arrival_seed = 202608290281L;
+	root.service_seed = 202608290282L;
+	root.routing_seed = 202608290283L;
+	root.tie_seed = 202608290284L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 29 ) {
+	root.arrival_seed = 202608290291L;
+	root.service_seed = 202608290292L;
+	root.routing_seed = 202608290293L;
+	root.tie_seed = 202608290294L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 30 ) {
+	root.arrival_seed = 202608290301L;
+	root.service_seed = 202608290302L;
+	root.routing_seed = 202608290303L;
+	root.tie_seed = 202608290304L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 31 ) {
+	root.arrival_seed = 202608290311L;
+	root.service_seed = 202608290312L;
+	root.routing_seed = 202608290313L;
+	root.tie_seed = 202608290314L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 32 ) {
+	root.arrival_seed = 202608290321L;
+	root.service_seed = 202608290322L;
+	root.routing_seed = 202608290323L;
+	root.tie_seed = 202608290324L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 33 ) {
+	root.arrival_seed = 202608290331L;
+	root.service_seed = 202608290332L;
+	root.routing_seed = 202608290333L;
+	root.tie_seed = 202608290334L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 34 ) {
+	root.arrival_seed = 202608290341L;
+	root.service_seed = 202608290342L;
+	root.routing_seed = 202608290343L;
+	root.tie_seed = 202608290344L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 35 ) {
+	root.arrival_seed = 202608290351L;
+	root.service_seed = 202608290352L;
+	root.routing_seed = 202608290353L;
+	root.tie_seed = 202608290354L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 36 ) {
+	root.arrival_seed = 202608290361L;
+	root.service_seed = 202608290362L;
+	root.routing_seed = 202608290363L;
+	root.tie_seed = 202608290364L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 37 ) {
+	root.arrival_seed = 202608290371L;
+	root.service_seed = 202608290372L;
+	root.routing_seed = 202608290373L;
+	root.tie_seed = 202608290374L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 38 ) {
+	root.arrival_seed = 202608290381L;
+	root.service_seed = 202608290382L;
+	root.routing_seed = 202608290383L;
+	root.tie_seed = 202608290384L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 39 ) {
+	root.arrival_seed = 202608290391L;
+	root.service_seed = 202608290392L;
+	root.routing_seed = 202608290393L;
+	root.tie_seed = 202608290394L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 40 ) {
+	root.arrival_seed = 202608290401L;
+	root.service_seed = 202608290402L;
+	root.routing_seed = 202608290403L;
+	root.tie_seed = 202608290404L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 41 ) {
+	root.arrival_seed = 202608290411L;
+	root.service_seed = 202608290412L;
+	root.routing_seed = 202608290413L;
+	root.tie_seed = 202608290414L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 42 ) {
+	root.arrival_seed = 202608290421L;
+	root.service_seed = 202608290422L;
+	root.routing_seed = 202608290423L;
+	root.tie_seed = 202608290424L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 43 ) {
+	root.arrival_seed = 202608290431L;
+	root.service_seed = 202608290432L;
+	root.routing_seed = 202608290433L;
+	root.tie_seed = 202608290434L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 44 ) {
+	root.arrival_seed = 202608290441L;
+	root.service_seed = 202608290442L;
+	root.routing_seed = 202608290443L;
+	root.tie_seed = 202608290444L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 45 ) {
+	root.arrival_seed = 202608290451L;
+	root.service_seed = 202608290452L;
+	root.routing_seed = 202608290453L;
+	root.tie_seed = 202608290454L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 46 ) {
+	root.arrival_seed = 202608290461L;
+	root.service_seed = 202608290462L;
+	root.routing_seed = 202608290463L;
+	root.tie_seed = 202608290464L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 47 ) {
+	root.arrival_seed = 202608290471L;
+	root.service_seed = 202608290472L;
+	root.routing_seed = 202608290473L;
+	root.tie_seed = 202608290474L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 48 ) {
+	root.arrival_seed = 202608290481L;
+	root.service_seed = 202608290482L;
+	root.routing_seed = 202608290483L;
+	root.tie_seed = 202608290484L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 49 ) {
+	root.arrival_seed = 202608290491L;
+	root.service_seed = 202608290492L;
+	root.routing_seed = 202608290493L;
+	root.tie_seed = 202608290494L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_LOW".equals( root.input_sample_id )
+	&amp;&amp; replication == 50 ) {
+	root.arrival_seed = 202608290501L;
+	root.service_seed = 202608290502L;
+	root.routing_seed = 202608290503L;
+	root.tie_seed = 202608290504L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 1 ) {
+	root.arrival_seed = 202609290011L;
+	root.service_seed = 202609290012L;
+	root.routing_seed = 202609290013L;
+	root.tie_seed = 202609290014L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 2 ) {
+	root.arrival_seed = 202609290021L;
+	root.service_seed = 202609290022L;
+	root.routing_seed = 202609290023L;
+	root.tie_seed = 202609290024L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 3 ) {
+	root.arrival_seed = 202609290031L;
+	root.service_seed = 202609290032L;
+	root.routing_seed = 202609290033L;
+	root.tie_seed = 202609290034L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 4 ) {
+	root.arrival_seed = 202609290041L;
+	root.service_seed = 202609290042L;
+	root.routing_seed = 202609290043L;
+	root.tie_seed = 202609290044L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 5 ) {
+	root.arrival_seed = 202609290051L;
+	root.service_seed = 202609290052L;
+	root.routing_seed = 202609290053L;
+	root.tie_seed = 202609290054L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 6 ) {
+	root.arrival_seed = 202609290061L;
+	root.service_seed = 202609290062L;
+	root.routing_seed = 202609290063L;
+	root.tie_seed = 202609290064L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 7 ) {
+	root.arrival_seed = 202609290071L;
+	root.service_seed = 202609290072L;
+	root.routing_seed = 202609290073L;
+	root.tie_seed = 202609290074L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 8 ) {
+	root.arrival_seed = 202609290081L;
+	root.service_seed = 202609290082L;
+	root.routing_seed = 202609290083L;
+	root.tie_seed = 202609290084L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 9 ) {
+	root.arrival_seed = 202609290091L;
+	root.service_seed = 202609290092L;
+	root.routing_seed = 202609290093L;
+	root.tie_seed = 202609290094L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 10 ) {
+	root.arrival_seed = 202609290101L;
+	root.service_seed = 202609290102L;
+	root.routing_seed = 202609290103L;
+	root.tie_seed = 202609290104L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 11 ) {
+	root.arrival_seed = 202609290111L;
+	root.service_seed = 202609290112L;
+	root.routing_seed = 202609290113L;
+	root.tie_seed = 202609290114L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 12 ) {
+	root.arrival_seed = 202609290121L;
+	root.service_seed = 202609290122L;
+	root.routing_seed = 202609290123L;
+	root.tie_seed = 202609290124L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 13 ) {
+	root.arrival_seed = 202609290131L;
+	root.service_seed = 202609290132L;
+	root.routing_seed = 202609290133L;
+	root.tie_seed = 202609290134L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 14 ) {
+	root.arrival_seed = 202609290141L;
+	root.service_seed = 202609290142L;
+	root.routing_seed = 202609290143L;
+	root.tie_seed = 202609290144L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 15 ) {
+	root.arrival_seed = 202609290151L;
+	root.service_seed = 202609290152L;
+	root.routing_seed = 202609290153L;
+	root.tie_seed = 202609290154L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 16 ) {
+	root.arrival_seed = 202609290161L;
+	root.service_seed = 202609290162L;
+	root.routing_seed = 202609290163L;
+	root.tie_seed = 202609290164L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 17 ) {
+	root.arrival_seed = 202609290171L;
+	root.service_seed = 202609290172L;
+	root.routing_seed = 202609290173L;
+	root.tie_seed = 202609290174L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 18 ) {
+	root.arrival_seed = 202609290181L;
+	root.service_seed = 202609290182L;
+	root.routing_seed = 202609290183L;
+	root.tie_seed = 202609290184L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 19 ) {
+	root.arrival_seed = 202609290191L;
+	root.service_seed = 202609290192L;
+	root.routing_seed = 202609290193L;
+	root.tie_seed = 202609290194L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 20 ) {
+	root.arrival_seed = 202609290201L;
+	root.service_seed = 202609290202L;
+	root.routing_seed = 202609290203L;
+	root.tie_seed = 202609290204L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 21 ) {
+	root.arrival_seed = 202609290211L;
+	root.service_seed = 202609290212L;
+	root.routing_seed = 202609290213L;
+	root.tie_seed = 202609290214L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 22 ) {
+	root.arrival_seed = 202609290221L;
+	root.service_seed = 202609290222L;
+	root.routing_seed = 202609290223L;
+	root.tie_seed = 202609290224L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 23 ) {
+	root.arrival_seed = 202609290231L;
+	root.service_seed = 202609290232L;
+	root.routing_seed = 202609290233L;
+	root.tie_seed = 202609290234L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 24 ) {
+	root.arrival_seed = 202609290241L;
+	root.service_seed = 202609290242L;
+	root.routing_seed = 202609290243L;
+	root.tie_seed = 202609290244L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 25 ) {
+	root.arrival_seed = 202609290251L;
+	root.service_seed = 202609290252L;
+	root.routing_seed = 202609290253L;
+	root.tie_seed = 202609290254L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 26 ) {
+	root.arrival_seed = 202609290261L;
+	root.service_seed = 202609290262L;
+	root.routing_seed = 202609290263L;
+	root.tie_seed = 202609290264L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 27 ) {
+	root.arrival_seed = 202609290271L;
+	root.service_seed = 202609290272L;
+	root.routing_seed = 202609290273L;
+	root.tie_seed = 202609290274L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 28 ) {
+	root.arrival_seed = 202609290281L;
+	root.service_seed = 202609290282L;
+	root.routing_seed = 202609290283L;
+	root.tie_seed = 202609290284L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 29 ) {
+	root.arrival_seed = 202609290291L;
+	root.service_seed = 202609290292L;
+	root.routing_seed = 202609290293L;
+	root.tie_seed = 202609290294L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 30 ) {
+	root.arrival_seed = 202609290301L;
+	root.service_seed = 202609290302L;
+	root.routing_seed = 202609290303L;
+	root.tie_seed = 202609290304L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 31 ) {
+	root.arrival_seed = 202609290311L;
+	root.service_seed = 202609290312L;
+	root.routing_seed = 202609290313L;
+	root.tie_seed = 202609290314L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 32 ) {
+	root.arrival_seed = 202609290321L;
+	root.service_seed = 202609290322L;
+	root.routing_seed = 202609290323L;
+	root.tie_seed = 202609290324L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 33 ) {
+	root.arrival_seed = 202609290331L;
+	root.service_seed = 202609290332L;
+	root.routing_seed = 202609290333L;
+	root.tie_seed = 202609290334L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 34 ) {
+	root.arrival_seed = 202609290341L;
+	root.service_seed = 202609290342L;
+	root.routing_seed = 202609290343L;
+	root.tie_seed = 202609290344L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 35 ) {
+	root.arrival_seed = 202609290351L;
+	root.service_seed = 202609290352L;
+	root.routing_seed = 202609290353L;
+	root.tie_seed = 202609290354L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 36 ) {
+	root.arrival_seed = 202609290361L;
+	root.service_seed = 202609290362L;
+	root.routing_seed = 202609290363L;
+	root.tie_seed = 202609290364L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 37 ) {
+	root.arrival_seed = 202609290371L;
+	root.service_seed = 202609290372L;
+	root.routing_seed = 202609290373L;
+	root.tie_seed = 202609290374L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 38 ) {
+	root.arrival_seed = 202609290381L;
+	root.service_seed = 202609290382L;
+	root.routing_seed = 202609290383L;
+	root.tie_seed = 202609290384L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 39 ) {
+	root.arrival_seed = 202609290391L;
+	root.service_seed = 202609290392L;
+	root.routing_seed = 202609290393L;
+	root.tie_seed = 202609290394L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 40 ) {
+	root.arrival_seed = 202609290401L;
+	root.service_seed = 202609290402L;
+	root.routing_seed = 202609290403L;
+	root.tie_seed = 202609290404L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 41 ) {
+	root.arrival_seed = 202609290411L;
+	root.service_seed = 202609290412L;
+	root.routing_seed = 202609290413L;
+	root.tie_seed = 202609290414L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 42 ) {
+	root.arrival_seed = 202609290421L;
+	root.service_seed = 202609290422L;
+	root.routing_seed = 202609290423L;
+	root.tie_seed = 202609290424L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 43 ) {
+	root.arrival_seed = 202609290431L;
+	root.service_seed = 202609290432L;
+	root.routing_seed = 202609290433L;
+	root.tie_seed = 202609290434L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 44 ) {
+	root.arrival_seed = 202609290441L;
+	root.service_seed = 202609290442L;
+	root.routing_seed = 202609290443L;
+	root.tie_seed = 202609290444L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 45 ) {
+	root.arrival_seed = 202609290451L;
+	root.service_seed = 202609290452L;
+	root.routing_seed = 202609290453L;
+	root.tie_seed = 202609290454L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 46 ) {
+	root.arrival_seed = 202609290461L;
+	root.service_seed = 202609290462L;
+	root.routing_seed = 202609290463L;
+	root.tie_seed = 202609290464L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 47 ) {
+	root.arrival_seed = 202609290471L;
+	root.service_seed = 202609290472L;
+	root.routing_seed = 202609290473L;
+	root.tie_seed = 202609290474L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 48 ) {
+	root.arrival_seed = 202609290481L;
+	root.service_seed = 202609290482L;
+	root.routing_seed = 202609290483L;
+	root.tie_seed = 202609290484L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 49 ) {
+	root.arrival_seed = 202609290491L;
+	root.service_seed = 202609290492L;
+	root.routing_seed = 202609290493L;
+	root.tie_seed = 202609290494L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+	&amp;&amp; replication == 50 ) {
+	root.arrival_seed = 202609290501L;
+	root.service_seed = 202609290502L;
+	root.routing_seed = 202609290503L;
+	root.tie_seed = 202609290504L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 1 ) {
+	root.arrival_seed = 202610290011L;
+	root.service_seed = 202610290012L;
+	root.routing_seed = 202610290013L;
+	root.tie_seed = 202610290014L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 2 ) {
+	root.arrival_seed = 202610290021L;
+	root.service_seed = 202610290022L;
+	root.routing_seed = 202610290023L;
+	root.tie_seed = 202610290024L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 3 ) {
+	root.arrival_seed = 202610290031L;
+	root.service_seed = 202610290032L;
+	root.routing_seed = 202610290033L;
+	root.tie_seed = 202610290034L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 4 ) {
+	root.arrival_seed = 202610290041L;
+	root.service_seed = 202610290042L;
+	root.routing_seed = 202610290043L;
+	root.tie_seed = 202610290044L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 5 ) {
+	root.arrival_seed = 202610290051L;
+	root.service_seed = 202610290052L;
+	root.routing_seed = 202610290053L;
+	root.tie_seed = 202610290054L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 6 ) {
+	root.arrival_seed = 202610290061L;
+	root.service_seed = 202610290062L;
+	root.routing_seed = 202610290063L;
+	root.tie_seed = 202610290064L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 7 ) {
+	root.arrival_seed = 202610290071L;
+	root.service_seed = 202610290072L;
+	root.routing_seed = 202610290073L;
+	root.tie_seed = 202610290074L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 8 ) {
+	root.arrival_seed = 202610290081L;
+	root.service_seed = 202610290082L;
+	root.routing_seed = 202610290083L;
+	root.tie_seed = 202610290084L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 9 ) {
+	root.arrival_seed = 202610290091L;
+	root.service_seed = 202610290092L;
+	root.routing_seed = 202610290093L;
+	root.tie_seed = 202610290094L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 10 ) {
+	root.arrival_seed = 202610290101L;
+	root.service_seed = 202610290102L;
+	root.routing_seed = 202610290103L;
+	root.tie_seed = 202610290104L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 11 ) {
+	root.arrival_seed = 202610290111L;
+	root.service_seed = 202610290112L;
+	root.routing_seed = 202610290113L;
+	root.tie_seed = 202610290114L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 12 ) {
+	root.arrival_seed = 202610290121L;
+	root.service_seed = 202610290122L;
+	root.routing_seed = 202610290123L;
+	root.tie_seed = 202610290124L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 13 ) {
+	root.arrival_seed = 202610290131L;
+	root.service_seed = 202610290132L;
+	root.routing_seed = 202610290133L;
+	root.tie_seed = 202610290134L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 14 ) {
+	root.arrival_seed = 202610290141L;
+	root.service_seed = 202610290142L;
+	root.routing_seed = 202610290143L;
+	root.tie_seed = 202610290144L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 15 ) {
+	root.arrival_seed = 202610290151L;
+	root.service_seed = 202610290152L;
+	root.routing_seed = 202610290153L;
+	root.tie_seed = 202610290154L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 16 ) {
+	root.arrival_seed = 202610290161L;
+	root.service_seed = 202610290162L;
+	root.routing_seed = 202610290163L;
+	root.tie_seed = 202610290164L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 17 ) {
+	root.arrival_seed = 202610290171L;
+	root.service_seed = 202610290172L;
+	root.routing_seed = 202610290173L;
+	root.tie_seed = 202610290174L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 18 ) {
+	root.arrival_seed = 202610290181L;
+	root.service_seed = 202610290182L;
+	root.routing_seed = 202610290183L;
+	root.tie_seed = 202610290184L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 19 ) {
+	root.arrival_seed = 202610290191L;
+	root.service_seed = 202610290192L;
+	root.routing_seed = 202610290193L;
+	root.tie_seed = 202610290194L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 20 ) {
+	root.arrival_seed = 202610290201L;
+	root.service_seed = 202610290202L;
+	root.routing_seed = 202610290203L;
+	root.tie_seed = 202610290204L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 21 ) {
+	root.arrival_seed = 202610290211L;
+	root.service_seed = 202610290212L;
+	root.routing_seed = 202610290213L;
+	root.tie_seed = 202610290214L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 22 ) {
+	root.arrival_seed = 202610290221L;
+	root.service_seed = 202610290222L;
+	root.routing_seed = 202610290223L;
+	root.tie_seed = 202610290224L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 23 ) {
+	root.arrival_seed = 202610290231L;
+	root.service_seed = 202610290232L;
+	root.routing_seed = 202610290233L;
+	root.tie_seed = 202610290234L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 24 ) {
+	root.arrival_seed = 202610290241L;
+	root.service_seed = 202610290242L;
+	root.routing_seed = 202610290243L;
+	root.tie_seed = 202610290244L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 25 ) {
+	root.arrival_seed = 202610290251L;
+	root.service_seed = 202610290252L;
+	root.routing_seed = 202610290253L;
+	root.tie_seed = 202610290254L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 26 ) {
+	root.arrival_seed = 202610290261L;
+	root.service_seed = 202610290262L;
+	root.routing_seed = 202610290263L;
+	root.tie_seed = 202610290264L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 27 ) {
+	root.arrival_seed = 202610290271L;
+	root.service_seed = 202610290272L;
+	root.routing_seed = 202610290273L;
+	root.tie_seed = 202610290274L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 28 ) {
+	root.arrival_seed = 202610290281L;
+	root.service_seed = 202610290282L;
+	root.routing_seed = 202610290283L;
+	root.tie_seed = 202610290284L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 29 ) {
+	root.arrival_seed = 202610290291L;
+	root.service_seed = 202610290292L;
+	root.routing_seed = 202610290293L;
+	root.tie_seed = 202610290294L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 30 ) {
+	root.arrival_seed = 202610290301L;
+	root.service_seed = 202610290302L;
+	root.routing_seed = 202610290303L;
+	root.tie_seed = 202610290304L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 31 ) {
+	root.arrival_seed = 202610290311L;
+	root.service_seed = 202610290312L;
+	root.routing_seed = 202610290313L;
+	root.tie_seed = 202610290314L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 32 ) {
+	root.arrival_seed = 202610290321L;
+	root.service_seed = 202610290322L;
+	root.routing_seed = 202610290323L;
+	root.tie_seed = 202610290324L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 33 ) {
+	root.arrival_seed = 202610290331L;
+	root.service_seed = 202610290332L;
+	root.routing_seed = 202610290333L;
+	root.tie_seed = 202610290334L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 34 ) {
+	root.arrival_seed = 202610290341L;
+	root.service_seed = 202610290342L;
+	root.routing_seed = 202610290343L;
+	root.tie_seed = 202610290344L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 35 ) {
+	root.arrival_seed = 202610290351L;
+	root.service_seed = 202610290352L;
+	root.routing_seed = 202610290353L;
+	root.tie_seed = 202610290354L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 36 ) {
+	root.arrival_seed = 202610290361L;
+	root.service_seed = 202610290362L;
+	root.routing_seed = 202610290363L;
+	root.tie_seed = 202610290364L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 37 ) {
+	root.arrival_seed = 202610290371L;
+	root.service_seed = 202610290372L;
+	root.routing_seed = 202610290373L;
+	root.tie_seed = 202610290374L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 38 ) {
+	root.arrival_seed = 202610290381L;
+	root.service_seed = 202610290382L;
+	root.routing_seed = 202610290383L;
+	root.tie_seed = 202610290384L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 39 ) {
+	root.arrival_seed = 202610290391L;
+	root.service_seed = 202610290392L;
+	root.routing_seed = 202610290393L;
+	root.tie_seed = 202610290394L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 40 ) {
+	root.arrival_seed = 202610290401L;
+	root.service_seed = 202610290402L;
+	root.routing_seed = 202610290403L;
+	root.tie_seed = 202610290404L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 41 ) {
+	root.arrival_seed = 202610290411L;
+	root.service_seed = 202610290412L;
+	root.routing_seed = 202610290413L;
+	root.tie_seed = 202610290414L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 42 ) {
+	root.arrival_seed = 202610290421L;
+	root.service_seed = 202610290422L;
+	root.routing_seed = 202610290423L;
+	root.tie_seed = 202610290424L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 43 ) {
+	root.arrival_seed = 202610290431L;
+	root.service_seed = 202610290432L;
+	root.routing_seed = 202610290433L;
+	root.tie_seed = 202610290434L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 44 ) {
+	root.arrival_seed = 202610290441L;
+	root.service_seed = 202610290442L;
+	root.routing_seed = 202610290443L;
+	root.tie_seed = 202610290444L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 45 ) {
+	root.arrival_seed = 202610290451L;
+	root.service_seed = 202610290452L;
+	root.routing_seed = 202610290453L;
+	root.tie_seed = 202610290454L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 46 ) {
+	root.arrival_seed = 202610290461L;
+	root.service_seed = 202610290462L;
+	root.routing_seed = 202610290463L;
+	root.tie_seed = 202610290464L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 47 ) {
+	root.arrival_seed = 202610290471L;
+	root.service_seed = 202610290472L;
+	root.routing_seed = 202610290473L;
+	root.tie_seed = 202610290474L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 48 ) {
+	root.arrival_seed = 202610290481L;
+	root.service_seed = 202610290482L;
+	root.routing_seed = 202610290483L;
+	root.tie_seed = 202610290484L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 49 ) {
+	root.arrival_seed = 202610290491L;
+	root.service_seed = 202610290492L;
+	root.routing_seed = 202610290493L;
+	root.tie_seed = 202610290494L;
+	seedGroupMatched = true;
+}
+else if ( "LOCAL_WINDOW_HPP_EXACT95_HIGH".equals( root.input_sample_id )
+	&amp;&amp; replication == 50 ) {
+	root.arrival_seed = 202610290501L;
+	root.service_seed = 202610290502L;
+	root.routing_seed = 202610290503L;
+	root.tie_seed = 202610290504L;
+	seedGroupMatched = true;
+}
+if ( !seedGroupMatched )
+	throw new IllegalArgumentException(
+		"CapacityRobustnessConfirmatory seed group is not frozen"
+	);
+getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );</BeforeSimulationRunCode>
+		<AfterSimulationRunCode>if ( !"COMPLETE".equals( root.run_status ) )
+	throw new IllegalStateException( "operational run did not reach COMPLETE" );
+if ( root.guard_hit || root.rejected_or_dropped_count != 0 )
+	throw new IllegalStateException( "guard, rejection, or drop detected" );
+if ( root.admitted != root.completed )
+	throw new IllegalStateException( "full-drain conservation failed" );
+if ( root.security_queue_count != 0 || root.security_in_service_count != 0
+	|| root.immigration_queue_count != 0 || root.immigration_in_service_count != 0 )
+	throw new IllegalStateException( "non-zero WIP after drain" );
+int wipAtCutoff =
+	root.security_queue_at_cutoff + root.security_in_service_at_cutoff
+	+ root.immigration_queue_at_cutoff + root.immigration_in_service_at_cutoff;
+boolean conservationPass =
+	root.admitted_at_cutoff == root.completed_at_cutoff + wipAtCutoff;
+if ( !conservationPass )
+	throw new IllegalStateException( "cutoff conservation failed" );
+
+java.util.ArrayList&lt;Double&gt; securitySorted =
+	new java.util.ArrayList&lt;Double&gt;( root.security_waits );
+java.util.ArrayList&lt;Double&gt; immigrationSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.immigration_waits );
+java.util.ArrayList&lt;Double&gt; totalSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.total_queue_waits );
+java.util.ArrayList&lt;Double&gt; systemSorted =
+	new java.util.ArrayList&lt;Double&gt;( root.system_times );
+java.util.Collections.sort( securitySorted );
+java.util.Collections.sort( immigrationSorted );
+java.util.Collections.sort( totalSorted );
+java.util.Collections.sort( systemSorted );
+double securitySum = 0.0, immigrationSum = 0.0, totalSum = 0.0, systemSum = 0.0;
+for ( double value : securitySorted ) securitySum += value;
+for ( double value : immigrationSorted ) immigrationSum += value;
+for ( double value : totalSorted ) totalSum += value;
+for ( double value : systemSorted ) systemSum += value;
+int n = root.completed;
+if ( n &lt;= 0 ) throw new IllegalStateException( "operational run generated no travellers" );
+int p95Index = Math.max( 0, (int) Math.ceil( 0.95 * n ) - 1 );
+double drainEnd = Math.max( root.arrival_cutoff_seconds, root.last_exit );
+int cutoffBacklog = root.admitted_at_cutoff - root.completed_at_cutoff;
+double securityUtilization =
+	root.security_busy_seconds / ( root.security_capacity * drainEnd );
+double immigrationUtilization =
+	root.immigration_busy_seconds / ( root.immigration_capacity * drainEnd );
+java.util.function.DoubleFunction&lt;String&gt; number = value -&gt;
+	String.format( java.util.Locale.ROOT, "%.9f", value );
+
+java.io.File probe = new java.io.File(
+	System.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+).getAbsoluteFile();
+while ( probe != null
+	&amp;&amp; !new java.io.File( probe, "config/operational_scenarios.csv" ).isFile() ) {
+	probe = probe.getParentFile();
+}
+if ( probe == null )
+	throw new IllegalStateException( "Cannot locate repository root" );
+java.nio.file.Path runDirectory = new java.io.File(
+	probe,
+	String.format(
+		java.util.Locale.ROOT,
+		"results/raw/%s/%s/%s/replication_%03d",
+		root.output_collection_id,
+		root.scenario_id,
+		root.input_sample_id,
+		root.replication_id
+	)
+).toPath();
+try {
+	java.nio.file.Files.createDirectories( runDirectory );
+	java.util.ArrayList&lt;String&gt; manifest = new java.util.ArrayList&lt;String&gt;();
+	manifest.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "scenario_family,reference_scenario_id,input_sample_id,replication_id,"
+		+ "master_seed,arrival_seed,service_seed,routing_seed,tie_seed,start_state,"
+		+ "arrival_mode,arrival_cutoff_seconds,drain_end_seconds,drain_rule,"
+		+ "engine_name,engine_version,calibration_status,claim_ceiling,"
+		+ "crn_alignment_status,run_status"
+	);
+	manifest.add( String.join( ",", new String[] {
+		root.schema_version, root.config_id, root.config_sha256, root.model_version,
+		root.scenario_id, root.scenario_family, root.reference_scenario_id,
+		root.input_sample_id, Integer.toString( root.replication_id ),
+		Long.toString( root.master_seed ), Long.toString( root.arrival_seed ),
+		Long.toString( root.service_seed ), Long.toString( root.routing_seed ),
+		Long.toString( root.tie_seed ), root.start_state, root.arrival_mode,
+		number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+		root.drain_rule, "AnyLogic", "8.9.9.202607020720",
+		root.calibration_status, root.claim_ceiling, root.crn_alignment_status,
+		root.run_status
+	} ) );
+	java.util.ArrayList&lt;String&gt; entities = new java.util.ArrayList&lt;String&gt;();
+	entities.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "input_sample_id,replication_id,traveller_id,arrival_seconds,"
+		+ "security_service_demand_seconds,"
+		+ "immigration_conventional_service_demand_seconds,automation_u,"
+		+ "additional_check_u,lane_tie_u,security_queue_join_seconds,"
+		+ "security_start_seconds,security_end_seconds,"
+		+ "immigration_queue_join_seconds,immigration_lane_id,"
+		+ "immigration_start_seconds,technology_flag,"
+		+ "immigration_primary_service_demand_seconds,"
+		+ "immigration_primary_end_seconds,additional_check_flag,"
+		+ "additional_check_service_demand_seconds,"
+		+ "additional_check_end_seconds,exit_seconds,security_resource_id,"
+		+ "immigration_resource_id"
+	);
+	entities.addAll( root.entity_log_rows );
+	java.util.ArrayList&lt;String&gt; kpis = new java.util.ArrayList&lt;String&gt;();
+	kpis.add(
+		"schema_version,config_id,config_sha256,model_version,scenario_id,"
+		+ "input_sample_id,replication_id,arrival_cutoff_seconds,"
+		+ "drain_end_seconds,arrivals,completed_at_cutoff,"
+		+ "security_queue_at_cutoff,security_in_service_at_cutoff,"
+		+ "immigration_queue_at_cutoff,immigration_in_service_at_cutoff,"
+		+ "wip_at_cutoff,completed_after_drain,rejected_or_dropped_count,"
+		+ "technology_count,additional_check_count,"
+		+ "security_wait_mean_seconds,security_wait_p95_seconds,"
+		+ "immigration_wait_mean_seconds,immigration_wait_p95_seconds,"
+		+ "total_queue_wait_mean_seconds,total_queue_wait_p95_seconds,"
+		+ "total_queue_wait_exceed_600_rate,total_queue_wait_exceed_900_rate,"
+		+ "total_queue_wait_exceed_1200_rate,system_time_mean_seconds,"
+		+ "system_time_p95_seconds,security_utilization,immigration_utilization,"
+		+ "cutoff_backlog,cutoff_backlog_fraction,"
+		+ "cohort_clear_time_after_cutoff_seconds,conservation_pass,run_status"
+	);
+	kpis.add( String.join( ",", new String[] {
+		root.schema_version, root.config_id, root.config_sha256, root.model_version,
+		root.scenario_id, root.input_sample_id, Integer.toString( root.replication_id ),
+		number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+		Integer.toString( root.admitted ), Integer.toString( root.completed_at_cutoff ),
+		Integer.toString( root.security_queue_at_cutoff ),
+		Integer.toString( root.security_in_service_at_cutoff ),
+		Integer.toString( root.immigration_queue_at_cutoff ),
+		Integer.toString( root.immigration_in_service_at_cutoff ),
+		Integer.toString( wipAtCutoff ), Integer.toString( root.completed ),
+		Integer.toString( root.rejected_or_dropped_count ),
+		Integer.toString( root.technology_count ),
+		Integer.toString( root.additional_check_count ),
+		number.apply( securitySum / n ), number.apply( securitySorted.get( p95Index ) ),
+		number.apply( immigrationSum / n ), number.apply( immigrationSorted.get( p95Index ) ),
+		number.apply( totalSum / n ), number.apply( totalSorted.get( p95Index ) ),
+		number.apply( (double) root.exceed_600_count / n ),
+		number.apply( (double) root.exceed_900_count / n ),
+		number.apply( (double) root.exceed_1200_count / n ),
+		number.apply( systemSum / n ), number.apply( systemSorted.get( p95Index ) ),
+		number.apply( securityUtilization ), number.apply( immigrationUtilization ),
+		Integer.toString( cutoffBacklog ),
+		number.apply( root.admitted_at_cutoff &gt; 0
+			? (double) cutoffBacklog / root.admitted_at_cutoff : 0.0 ),
+		number.apply( Math.max( 0.0, drainEnd - root.arrival_cutoff_seconds ) ),
+		Boolean.toString( conservationPass ), root.run_status
+	} ) );
+	java.nio.file.Files.write(
+		runDirectory.resolve( "run_manifest.csv" ), manifest,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+	java.nio.file.Files.write(
+		runDirectory.resolve( "entity_log.csv" ), entities,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+	java.nio.file.Files.write(
+		runDirectory.resolve( "replication_kpis.csv" ), kpis,
+		java.nio.charset.StandardCharsets.UTF_8
+	);
+} catch ( java.io.IOException exception ) {
+	throw new RuntimeException( "Operational CSV export failed", exception );
+}</AfterSimulationRunCode>
+		<SeedValue>1</SeedValue>
+		<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+		<VmArgs/>
+		<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+		<Variables>
+			<Variable Class="PlainVariable">
+				<Id>1785162900002</Id>
+				<Name><![CDATA[confirmatory_auto_start_timer]]></Name>
+				<X>40</X><Y>120</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>false</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<Properties SaveInSnapshot="false"
+                Constant="false"
+                AccessType="private"
+                StaticVariable="false">
+					<Type><![CDATA[javax.swing.Timer]]></Type>
+					<InitialValue Class="CodeValue">
+						<Code><![CDATA[new javax.swing.Timer(300, event -> { ((javax.swing.Timer) event.getSource()).stop(); CapacityRobustnessConfirmatory.this.run(); }) {{ setRepeats(false); start(); }}]]></Code>
+					</InitialValue>
+				</Properties>
+			</Variable>
+		</Variables>
+		<AllowParallelEvaluations>false</AllowParallelEvaluations>
+		<UseFreeformParameters>true</UseFreeformParameters>
+		<NumberOfRuns>12</NumberOfRuns>
+		<FreeformParamValue>
+			<Id>1785163110001</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["1.0"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110011</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["TASK3_OPERATIONAL_POOLED_V1"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110021</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["confirmatory_capacity"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110031</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "OP_CONFIRM_EXACT95_LOW_REFERENCE_ASSUMPTION_SANDBOX_V1"
+	: index == 1 ? "OP_CONFIRM_EXACT95_LOW_CAPACITY_SECURITY_PLUS_4"
+	: index == 2 ? "OP_CONFIRM_EXACT95_LOW_CAPACITY_IMMIGRATION_PLUS_3"
+	: index == 3 ? "OP_CONFIRM_EXACT95_LOW_CAPACITY_BOTH_PLUS"
+	: index == 4 ? "OP_CONFIRM_MLE_BASE_REFERENCE_ASSUMPTION_SANDBOX_V1"
+	: index == 5 ? "OP_CONFIRM_MLE_BASE_CAPACITY_SECURITY_PLUS_4"
+	: index == 6 ? "OP_CONFIRM_MLE_BASE_CAPACITY_IMMIGRATION_PLUS_3"
+	: index == 7 ? "OP_CONFIRM_MLE_BASE_CAPACITY_BOTH_PLUS"
+	: index == 8 ? "OP_CONFIRM_EXACT95_HIGH_REFERENCE_ASSUMPTION_SANDBOX_V1"
+	: index == 9 ? "OP_CONFIRM_EXACT95_HIGH_CAPACITY_SECURITY_PLUS_4"
+	: index == 10 ? "OP_CONFIRM_EXACT95_HIGH_CAPACITY_IMMIGRATION_PLUS_3"
+	: "OP_CONFIRM_EXACT95_HIGH_CAPACITY_BOTH_PLUS"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110041</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "32b9044b5bbd75968a07e8c7fc390d8c3419cadcce37bf0965896dd768445e2b"
+	: index == 1 ? "a74f1c43d1e7330dabf9ae37612321af21799b456bd27f56db170446d229217d"
+	: index == 2 ? "d154b0dba54f481e612a360ff3e08fee334b279d1c08b2168c3ce51b4a1313bc"
+	: index == 3 ? "45f53fc3706fbd4413cadc5030b851fb533d4189450a73803837ccdf0a203f22"
+	: index == 4 ? "369372d7e06066baf12416f63c9b12a0af11b1ef17459431e126a703ba4c7eae"
+	: index == 5 ? "0efc30229024df398b0a79670c550ea3869c5337e3f66926aa0fac683945864d"
+	: index == 6 ? "52e5a50942acb0714e5eb93930edb571a9de4facb82099f63da0ea7457690a70"
+	: index == 7 ? "f15e7bca3caf7928d1cc85c7f0769cc39601b6e161afce3edf97023561e4ab66"
+	: index == 8 ? "eed4ac1694a3cbb110169bff620757a2aa7b14be5e0738f9318b5c1a3c59b08f"
+	: index == 9 ? "a9364c0ce0bb791d9df3e0ce27f0dbff6f9ec2b51a813d48d21b79e2344018d1"
+	: index == 10 ? "a60e5a4329e682c893b5dc0c2f697a051c839ed5a4bd9949951a26ad3245d023"
+	: "ef79d952f469f00fe5912eaa570ac3bdd1cd57c6609deb809b46ed4021e3ce3a"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110051</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "REFERENCE_ASSUMPTION_SANDBOX_V1"
+	: index == 1 ? "CAPACITY_SECURITY_PLUS_4"
+	: index == 2 ? "CAPACITY_IMMIGRATION_PLUS_3"
+	: index == 3 ? "CAPACITY_BOTH_PLUS"
+	: index == 4 ? "REFERENCE_ASSUMPTION_SANDBOX_V1"
+	: index == 5 ? "CAPACITY_SECURITY_PLUS_4"
+	: index == 6 ? "CAPACITY_IMMIGRATION_PLUS_3"
+	: index == 7 ? "CAPACITY_BOTH_PLUS"
+	: index == 8 ? "REFERENCE_ASSUMPTION_SANDBOX_V1"
+	: index == 9 ? "CAPACITY_SECURITY_PLUS_4"
+	: index == 10 ? "CAPACITY_IMMIGRATION_PLUS_3"
+	: "CAPACITY_BOTH_PLUS"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110061</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "REFERENCE"
+	: index == 1 ? "CAPACITY"
+	: index == 2 ? "CAPACITY"
+	: index == 3 ? "CAPACITY"
+	: index == 4 ? "REFERENCE"
+	: index == 5 ? "CAPACITY"
+	: index == 6 ? "CAPACITY"
+	: index == 7 ? "CAPACITY"
+	: index == 8 ? "REFERENCE"
+	: index == 9 ? "CAPACITY"
+	: index == 10 ? "CAPACITY"
+	: "CAPACITY"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110071</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["REFERENCE_ASSUMPTION_SANDBOX_V1"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110081</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? "LOCAL_WINDOW_HPP_EXACT95_LOW"
+	: index == 1 ? "LOCAL_WINDOW_HPP_EXACT95_LOW"
+	: index == 2 ? "LOCAL_WINDOW_HPP_EXACT95_LOW"
+	: index == 3 ? "LOCAL_WINDOW_HPP_EXACT95_LOW"
+	: index == 4 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 5 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 6 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 7 ? "LOCAL_WINDOW_HPP_BASE"
+	: index == 8 ? "LOCAL_WINDOW_HPP_EXACT95_HIGH"
+	: index == 9 ? "LOCAL_WINDOW_HPP_EXACT95_HIGH"
+	: index == 10 ? "LOCAL_WINDOW_HPP_EXACT95_HIGH"
+	: "LOCAL_WINDOW_HPP_EXACT95_HIGH"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110091</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110101</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["EMPTY_AND_IDLE"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110111</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["NOT_CALIBRATED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110121</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["COMPARATIVE_WHAT_IF_ONLY"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110131</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["PENDING_VALIDATION"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110141</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["HPP"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110151</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 0.9447573660171154
+	: index == 1 ? 0.9447573660171154
+	: index == 2 ? 0.9447573660171154
+	: index == 3 ? 0.9447573660171154
+	: index == 4 ? 1.3642132969720073
+	: index == 5 ? 1.3642132969720073
+	: index == 6 ? 1.3642132969720073
+	: index == 7 ? 1.3642132969720073
+	: index == 8 ? 1.90635134401724
+	: index == 9 ? 1.90635134401724
+	: index == 10 ? 1.90635134401724
+	: 1.90635134401724]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110161</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[1.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110171</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[300.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110181</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[5000]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110191</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["FULL_DRAIN"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110201</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 36
+	: index == 1 ? 40
+	: index == 2 ? 36
+	: index == 3 ? 40
+	: index == 4 ? 36
+	: index == 5 ? 40
+	: index == 6 ? 36
+	: index == 7 ? 40
+	: index == 8 ? 36
+	: index == 9 ? 40
+	: index == 10 ? 36
+	: 40]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110211</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[5000]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110221</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["FIXED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110231</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[21.818181818]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110241</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 21
+	: index == 1 ? 21
+	: index == 2 ? 24
+	: index == 3 ? 24
+	: index == 4 ? 21
+	: index == 5 ? 21
+	: index == 6 ? 24
+	: index == 7 ? 24
+	: index == 8 ? 21
+	: index == 9 ? 21
+	: index == 10 ? 24
+	: 24]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110251</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[5000]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110261</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["FIXED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110271</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[13.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110281</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["pooled"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110291</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["DISABLED"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110301</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[0.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110311</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[1.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110321</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["NONE"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110331</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[0.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110341</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[0.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110351</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA["UNSET"]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110361</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[0.0]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110371</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[202607290000L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110381</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 202608290011L
+	: index == 1 ? 202608290011L
+	: index == 2 ? 202608290011L
+	: index == 3 ? 202608290011L
+	: index == 4 ? 202609290011L
+	: index == 5 ? 202609290011L
+	: index == 6 ? 202609290011L
+	: index == 7 ? 202609290011L
+	: index == 8 ? 202610290011L
+	: index == 9 ? 202610290011L
+	: index == 10 ? 202610290011L
+	: 202610290011L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110391</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 202608290012L
+	: index == 1 ? 202608290012L
+	: index == 2 ? 202608290012L
+	: index == 3 ? 202608290012L
+	: index == 4 ? 202609290012L
+	: index == 5 ? 202609290012L
+	: index == 6 ? 202609290012L
+	: index == 7 ? 202609290012L
+	: index == 8 ? 202610290012L
+	: index == 9 ? 202610290012L
+	: index == 10 ? 202610290012L
+	: 202610290012L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110401</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 202608290013L
+	: index == 1 ? 202608290013L
+	: index == 2 ? 202608290013L
+	: index == 3 ? 202608290013L
+	: index == 4 ? 202609290013L
+	: index == 5 ? 202609290013L
+	: index == 6 ? 202609290013L
+	: index == 7 ? 202609290013L
+	: index == 8 ? 202610290013L
+	: index == 9 ? 202610290013L
+	: index == 10 ? 202610290013L
+	: 202610290013L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<FreeformParamValue>
+			<Id>1785163110411</Id>
+			<Expression Class="CodeValue">
+				<Code><![CDATA[index == 0 ? 202608290014L
+	: index == 1 ? 202608290014L
+	: index == 2 ? 202608290014L
+	: index == 3 ? 202608290014L
+	: index == 4 ? 202609290014L
+	: index == 5 ? 202609290014L
+	: index == 6 ? 202609290014L
+	: index == 7 ? 202609290014L
+	: index == 8 ? 202610290014L
+	: index == 9 ? 202610290014L
+	: index == 10 ? 202610290014L
+	: 202610290014L]]></Code>
+			</Expression>
+		</FreeformParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110001</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110011</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110021</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110031</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110041</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110051</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110061</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110071</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110081</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110091</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110101</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110111</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110121</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110131</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110141</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110151</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110161</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110171</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110181</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110191</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110201</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110211</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110221</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110231</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110241</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110251</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110261</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110271</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110281</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110291</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110301</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110311</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110321</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110331</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110341</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110351</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110361</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110371</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110381</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110391</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110401</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<RangeVariationParamValue>
+			<Id>1785163110411</Id>
+			<Type><![CDATA[FIXED]]></Type>
+		</RangeVariationParamValue>
+		<ModelTimeProperties>
+			<StopOption>Never</StopOption>
+			<InitialDate>1785024000000</InitialDate>
+			<InitialTime>0.0</InitialTime>
+			<FinalDate>1787702400000</FinalDate>
+			<FinalTime>300.0</FinalTime>
+		</ModelTimeProperties>
+		<PresentationProperties>
+			<EnableZoomAndPanning>true</EnableZoomAndPanning>
+			<Title>HTXCheckpointSimulation : CapacityRobustnessConfirmatory</Title>
+			<EnableDeveloperPanel>true</EnableDeveloperPanel>
+			<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+		</PresentationProperties>
+		<ReplicationsProperties>
+			<UseReplication>true</UseReplication>
+			<FixedReplicationsNumber>true</FixedReplicationsNumber>
+			<ReplicationPerIteration>50</ReplicationPerIteration>
+			<MinimumReplication>50</MinimumReplication>
+			<MaximumReplication>50</MaximumReplication>
+			<ConfidenceLevel>LEVEL_95</ConfidenceLevel>
+			<ErrorPercent>0.05</ErrorPercent>
+			<ExpressionForConfidenceComputation>0</ExpressionForConfidenceComputation>
+		</ReplicationsProperties>
+	</ParamVariationExperiment>
 </Experiments>

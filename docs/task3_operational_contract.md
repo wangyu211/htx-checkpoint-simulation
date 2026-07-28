@@ -4,7 +4,8 @@
 
 **Model:** `TASK3_OPERATIONAL_POOLED_V1`
 
-**Recorded execution:** 15 scenarios × 10 replications
+**Recorded execution:** 15 scenarios × 10 pilot replications; 12 capacity/rate
+cells × 50 confirmatory replications
 
 **Claim ceiling:** comparative what-if evidence only; not a calibrated HTX
 baseline, site forecast, digital twin, or staffing recommendation
@@ -42,15 +43,43 @@ on `[0, 300)` seconds, then the Source closes and the complete admitted cohort
 drains. A run cannot pass if a traveller is dropped, rejected, silently
 truncated, or left in the system.
 
-V1 does **not** implement counter-specific Immigration queues. A genuine
+Pooled FCFS is the only implemented queue policy. V1 does **not** implement
+counter-specific Immigration queues. A genuine
 separate-queue comparison requires replicated queue objects, an explicit lane
 assignment/tie rule, and counter-specific event logging. It remains a future
-mechanism rather than a scenario-label change.
+mechanism rather than a scenario-label change, and the interactive experiment
+does not offer a misleading queue-policy selector.
 
 Additional checks use a `COUNTER_HELD_RISK_REFERRAL_PROXY`: selected
 travellers retain an Immigration resource for the declared extra work. This
 deliberately pessimistic boundary does not assert ICA practice or invent
 unobserved secondary capacity.
+
+## Interactive execution surface
+
+`OperationalInteractive` is a visible 2D exploratory/ad-hoc run. Its four
+zones make the implemented process legible:
+
+```text
+Arrival -> Security -> Immigration -> Exit
+```
+
+The live presentation shows admitted and completed counts, Security and
+Immigration queue and in-service counts, queue maxima, branch counts, and
+`run_status`. Its complete editable pre-run parameter surface is exactly:
+
+1. `demand_multiplier`;
+2. `security_capacity`;
+3. `immigration_capacity`;
+4. `automation_uptake`; and
+5. `automation_multiplier`.
+
+All other process, queue, cutoff, service, and seed fields remain fixed.
+Inputs are set before Run, and AnyLogic's built-in Pause/Resume/Stop controls
+govern execution. The generated interactive scenario is labelled
+`INTERACTIVE_EXPLORATORY`, uses replication `0`, and exports to a separate
+ad-hoc collection. It is for mechanism exploration and demonstration.
+Reportable claims come only from validated replicated experiments.
 
 ## Reference assumptions
 
@@ -100,8 +129,10 @@ The primary estimand is the mean of the 10 replication-level
 treated as independent statistical replications.
 
 Paired analysis is prohibited unless a separate alignment report verifies
-traveller IDs and branch-invariant draws. `crn_alignment_status` is
-`NOT_TESTED`, so the recorded contrasts use independent Welch intervals.
+traveller IDs and branch-invariant draws. Pilot `crn_alignment_status` is
+`NOT_TESTED`, so its recorded contrasts use independent Welch intervals. The
+frozen confirmatory study passed the full alignment gate and therefore uses
+paired Student-t inference for its within-rate contrasts.
 
 ## Generate, run, and verify
 
@@ -128,6 +159,13 @@ Then run:
 .\.venv\Scripts\python.exe -m src.analysis.build_operational_dashboard
 ```
 
+For the frozen capacity study, run
+`CapacityRobustnessConfirmatory: OperationalCheckpointModel`. Its Parameter
+Variation window can be blank; a private one-shot timer starts it
+automatically, so do not press Play. Parallel evaluation is disabled. The
+experiment runs `12 × 50 = 600` replications serially and must reach
+`Finished`.
+
 ## Recorded evidence
 
 The completed run contains:
@@ -144,7 +182,7 @@ The completed run contains:
 
 Evidence:
 
-- [strict validation report](../results/intermediate/operational_results/validation.json)
+- [strict validation report](../results/analysis/operational/validation.json)
 - [analysis manifest](../results/analysis/operational/analysis_manifest.json)
 - [scenario estimates](../results/analysis/operational/scenario_estimates.csv)
 - [scenario contrasts](../results/analysis/operational/scenario_contrasts.csv)
@@ -154,3 +192,30 @@ Evidence:
 Passing these gates establishes implementation integrity, registered coverage,
 and Monte Carlo analysis conditional on the fixed assumptions. It does not
 establish input calibration, operational validity, or forecast accuracy.
+
+## Recorded confirmatory evidence
+
+The completed `CapacityRobustnessConfirmatory` study contains:
+
+- `600/600` expected runs with strict validation `PASS`;
+- `253,756` entity records;
+- exact coverage of four capacity alternatives at three registered arrival
+  rates, with 50 replications per cell;
+- CRN alignment `PASS` for all 150 within-rate replication groups; and
+- conditional paired analysis after the CRN gate passed.
+
+The retained compact package is entirely under
+`results/analysis/confirmatory_capacity/`:
+
+- [compact audit manifest](../results/analysis/confirmatory_capacity/audit_manifest.json)
+- [strict validation report](../results/analysis/confirmatory_capacity/validation.json)
+- [CRN alignment report](../results/analysis/confirmatory_capacity/crn_alignment.json)
+- [analysis manifest](../results/analysis/confirmatory_capacity/analysis_manifest.json)
+- [primary result](../results/analysis/confirmatory_capacity/primary_result.json)
+- [scenario estimates](../results/analysis/confirmatory_capacity/scenario_estimates.csv)
+- [scenario contrasts](../results/analysis/confirmatory_capacity/scenario_contrasts.csv)
+
+The confirmatory result remains conditional capacity-mechanism evidence under
+pooled FCFS, fixed service times, empty/idle start, the 300-second arrival
+window, and full drain. Neither the execution count nor CRN `PASS` supplies
+missing field calibration, cost evidence, or roster feasibility.

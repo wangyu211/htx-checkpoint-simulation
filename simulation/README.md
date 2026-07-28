@@ -33,11 +33,11 @@ rights for the engine or model.
   `HppArrivalVerification` experiment. Its Source-to-Sink scope verifies only
   the local-window arrival-demand mechanism; it is not an operational
   checkpoint baseline.
-- `OperationalCheckpointModel`, `OperationalTraveller`,
-  `OperationalInteractive`, and `OperationalPilot` implement the Task 3
-  pooled-FCFS assumption sandbox. `OperationalPilot` is the evidence
-  experiment; the interactive experiment is intentionally a minimal GUI, not
-  a finished operational control panel.
+- `OperationalCheckpointModel` and `OperationalTraveller` implement the Task 3
+  pooled-FCFS assumption sandbox.
+- `OperationalInteractive` provides the exploratory four-zone 2D view and five
+  bounded pre-run inputs. `OperationalPilot` and
+  `CapacityRobustnessConfirmatory` provide the reportable replicated evidence.
 
 The ALPX project is the source of truth. Regenerate the ALP copy through
 `File -> Save As`, clear `Use multi-part ALP format`, and repeat the launch and
@@ -77,11 +77,12 @@ all three CSV files remained byte-identical to the reference run.
 
 This gate proves experiment orchestration, CSV export, seed lineage, distinct
 replications, and deterministic reruns. The separate deterministic experiment
-verifies the basic Security-to-Immigration flow. The later operational pilot
-adds registered capacity, demand, service-context, technology-multiplier, and
-counter-held risk-proxy scenarios plus a post-run dashboard. Genuinely
-separate lane queues, a richer interactive UI, traveller-level cross-scenario
-CRN alignment, and site calibration remain outside the verified v1 scope.
+verifies the basic Security-to-Immigration flow. The operational model adds
+registered capacity, demand, service-context, technology-multiplier, and
+counter-held risk-proxy scenarios, a four-zone interactive view, a post-run
+dashboard, and a frozen confirmatory capacity study. Genuinely separate lane
+queues and site calibration remain outside v1. Pilot CRN alignment remains
+untested; the later confirmatory study has its own verified CRN gate.
 
 ## Deterministic two-stage mechanism — PASS
 
@@ -157,8 +158,7 @@ byte for byte:
 Run `HppArrivalVerification` from the split ALPX project, then validate:
 
 ```powershell
-.\.venv\Scripts\python.exe -m src.analysis.validate_anylogic_hpp_arrival `
-  --reference-dir results\intermediate\anylogic_hpp_arrival_verification\reference_split_run
+.\.venv\Scripts\python.exe -m src.analysis.validate_anylogic_hpp_arrival
 ```
 
 The result is `PASS` for `DEMAND_MECHANISM_VERIFICATION` with readiness scope
@@ -184,7 +184,8 @@ HPP travellerSource
 ```
 
 Each replication admits arrivals for 300 seconds and then fully drains the
-arrival cohort. The v1 queue mechanism is pooled FCFS at both stages.
+arrival cohort. The v1 queue mechanism is pooled FCFS at both stages. It is the
+only implemented queue policy, and no UI offers a queue-policy selector.
 `OperationalPilot` executes 15 registered capacity, demand, service-context,
 automation-multiplier, and external risk-bound scenarios × 10 independent
 replications. The completed batch contains 150/150 validated runs and 61,218
@@ -195,6 +196,26 @@ configuration lineage, seed formulas, schemas, event order, counts,
 conservation, queue/resource bounds, and full drain. Analysis uses independent
 Welch intervals because `crn_alignment_status` is `NOT_TESTED`. The run does
 not support paired-CRN precision claims.
+
+### Explore with `OperationalInteractive`
+
+1. Open
+   `anylogic/HTXCheckpointSimulation/HTXCheckpointSimulation.alpx`.
+2. Run `OperationalInteractive: OperationalCheckpointModel`.
+3. Before pressing Run, edit only the five displayed model parameters:
+   `demand_multiplier`, `security_capacity`, `immigration_capacity`,
+   `automation_uptake`, and `automation_multiplier`.
+4. During execution, use AnyLogic's built-in Pause/Resume/Stop controls. Stop
+   and reopen the experiment to reset structural inputs.
+
+The 2D presentation follows Arrival → Security → Immigration → Exit. Its live
+panel shows admitted/completed progress, Security and Immigration queue and
+in-service counts, queue maxima, branch counts, and `run_status`. This run is
+labelled exploratory/ad-hoc, uses replication `0`, and writes to a separate
+collection. Do not use a single interactive trace for reportable claims;
+those come from validated replication outputs.
+
+### Run the reportable pilot
 
 Run the pilot from the split ALPX source:
 
@@ -215,7 +236,7 @@ Run the pilot from the split ALPX source:
 
 The consolidated data are in `../results/raw/operational/`; the validation
 report is
-[`../results/intermediate/operational_results/validation.json`](../results/intermediate/operational_results/validation.json).
+[`../results/analysis/operational/validation.json`](../results/analysis/operational/validation.json).
 Reviewer-facing outputs are the
 [`results summary`](../results/analysis/operational/README.md),
 [`scenario estimates`](../results/analysis/operational/scenario_estimates.csv),
@@ -227,6 +248,32 @@ This is a comparative, not-calibrated pilot. It is not an HTX performance
 estimate, production staffing model, or final recommendation. The risk rows
 use a deliberately pessimistic counter-held workload proxy and must not be
 presented as ICA practice.
+
+### Run the confirmatory capacity study
+
+Open the same split project and run
+`CapacityRobustnessConfirmatory: OperationalCheckpointModel`. Its Parameter
+Variation window may be blank. A private one-shot timer starts the experiment
+automatically after approximately 300 ms, so do not press Play. Parallel
+evaluation is disabled: the experiment runs 12 capacity/rate cells × 50
+replications = 600 runs serially and must reach `Finished`.
+
+The completed run has exact `600/600` coverage, 253,756 entity records, strict
+validation `PASS`, and traveller-level CRN alignment `PASS`. Retained compact
+evidence is under `../results/analysis/confirmatory_capacity/`:
+
+- [`audit_manifest.json`](../results/analysis/confirmatory_capacity/audit_manifest.json)
+- [`validation.json`](../results/analysis/confirmatory_capacity/validation.json)
+- [`crn_alignment.json`](../results/analysis/confirmatory_capacity/crn_alignment.json)
+- [`analysis_manifest.json`](../results/analysis/confirmatory_capacity/analysis_manifest.json)
+- [`primary_result.json`](../results/analysis/confirmatory_capacity/primary_result.json)
+- [`run_manifest.csv`](../results/analysis/confirmatory_capacity/run_manifest.csv)
+- [`replication_kpis.csv`](../results/analysis/confirmatory_capacity/replication_kpis.csv)
+
+The CRN gate permits the pre-specified paired analysis within each registered
+arrival-rate level. It does not calibrate service times, capacities, arrival
+shape, rosters, or costs. The confirmatory finding remains conditional
+capacity-mechanism evidence, not a site forecast or staffing recommendation.
 
 ## Run and verify
 
@@ -268,16 +315,17 @@ Validate structure, lineage, event order, counts, and stochastic fingerprints:
 For a deterministic rerun, preserve the first output:
 
 ```powershell
-$reference = "results\intermediate\anylogic_gate\reference_run"
-New-Item -ItemType Directory -Path $reference -Force | Out-Null
-Copy-Item "results\raw\anylogic_gate\*.csv" $reference
+$gateReference = Join-Path `
+  ([System.IO.Path]::GetTempPath()) "htx-anylogic-gate-reference"
+New-Item -ItemType Directory -Path $gateReference -Force | Out-Null
+Copy-Item "results\raw\anylogic_gate\*.csv" $gateReference
 ```
 
 Run the experiment again, then compare every output byte:
 
 ```powershell
 .\.venv\Scripts\python.exe -m src.analysis.validate_anylogic_gate `
-  --reference-dir results\intermediate\anylogic_gate\reference_run
+  --reference-dir $gateReference
 ```
 
 The expected result is `status: PASS`, no errors, and
@@ -291,7 +339,7 @@ with a lightweight browser UI remains the contingency if the full model or
 delivery path later fails. It must still provide:
 
 - the two-stage Security -> Immigration DES;
-- genuinely separate and pooled Immigration queues;
+- pooled FCFS, with separate queues claimed only if genuinely implemented;
 - finite resources, technology mixture, and additional checks;
 - reset/re-run controls, a primitive 2D state view, and dashboard;
 - identical parameter/scenario keys and output schemas; and

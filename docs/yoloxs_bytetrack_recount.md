@@ -118,7 +118,7 @@ isolated `.venv-bytetrack` environment:
 
 ```powershell
 .\.venv-bytetrack\Scripts\python.exe -m src.cv.audit_crossings `
-  --video "C:\Users\Admin\Documents\jobFinding\HTX\TechnicalTestVideo-main\TestVidTask.mov" `
+  --video data\raw\TestVidTask.mov `
   --model models\yolox_s.onnx `
   --output-dir _work\cv_yoloxs_bytetrack_sensitivity_20260727\a015_m090 `
   --tracker bytetrack `

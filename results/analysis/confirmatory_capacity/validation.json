@@ -1,0 +1,13 @@
+{
+  "claim_boundary": "Schema and software-invariant validation only; not operational validation or calibration.",
+  "confirmatory_coverage_required": true,
+  "contract": "TASK3_OPERATIONAL_RESULTS_V1",
+  "entity_count": 253756,
+  "errors": [],
+  "expected_confirmatory_run_count": 600,
+  "expected_pilot_run_count": null,
+  "pilot_coverage_required": false,
+  "results_dir": "results/raw/confirmatory_capacity_consolidated",
+  "run_count": 600,
+  "status": "PASS"
+}

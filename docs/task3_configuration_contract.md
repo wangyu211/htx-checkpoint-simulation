@@ -1,9 +1,9 @@
 # Task 3 configuration contract
 
-**Status:** operational assumption contract and 15 × 10 pilot verified; not
-calibrated
+**Status:** operational assumption contract, 15 × 10 pilot, and 12 × 50
+confirmatory capacity study verified; not calibrated
 
-**Version:** 2.0, 2026-07-28
+**Version:** 2.1, 2026-07-28
 
 ## Outcome
 
@@ -15,11 +15,13 @@ and operational assumptions in separate contracts:
 | `config/model_run_configs.csv` / `VERIFY_TWO_STAGE_A` | Exact six-person, 2 s/3 s, one-server-per-stage regression oracle | `READY` and verified |
 | `config/model_run_configs.csv` / `BASELINE_LOCAL_WINDOW_HPP` | Demand-only row carrying the accepted Task 1 rate | `BLOCKED_INPUTS` by design |
 | `config/operational_scenarios.csv` | Registered comparative assumption sandbox with explicit service, capacity, technology, and risk sensitivities | `READY_ASSUMPTION_SANDBOX`; 15 × 10 pilot complete |
+| `config/confirmatory_capacity_study.json` / `config/confirmatory_seed_manifest.csv` | Frozen 12-cell capacity/rate grid, precision cap, and 150 within-rate seed groups | `EXECUTED`; 12 × 50 runs complete |
 
-The last row does not “unblock” or calibrate the demand-only row. It creates a
-different, transparent what-if study whose non-video inputs are supported by
-named context, derivation, or explicit sensitivity assumptions in
-`config/scenario_provenance.csv` and `config/provenance_registry.csv`.
+The operational and confirmatory rows do not “unblock” or calibrate the
+demand-only row. They create transparent conditional studies whose non-video
+inputs are supported by named context, derivation, or explicit sensitivity
+assumptions in `config/scenario_provenance.csv` and
+`config/provenance_registry.csv`.
 
 ## Accepted demand boundary
 
@@ -67,6 +69,37 @@ external boundary tests and must not be described as ICA practice.
 All operational rows are labelled `NOT_CALIBRATED` and
 `COMPARATIVE_WHAT_IF_ONLY`.
 
+## Interactive execution contract
+
+`OperationalInteractive` is an exploratory/ad-hoc Simulation experiment, not
+a report-producing scenario batch. Its 2D presentation follows four visible
+zones:
+
+```text
+Arrival -> Security -> Immigration -> Exit
+```
+
+The live panel exposes admitted/completed progress, the queue and in-service
+count at Security and Immigration, queue maxima, technology/additional-check
+counts, and run status. Exactly five model parameters are genuine pre-run
+controls:
+
+| Parameter | Interactive domain |
+|---|---:|
+| `demand_multiplier` | `0.5` to `2.0` |
+| `security_capacity` | integer `1` to `200` |
+| `immigration_capacity` | integer `1` to `200` |
+| `automation_uptake` | `0.0` to `1.0` |
+| `automation_multiplier` | strictly between `0.0` and `1.0` when uptake is positive; reset to `1.0` when uptake is zero |
+
+All other mechanism and lineage fields are fixed by the experiment. Pooled
+FCFS is the only implemented queue policy, so the UI deliberately has no
+queue-policy selector. Inputs are set before Run; structural changes are reset
+by stopping and reopening the experiment. Replication `0` output is labelled
+`INTERACTIVE_EXPLORATORY` and kept outside reportable replicated collections.
+Reportable claims must come from validated replication outputs, not an
+interactive trace.
+
 ## Fail-closed validation
 
 Run both configuration validators from the repository root:
@@ -79,12 +112,8 @@ Run both configuration validators from the repository root:
 The legacy validator checks the oracle/demand-only configuration states. The
 operational validator checks the exact 15-row schema, scenario/provenance
 joins, numeric and enum domains, reference consistency, evidence boundaries,
-and a canonical configuration hash. It writes:
-
-```text
-results/intermediate/model_configuration/validation.json
-results/intermediate/operational_contract/validation.json
-```
+and a canonical configuration hash. Their local working reports are
+reproducibility artifacts rather than retained reviewer evidence.
 
 The operational AnyLogic generator fails closed if the registered rows,
 ordering, IDs, or canonical hash differ from the embedded experiment
@@ -133,7 +162,7 @@ Recorded outcome:
 
 Evidence links:
 
-- [`strict validation report`](../results/intermediate/operational_results/validation.json)
+- [`strict validation report`](../results/analysis/operational/validation.json)
 - [`analysis manifest`](../results/analysis/operational/analysis_manifest.json)
 - [`scenario estimates`](../results/analysis/operational/scenario_estimates.csv)
 - [`scenario contrasts`](../results/analysis/operational/scenario_contrasts.csv)
@@ -143,6 +172,44 @@ Scenario-specific seeds are valid and distinct, but traveller-level
 common-random-number alignment is `NOT_TESTED`. Analysis therefore uses
 independent Welch intervals rather than paired contrasts.
 
+## Confirmatory capacity evidence
+
+`CapacityRobustnessConfirmatory` crosses four capacity alternatives
+(reference, Security `+4`, Immigration `+3`, and joint `+4/+3`) with three
+registered HPP arrival-rate levels (exact-count 95% low, point estimate, and
+exact-count 95% high). It is fixed at:
+
+```text
+12 cells × 50 replications = 600 runs
+```
+
+The visible Parameter Variation experiment uses a private one-shot timer to
+start automatically after the window initializes. Parallel evaluations are
+disabled, so all 600 runs execute serially. The completed compact evidence
+package records:
+
+- `600/600` exact run coverage and strict result validation `PASS`;
+- `253,756` entity rows;
+- CRN alignment `PASS` across all 150 within-rate replication groups; and
+- paired Student-t analysis only after that traveller-level alignment gate
+  passed.
+
+Retained evidence is under
+`results/analysis/confirmatory_capacity/`:
+
+- [`audit_manifest.json`](../results/analysis/confirmatory_capacity/audit_manifest.json)
+- [`validation.json`](../results/analysis/confirmatory_capacity/validation.json)
+- [`crn_alignment.json`](../results/analysis/confirmatory_capacity/crn_alignment.json)
+- [`analysis_manifest.json`](../results/analysis/confirmatory_capacity/analysis_manifest.json)
+- [`primary_result.json`](../results/analysis/confirmatory_capacity/primary_result.json)
+- [`run_manifest.csv`](../results/analysis/confirmatory_capacity/run_manifest.csv)
+- [`replication_kpis.csv`](../results/analysis/confirmatory_capacity/replication_kpis.csv)
+
+The confirmatory `PASS` is conditional capacity-mechanism evidence under the
+registered pooled-FCFS, fixed-service, empty-start, and full-drain assumptions.
+It does not calibrate an HTX baseline or justify an operational staffing
+decision.
+
 ## Claim and delivery boundary
 
 This evidence supports an executable, reproducible comparative pilot under
@@ -150,10 +217,11 @@ registered assumptions. It does not establish operational validity,
 calibration, an HTX service level, a site forecast, an economic optimum, or a
 final staffing recommendation.
 
-The current GUI is minimal and the supported workflow remains a visible
-AnyLogic PLE run. No headless or standalone execution is claimed. Genuinely
-separate queue banks, a polished interactive layout, field calibration,
-confirmatory replication sizing, and CRN alignment remain future extensions.
+The supported workflow remains a visible AnyLogic PLE run; no headless or
+standalone execution is claimed. The four-zone interactive presentation and
+five bounded pre-run controls are implemented, as is the frozen confirmatory
+replication design and its CRN gate. Genuinely separate queue banks, field
+calibration, and a production control interface remain outside v1.
 
 The configuration boundary is engine-independent even though AnyLogic is the
 selected primary engine.

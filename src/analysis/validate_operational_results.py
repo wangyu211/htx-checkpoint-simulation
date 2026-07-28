@@ -17,6 +17,12 @@ from src.analysis.validate_operational_contract import (
     SCENARIO_COLUMNS,
     scenario_config_sha256,
 )
+from src.analysis.confirmatory_design import (
+    DEFAULT_DESIGN as DEFAULT_CONFIRMATORY_DESIGN,
+    DEFAULT_SEED_MANIFEST as DEFAULT_CONFIRMATORY_SEED_MANIFEST,
+    build_confirmatory_scenario_rows,
+    load_confirmatory_seed_rows,
+)
 
 
 DEFAULT_SCHEMA_REGISTRY = (
@@ -146,6 +152,13 @@ def _validate_table(
 
 def _key(row: Mapping[str, str]) -> tuple[str, str, str]:
     return tuple((row.get(field) or "").strip() for field in RUN_KEY)  # type: ignore[return-value]
+
+
+def _scenario_key(row: Mapping[str, str]) -> tuple[str, str]:
+    return (
+        (row.get("scenario_id") or "").strip(),
+        (row.get("input_sample_id") or "").strip(),
+    )
 
 
 def _nonnegative(
@@ -287,12 +300,114 @@ def validate_operational_pilot_coverage(
     return errors
 
 
+def validate_confirmatory_coverage(
+    manifests: Sequence[Mapping[str, str]],
+    scenario_rows: Sequence[Mapping[str, str]],
+    seed_rows: Sequence[Mapping[str, str]],
+) -> list[str]:
+    """Require the exact 12-cell x 50-replication confirmatory contract."""
+
+    errors: list[str] = []
+    cells = {_scenario_key(row): row for row in scenario_rows}
+    if len(scenario_rows) != 12 or len(cells) != 12:
+        errors.append(
+            "CapacityRobustnessConfirmatory requires 12 unique "
+            f"scenario/input cells; found {len(scenario_rows)} rows/"
+            f"{len(cells)} keys"
+        )
+
+    expected: dict[tuple[str, str, str], Mapping[str, str]] = {}
+    for line, seed in enumerate(seed_rows, start=2):
+        input_sample_id = (seed.get("input_sample_id") or "").strip()
+        replication_id = (seed.get("replication_id") or "").strip()
+        scenarios = [
+            value for value in (seed.get("scenario_ids") or "").split("|")
+            if value
+        ]
+        if len(scenarios) != 4:
+            errors.append(
+                f"confirmatory_seed_manifest.csv:{line}: expected four scenarios"
+            )
+        for scenario_id in scenarios:
+            key = (scenario_id, input_sample_id, replication_id)
+            if key in expected:
+                errors.append(
+                    f"confirmatory_seed_manifest.csv:{line}: duplicate run key {key}"
+                )
+            expected[key] = seed
+            if (scenario_id, input_sample_id) not in cells:
+                errors.append(
+                    f"confirmatory_seed_manifest.csv:{line}: unknown cell "
+                    f"{scenario_id}/{input_sample_id}"
+                )
+    if len(expected) != 600:
+        errors.append(
+            f"confirmatory seed manifest expands to {len(expected)} runs; "
+            "expected 600"
+        )
+
+    actual_keys = {_key(row) for row in manifests}
+    missing = sorted(set(expected) - actual_keys)
+    extra = sorted(actual_keys - set(expected))
+    if missing:
+        errors.append(
+            "CapacityRobustnessConfirmatory coverage is missing "
+            f"{len(missing)} run keys; first={missing[:10]}"
+        )
+    if extra:
+        errors.append(
+            "CapacityRobustnessConfirmatory coverage has "
+            f"{len(extra)} unexpected run keys; first={extra[:10]}"
+        )
+
+    for line, manifest in enumerate(manifests, start=2):
+        label = f"run_manifest.csv:{line}"
+        key = _key(manifest)
+        scenario = cells.get((key[0], key[1]))
+        seed = expected.get(key)
+        if scenario is None or seed is None:
+            continue
+        exact_fields = {
+            "schema_version": scenario["schema_version"],
+            "config_id": scenario["config_id"],
+            "scenario_family": scenario["scenario_family"],
+            "reference_scenario_id": scenario["reference_scenario_id"],
+            "input_sample_id": scenario["input_sample_id"],
+            "master_seed": seed["master_seed"],
+            "arrival_seed": seed["arrival_seed"],
+            "service_seed": seed["service_seed"],
+            "routing_seed": seed["routing_seed"],
+            "tie_seed": seed["tie_seed"],
+            "arrival_mode": scenario["arrival_mode"],
+            "calibration_status": scenario["calibration_status"],
+            "claim_ceiling": scenario["claim_ceiling"],
+            "crn_alignment_status": scenario["crn_alignment_status"],
+        }
+        for field, expected_value in exact_fields.items():
+            if (manifest.get(field) or "").strip() != expected_value.strip():
+                errors.append(
+                    f"{label}:{field}: does not match confirmatory contract"
+                )
+        if manifest.get("model_version") != "TASK3_OPERATIONAL_POOLED_V1":
+            errors.append(
+                f"{label}:model_version: expected TASK3_OPERATIONAL_POOLED_V1"
+            )
+        if manifest.get("start_state") != "EMPTY_AND_IDLE":
+            errors.append(
+                f"{label}:start_state: expected EMPTY_AND_IDLE"
+            )
+    return errors
+
+
 def validate_operational_results(
     results_dir: Path = DEFAULT_RESULTS_DIR,
     *,
     schema_registry_path: Path = DEFAULT_SCHEMA_REGISTRY,
     scenarios_path: Path = DEFAULT_SCENARIOS,
     require_pilot_coverage: bool = False,
+    require_confirmatory_coverage: bool = False,
+    confirmatory_design_path: Path = DEFAULT_CONFIRMATORY_DESIGN,
+    confirmatory_seed_manifest_path: Path = DEFAULT_CONFIRMATORY_SEED_MANIFEST,
 ) -> dict[str, object]:
     """Validate schemas, lineage, conservation, and entity event order."""
 
@@ -316,20 +431,37 @@ def validate_operational_results(
             results_dir / filename, table, fields, errors
         )
 
-    try:
-        scenario_fields, scenario_rows = read_csv(scenarios_path)
-        if (
-            require_pilot_coverage
-            and tuple(scenario_fields) != SCENARIO_COLUMNS
-        ):
-            errors.append(
-                "operational_scenarios.csv: header does not match the "
-                "canonical scenario contract"
+    if require_pilot_coverage and require_confirmatory_coverage:
+        errors.append("pilot and confirmatory coverage modes are mutually exclusive")
+    if require_confirmatory_coverage:
+        try:
+            scenario_rows = build_confirmatory_scenario_rows(
+                confirmatory_design_path,
+                scenarios_path,
             )
-    except (FileNotFoundError, ValueError) as exc:
-        errors.append(str(exc))
-        scenario_rows = []
-    scenarios = {row["scenario_id"]: row for row in scenario_rows}
+            seed_rows = load_confirmatory_seed_rows(
+                confirmatory_seed_manifest_path
+            )
+        except (FileNotFoundError, KeyError, ValueError) as exc:
+            errors.append(str(exc))
+            scenario_rows = []
+            seed_rows = []
+    else:
+        try:
+            scenario_fields, scenario_rows = read_csv(scenarios_path)
+            if (
+                require_pilot_coverage
+                and tuple(scenario_fields) != SCENARIO_COLUMNS
+            ):
+                errors.append(
+                    "operational_scenarios.csv: header does not match the "
+                    "canonical scenario contract"
+                )
+        except (FileNotFoundError, ValueError) as exc:
+            errors.append(str(exc))
+            scenario_rows = []
+        seed_rows = []
+    scenarios = {_scenario_key(row): row for row in scenario_rows}
 
     manifests = rows_by_table.get("run_manifest", [])
     kpis = rows_by_table.get("replication_kpis", [])
@@ -348,6 +480,14 @@ def validate_operational_results(
             validate_operational_pilot_coverage(
                 manifests,
                 scenario_rows,
+            )
+        )
+    if require_confirmatory_coverage:
+        errors.extend(
+            validate_confirmatory_coverage(
+                manifests,
+                scenario_rows,
+                seed_rows,
             )
         )
 
@@ -466,7 +606,7 @@ def validate_operational_results(
             )
 
     for line, row in enumerate(manifests, start=2):
-        scenario = scenarios.get(row.get("scenario_id", ""))
+        scenario = scenarios.get(_scenario_key(row))
         if scenario is None:
             errors.append(
                 f"run_manifest.csv:{line}: unknown scenario_id "
@@ -614,6 +754,7 @@ def validate_operational_results(
         "results_dir": str(results_dir),
         "run_count": len(manifests),
         "pilot_coverage_required": require_pilot_coverage,
+        "confirmatory_coverage_required": require_confirmatory_coverage,
         "expected_pilot_run_count": (
             sum(
                 int(row.get("pilot_replications", "0"))
@@ -622,6 +763,9 @@ def validate_operational_results(
             )
             if require_pilot_coverage
             else None
+        ),
+        "expected_confirmatory_run_count": (
+            600 if require_confirmatory_coverage else None
         ),
         "entity_count": len(entities),
         "claim_boundary": (
@@ -637,6 +781,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR)
     parser.add_argument(
         "--schema-registry", type=Path, default=DEFAULT_SCHEMA_REGISTRY
+    )
+    parser.add_argument(
+        "--require-confirmatory-coverage",
+        action="store_true",
+        help="Require the frozen 12-cell x 50-replication key and seed set.",
+    )
+    parser.add_argument(
+        "--confirmatory-design",
+        type=Path,
+        default=DEFAULT_CONFIRMATORY_DESIGN,
+    )
+    parser.add_argument(
+        "--confirmatory-seed-manifest",
+        type=Path,
+        default=DEFAULT_CONFIRMATORY_SEED_MANIFEST,
     )
     parser.add_argument("--scenarios", type=Path, default=DEFAULT_SCENARIOS)
     parser.add_argument(
@@ -655,6 +814,11 @@ def main() -> int:
         schema_registry_path=args.schema_registry.resolve(),
         scenarios_path=args.scenarios.resolve(),
         require_pilot_coverage=args.require_pilot_coverage,
+        require_confirmatory_coverage=args.require_confirmatory_coverage,
+        confirmatory_design_path=args.confirmatory_design.resolve(),
+        confirmatory_seed_manifest_path=(
+            args.confirmatory_seed_manifest.resolve()
+        ),
     )
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(

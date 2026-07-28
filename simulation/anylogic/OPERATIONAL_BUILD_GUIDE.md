@@ -6,7 +6,8 @@
 
 **Generator:** `scripts/generate_operational_anylogic.py`
 
-**Batch design:** 15 registered scenarios × 10 independent replications, run serially
+**Batch designs:** 15 registered scenarios × 10 pilot replications and 12
+capacity/rate cells × 50 confirmatory replications, both run serially
 
 **Claim boundary:** executable and traceable assumption sandbox; **not calibrated
 to an HTX site and not an operational forecast**
@@ -24,8 +25,9 @@ The split AnyLogic project contains:
 |---|---|
 | `OperationalTraveller` | Per-traveller lineage, random draws, timestamps, routing flags, and resource IDs |
 | `OperationalCheckpointModel` | Pooled FCFS Security and Immigration process model |
-| `OperationalInteractive` | One canonical reference smoke run |
+| `OperationalInteractive` | Exploratory/ad-hoc four-zone 2D Simulation experiment with five pre-run inputs and live state |
 | `OperationalPilot` | Registry-driven Parameter Variation experiment |
+| `CapacityRobustnessConfirmatory` | Frozen capacity/rate Parameter Variation experiment with 600 serial runs and one-shot auto-start |
 
 The process is:
 
@@ -55,6 +57,8 @@ control the generated model:
 | File | Contract |
 |---|---|
 | `config/operational_scenarios.csv` | Exact 15-scenario registry and pilot replication count |
+| `config/confirmatory_capacity_study.json` | Frozen 12-cell capacity/rate design and 600-run cap |
+| `config/confirmatory_seed_manifest.csv` | Exact 150 within-rate replication seed groups |
 | `config/provenance_registry.csv` | Evidence and transparent-assumption registry |
 | `config/scenario_provenance.csv` | Scenario-field-to-provenance mappings |
 | `config/result_schema_registry.csv` | Exact output schemas |
@@ -78,6 +82,7 @@ The generated output selector is `output_collection_id`, not
 |---|---|---|
 | `OperationalInteractive` | `anylogic_operational` | `results/raw/anylogic_operational` |
 | `OperationalPilot` | `anylogic_operational_batch` | `results/raw/anylogic_operational_batch` |
+| `CapacityRobustnessConfirmatory` | `confirmatory_capacity` | `results/raw/confirmatory_capacity` |
 
 The Java export code locates the repository root by walking upward until it
 finds `config/operational_scenarios.csv`, then writes beneath
@@ -98,7 +103,8 @@ Expected generator summary:
 
 ```text
 OperationalPilot: 15 scenarios x 10 replications (serial)
-Generated operational AnyLogic split fragments
+CapacityRobustnessConfirmatory: 12 cells x 50 replications (600 capped runs, serial)
+Generated operational AnyLogic split fragments and single-file launcher
 ```
 
 The generator fails closed unless:
@@ -107,6 +113,8 @@ The generator fails closed unless:
 - the CSV header is canonical;
 - exactly 15 unique scenario IDs exist;
 - every scenario declares exactly 10 pilot replications; and
+- the frozen confirmatory design has exactly 12 cells, 50 replications per
+  cell, and 150 valid seed groups; and
 - the GUI-owned operational class and experiment IDs still exist.
 
 The script edits only the generated operational objects. The deterministic,
@@ -139,23 +147,51 @@ The AnyLogic default random generator is reseeded with `arrival_seed`.
 `routing_rng` and `tie_rng` use their named streams. Fixed v1 service times do
 not consume `service_seed`, but it remains in the lineage record.
 
-`crn_alignment_status` is `NOT_TESTED`. A shared master-seed policy alone does
-not establish common-random-number alignment, so downstream scenario
-contrasts default to independent Welch intervals.
+Pilot `crn_alignment_status` is `NOT_TESTED`. A shared master-seed policy alone
+does not establish common-random-number alignment, so pilot scenario contrasts
+default to independent Welch intervals.
 
-## 5. Run the reference smoke experiment
+The confirmatory experiment uses its separate frozen seed manifest. Within an
+arrival-rate level and replication, all four capacity alternatives receive the
+same arrival, service, routing, and tie seeds. Paired analysis is still
+forbidden until the traveller-level validator confirms identical traveller
+sets and branch-invariant draws. The completed confirmatory gate returned
+`PASS` across all 150 within-rate groups.
+
+## 5. Run the exploratory interactive experiment
 
 1. Open
    `simulation/anylogic/HTXCheckpointSimulation/HTXCheckpointSimulation.alpx`
    in AnyLogic PLE.
 2. Run `OperationalInteractive`.
-3. Use the visible experiment window and allow the model to drain fully.
-4. Confirm that the window reaches `Finished`.
-5. Close the experiment window before starting another experiment.
+3. On the initial experiment screen, edit only the five exposed parameters:
+   `demand_multiplier`, `security_capacity`, `immigration_capacity`,
+   `automation_uptake`, and `automation_multiplier`.
+4. Press Run. During execution, use AnyLogic's built-in Pause/Resume/Stop
+   controls as needed.
+5. Use the live four-zone 2D view:
+   Arrival → Security → Immigration → Exit.
+6. Observe admitted/completed progress, both queue counts, both in-service
+   counts, queue maxima, technology/additional-check counts, and `run_status`.
+7. Allow the cohort to drain, confirm `Finished`, and close the experiment
+   window before starting another experiment. Stop and reopen the experiment
+   to reset structural inputs.
 
-`OperationalInteractive` is locked to the canonical reference row. Its
-replication ID is `0`, and its output is deliberately separated from the
-reportable Pilot batch.
+Interactive domains are enforced before simulation:
+
+| Parameter | Allowed value |
+|---|---:|
+| `demand_multiplier` | `0.5` through `2.0` |
+| `security_capacity` | integer `1` through `200` |
+| `immigration_capacity` | integer `1` through `200` |
+| `automation_uptake` | `0.0` through `1.0` |
+| `automation_multiplier` | strictly between `0.0` and `1.0` when uptake is positive; forced to `1.0` when uptake is zero |
+
+Pooled FCFS is the only implemented queue policy. It is fixed rather than
+offered as a fake selector. The interactive experiment generates an
+`INTERACTIVE_EXPLORATORY` ad-hoc scenario, uses replication ID `0`, and writes
+outside the reportable replicated collections. Use it to inspect behaviour,
+not to make reportable claims.
 
 ## 6. Run `OperationalPilot`
 
@@ -195,7 +231,40 @@ A successful full Pilot produces exactly 150 manifest files, 150 KPI files,
 and 150 entity-log files. The three files in every leaf directory must match
 `config/result_schema_registry.csv`.
 
-## 7. Consolidate, validate, and analyse
+## 7. Run `CapacityRobustnessConfirmatory`
+
+`CapacityRobustnessConfirmatory` is also a visible AnyLogic PLE Parameter
+Variation experiment:
+
+1. Close any running experiment window.
+2. In the Projects tree, run `CapacityRobustnessConfirmatory`.
+3. The Parameter Variation window may be blank. Do not press Play.
+4. A private one-shot Swing timer starts the experiment automatically after
+   approximately 300 ms.
+5. Wait until the bottom-right status reads `Finished`, then close the window.
+
+The frozen experiment crosses four capacity alternatives with three registered
+arrival-rate levels, uses 50 replications per cell, and therefore executes:
+
+```text
+12 cells × 50 replications = 600 runs
+```
+
+Evaluation is serial (`AllowParallelEvaluations=false`), no adaptive extension
+is permitted, and the same full-drain termination and fail-closed export
+checks apply to every run. Raw run folders are written under:
+
+```text
+results/raw/confirmatory_capacity/
+  <scenario_id>/
+    <input_sample_id>/
+      replication_<NNN>/
+        run_manifest.csv
+        entity_log.csv
+        replication_kpis.csv
+```
+
+## 8. Consolidate, validate, and analyse
 
 Do not analyse the nested raw batch directly. First consolidate it and require
 the exact registered scenario-by-replication key set.
@@ -210,6 +279,20 @@ the exact registered scenario-by-replication key set.
 For reportable Pilot output, do not use the consolidation script's
 `--allow-partial` escape hatch.
 
+For the confirmatory study, consolidate the exact frozen key set and run its
+fail-closed analysis:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.analysis.consolidate_operational_results `
+  --confirmatory
+.\.venv\Scripts\python.exe -m src.analysis.analyse_confirmatory_capacity
+```
+
+The confirmatory analysis revalidates exact 600-run coverage and
+traveller-level CRN alignment before choosing the pre-specified paired method
+or Welch fallback. The repository-retained compact outputs are kept under
+`results/analysis/confirmatory_capacity/`.
+
 Expected consolidated files:
 
 ```text
@@ -222,7 +305,7 @@ results/raw/operational/
 Expected validation report:
 
 ```text
-results/intermediate/operational_results/validation.json
+results/analysis/operational/validation.json
 ```
 
 Expected analysis outputs:
@@ -237,7 +320,25 @@ results/analysis/operational/
   README.md
 ```
 
-The strict result gate checks, among other invariants:
+Expected retained confirmatory outputs:
+
+```text
+results/analysis/confirmatory_capacity/
+  audit_manifest.json
+  validation.json
+  crn_alignment.json
+  analysis_manifest.json
+  primary_result.json
+  ranking_stability.json
+  rate_rankings.csv
+  scenario_estimates.csv
+  scenario_contrasts.csv
+  within_rate_pairwise_contrasts.csv
+  run_manifest.csv
+  replication_kpis.csv
+```
+
+For the Pilot, the strict result gate checks, among other invariants:
 
 - the exact 15 × 10 key set, with no missing or extra run;
 - exact canonical scenario hash and configuration lineage;
@@ -250,12 +351,15 @@ The strict result gate checks, among other invariants:
 - utilization bounds; and
 - `run_status=COMPLETE`.
 
-Passing this gate establishes software, lineage, and conservation integrity.
-It does not establish input calibration or operational validity.
+The confirmatory gate applies the same schema, lineage, event-order,
+conservation, zero-loss, and full-drain checks to the exact 12 × 50 key set,
+then applies its separate traveller-level CRN alignment gate. Passing either
+execution gate establishes software, lineage, and conservation integrity. It
+does not establish input calibration or operational validity.
 
-## 8. Current verified Pilot evidence
+## 9. Current verified evidence
 
-The completed repository run has passed the strict gate:
+The completed Pilot repository run has passed the strict gate:
 
 | Check | Verified value |
 |---|---:|
@@ -269,7 +373,7 @@ The completed repository run has passed the strict gate:
 The machine-readable evidence is in:
 
 ```text
-results/intermediate/operational_results/validation.json
+results/analysis/operational/validation.json
 results/analysis/operational/analysis_manifest.json
 ```
 
@@ -277,7 +381,32 @@ These counts prove complete registered coverage and software invariants for
 this generated run. They do not convert the sandbox assumptions into
 calibrated field inputs.
 
-## 9. Statistical interpretation
+The completed confirmatory study records:
+
+| Check | Verified value |
+|---|---:|
+| Capacity/rate cells × replications | `12 × 50 = 600`, serial |
+| Exact run coverage | `600 / 600` |
+| Entity records | `253,756` |
+| Strict result validation | `PASS` |
+| CRN alignment | `PASS`, 150 within-rate replication groups |
+| Comparison method after the gate | `PAIRED_STUDENT_T` |
+
+Reviewer-facing machine-readable evidence is retained at:
+
+- [`audit_manifest.json`](../../results/analysis/confirmatory_capacity/audit_manifest.json)
+- [`validation.json`](../../results/analysis/confirmatory_capacity/validation.json)
+- [`crn_alignment.json`](../../results/analysis/confirmatory_capacity/crn_alignment.json)
+- [`analysis_manifest.json`](../../results/analysis/confirmatory_capacity/analysis_manifest.json)
+- [`primary_result.json`](../../results/analysis/confirmatory_capacity/primary_result.json)
+
+These checks establish exact execution, lineage, conservation, and CRN
+alignment for the frozen study. They remain conditional on the registered
+pooled-FCFS, fixed-service, empty-start, and full-drain assumptions.
+The compact audit manifest retains the 253,756-row entity-log hash and row
+count; the 125 MB consolidated entity log itself is deliberately not tracked.
+
+## 10. Statistical interpretation
 
 The statistical sample is the 10 replication-level KPI values per scenario,
 not the tens of thousands of traveller rows. The primary estimand is:
@@ -286,13 +415,18 @@ not the tens of thousands of traveller rows. The primary estimand is:
 mean of replication-level total_queue_wait_p95_seconds
 ```
 
-The analysis produces 95% Student-t intervals for scenario estimates. Because
-CRN alignment has not passed, scenario-minus-reference contrasts use
-independent Welch intervals. With only 10 pilot replications, treat fine
-rankings as provisional and use the results to identify dominant mechanisms,
-failure boundaries, and the next evidence to collect.
+The pilot analysis produces 95% Student-t intervals for scenario estimates.
+Because pilot CRN alignment has not been tested, its scenario-minus-reference
+contrasts use independent Welch intervals. With only 10 pilot replications,
+treat fine pilot rankings as provisional.
 
-## 10. Troubleshooting
+The confirmatory design fixes 50 replications in each of 12 cells. Its current
+full CRN alignment gate passed, so within-rate contrasts use paired Student-t
+intervals. That statistical upgrade strengthens the frozen conditional
+capacity-mechanism comparison; it does not establish calibrated demand,
+service, resource, roster, or cost inputs.
+
+## 11. Troubleshooting
 
 ### The Pilot window is blank
 
@@ -302,8 +436,9 @@ auto-start timer and then for `Finished`.
 ### The window remains `Idle`
 
 Close the experiment window, confirm the current generated split project was
-saved and reopened, and rerun `OperationalPilot`. Do not add a second timer or
-duplicate variable manually.
+saved and reopened, and rerun `OperationalPilot` or
+`CapacityRobustnessConfirmatory`. Do not add a second timer or duplicate
+variable manually.
 
 ### The export cannot locate the repository
 
@@ -323,12 +458,14 @@ Do not paste or recompute a raw-line hash. Run the contract validator, then
 regenerate the split project so the exact canonical hashes are embedded in
 the experiment.
 
-## 11. Explicit non-claims
+## 12. Explicit non-claims
 
 The current model does not claim a measured time-of-day arrival profile,
 empirically fitted service-time distributions, calibrated HTX resource
-counts, a physical terminal layout, verified CRN pairing, or a site forecast.
-It also does not represent a separate Secondary inspection resource pool.
+counts, a physical terminal layout, or a site forecast. Confirmatory CRN
+pairing is verified only for the frozen within-rate capacity study; pilot CRN
+remains untested. The model also does not represent separate per-counter queues
+or a separate Secondary inspection resource pool.
 
 The implemented comparison levers are demand, pooled capacity, named
 Immigration service contexts, automation uptake and service multipliers, and

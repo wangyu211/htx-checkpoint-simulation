@@ -1,9 +1,9 @@
 # Task 2 — System Design
 
-**Status:** pooled-FCFS operational v1 executed in AnyLogic; 15 scenarios × 10
-replications passed the strict output contract
+**Status:** pooled-FCFS operational v1 executed in AnyLogic; the 15 × 10 pilot
+and the 12 × 50 confirmatory capacity study passed their declared output gates
 
-**Version:** 0.4, 2026-07-28
+**Version:** 0.5, 2026-07-28
 
 **Claim ceiling:** executable, traceable assumption sandbox; not a calibrated
 HTX baseline, site forecast, digital twin, staffing recommendation, or
@@ -97,8 +97,9 @@ as `separate`.
 | `immigrationService` | Pooled FCFS queue and homogeneous Immigration resource pool |
 | Additional-work logic | Retains the Immigration counter for declared extra work; separately logged but not a separate resource |
 | `arrivalCutoff` / `checkpointSink` | Snapshot cutoff state, record exits, and trigger termination after full drain |
-| `OperationalInteractive` | One locked canonical reference smoke run, not a custom scenario-control panel |
+| `OperationalInteractive` | Exploratory/ad-hoc Simulation experiment with a four-zone 2D Arrival → Security → Immigration → Exit view, live state metrics, and five genuine pre-run inputs |
 | `OperationalPilot` | Registry-driven Parameter Variation batch |
+| `CapacityRobustnessConfirmatory` | Frozen 12-cell capacity/rate Parameter Variation study with 50 replications per cell, serial evaluation, and one-shot GUI auto-start |
 | Validation/analysis pipeline | Consolidates output, validates contracts, estimates uncertainty, and builds the offline dashboard |
 
 Technology is an effective mixture:
@@ -140,6 +141,12 @@ non-canonical configuration hashes.
 | Automation / additional work | disabled | isolated in sensitivity rows |
 | Replications | `10` per scenario | variance and pipeline pilot, not confirmatory precision |
 
+`OperationalInteractive` exposes exactly five editable pre-run parameters:
+`demand_multiplier`, `security_capacity`, `immigration_capacity`,
+`automation_uptake`, and `automation_multiplier`. The queue policy is not an
+interactive control: pooled FCFS is the only implemented v1 mechanism, so a
+queue-policy selector would misrepresent the model.
+
 ### Scenario matrix
 
 Only declared fields may change within a family.
@@ -158,12 +165,22 @@ external benchmark, structural literature, transparent assumption, or
 illustrative scenario. A result cannot make a stronger claim than its weakest
 decision-relevant input.
 
+The frozen capacity confirmation crosses the reference, Security `+4`,
+Immigration `+3`, and joint `+4/+3` alternatives with the exact-count HPP
+low, point-estimate, and high arrival-rate levels: `4 × 3 = 12` cells. Each
+cell has 50 fixed replications, giving 600 serial runs. Service times, pooled
+FCFS, empty/idle start, the 300-second arrival window, and full drain remain
+fixed registered assumptions.
+
 For scenario index `i` and replication `r`, the stream base is
 `master_seed + 100000i + 100r`; arrival, service, routing, and tie seeds use
 offsets `+1` to `+4`. Arrival consumes its stream, while fixed v1 service does
 not consume `service_seed`. The reserved tie draw has no routing effect in the
 pooled model. Recording a seed or draw is not evidence that stochastic service,
-CRN alignment, or separate lanes are implemented.
+CRN alignment, or separate lanes are implemented. The pilot's CRN status
+therefore remains `NOT_TESTED`. The confirmatory study uses a separate frozen
+seed manifest and permits paired inference only because its traveller-level
+alignment gate returned `PASS`.
 
 ## D. Simulation Outputs
 
@@ -199,8 +216,11 @@ The primary estimand is the mean across replications of each replication's
 `total_queue_wait_p95_seconds`. Scenario estimates use 95% Student-t
 intervals. Within a replication, P95 is the nearest-rank observation at
 `ceil(0.95n) - 1` in zero-based indexing; exceedance rates use strict `>` at
-600, 900, and 1200 seconds. Common-random-number alignment is `NOT_TESTED`, so
-v1 prohibits paired claims and uses independent Welch intervals.
+600, 900, and 1200 seconds. Pilot common-random-number alignment is
+`NOT_TESTED`, so pilot contrasts use independent Welch intervals. The frozen
+confirmatory capacity study passed its seed, traveller-set, and
+branch-invariant-draw alignment gate and therefore uses the pre-specified
+paired Student-t method within an arrival-rate level.
 Maximum/time-weighted queue length, lane KPIs, technology subgroup gaps, and
 arrival-window utilization are not exported in v1.
 
@@ -218,7 +238,7 @@ arrival-window utilization are not exported in v1.
 | Technology | Effective uptake combines eligibility, adoption, routing, and success | no component-level causal attribution |
 | Exceptions | Additional work holds the Immigration counter | conservative proxy; no secondary-pool claim |
 | Experiment | Empty/idle start, 300-second arrival window, full drain | terminating cohort, not steady state |
-| Statistics | Ten independent pilot replications; CRN unverified | fine rankings remain provisional |
+| Statistics | Ten independent pilot replications; 50 per confirmatory cell with verified within-rate CRN | pilot rankings remain provisional; confirmatory claims remain limited to the frozen question |
 | Scope | Walking, spatial congestion, costs, nationality/eligibility routing, and rosters excluded | no layout, equity, staffing, or economic recommendation |
 | Validity | Local service, roster, queue, referral, and outcome data are unavailable | no calibrated baseline or site forecast |
 
@@ -237,20 +257,38 @@ zero.
 | Resource-capacity constraint | `ENFORCED_BY_ANYLOGIC`; independent interval-overlap audit `NOT PERFORMED` |
 | Full drain / rejected or dropped travellers | `150 / 150 PASS` / `0` |
 | Traveller rows / scenario estimates / exploratory contrasts | `61,218 / 165 / 154` |
+| Confirmatory coverage / entity rows | `600 / 600 PASS` / `253,756` |
+| Confirmatory CRN alignment | `PASS`, 150 within-rate replication groups |
 | Deterministic two-stage oracle | `PASS`, exact six-traveller trace |
-| CRN alignment / separate queues / field calibration | `NOT_TESTED / NOT_IMPLEMENTED / NOT PERFORMED` |
+| Pilot CRN / separate queues / field calibration | `NOT_TESTED / NOT IMPLEMENTED / NOT PERFORMED` |
 
-The current GUI is intentionally minimal. `OperationalInteractive` is
-replication `0`, writes to a separate smoke-output collection, and is excluded
-from reportable Pilot consolidation. `OperationalPilot` auto-starts the
-registered batch, and the reviewer dashboard is generated offline. Rich custom
-controls and a live dashboard are presentation extensions, not delivered
-mechanisms.
+`OperationalInteractive` provides a four-zone 2D process view from Arrival to
+Security to Immigration to Exit. During a run it shows admitted/completed
+counts, Security and Immigration queue and in-service counts, queue maxima,
+technology/additional-check counts, and `run_status`. Its five inputs must be
+set before Run; AnyLogic's built-in Pause/Resume/Stop controls govern
+execution. The run is labelled exploratory/ad-hoc, uses replication `0`, and
+writes outside the reportable replicated collections. It is suitable for
+mechanism exploration and demonstration, not reportable inference. Reportable
+claims come from validated replication outputs from `OperationalPilot` or the
+frozen `CapacityRobustnessConfirmatory` study.
+
+`CapacityRobustnessConfirmatory` is a visible Parameter Variation experiment.
+A private one-shot timer starts it automatically; evaluation is serial and
+fixed at `12 × 50 = 600` runs. The tracked compact package under
+`results/analysis/confirmatory_capacity/` records `600/600 PASS`, 253,756
+entities, CRN alignment `PASS`, and the conditional paired analysis. These
+software and analysis gates do not calibrate the model or turn its capacity
+comparison into a staffing recommendation.
 
 Evidence:
 
 - [Task 3 operational contract](task3_operational_contract.md)
 - [Task 3 results](task3_results.md)
 - [AnyLogic build and run guide](../simulation/anylogic/OPERATIONAL_BUILD_GUIDE.md)
-- [Strict validation report](../results/intermediate/operational_results/validation.json)
+- [Strict validation report](../results/analysis/operational/validation.json)
 - [Operational dashboard](../results/analysis/operational/operational_dashboard.png)
+- [Confirmatory compact audit manifest](../results/analysis/confirmatory_capacity/audit_manifest.json)
+- [Confirmatory strict validation](../results/analysis/confirmatory_capacity/validation.json)
+- [Confirmatory CRN alignment](../results/analysis/confirmatory_capacity/crn_alignment.json)
+- [Confirmatory primary result](../results/analysis/confirmatory_capacity/primary_result.json)

@@ -25,6 +25,13 @@ from src.analysis.validate_operational_contract import (  # noqa: E402
     scenario_config_sha256,
     validate_operational_contract,
 )
+from src.analysis.confirmatory_design import (  # noqa: E402
+    DEFAULT_DESIGN as CONFIRMATORY_DESIGN,
+    DEFAULT_SEED_MANIFEST as CONFIRMATORY_SEED_MANIFEST,
+    build_confirmatory_scenario_rows,
+    load_confirmatory_seed_rows,
+    validate_confirmatory_design,
+)
 
 ALP = REPO / "simulation" / "anylogic" / "HTXCheckpointSimulation" / "_alp"
 AGENTS = ALP / "Agents"
@@ -33,10 +40,53 @@ OP_MODEL = AGENTS / "OperationalCheckpointModel"
 OP_TRAVELLER = AGENTS / "OperationalTraveller"
 EXPERIMENTS = ALP / "Experiments.xml"
 SCENARIOS = REPO / "config" / "operational_scenarios.csv"
+SINGLE_ALP = (
+    REPO
+    / "simulation"
+    / "anylogic"
+    / "HTXCheckpointSimulationCLI"
+    / "HTXCheckpointSimulationCLI.alp"
+)
 
 PILOT_EXPERIMENT_NAME = "OperationalPilot"
 PILOT_OUTPUT_COLLECTION = "anylogic_operational_batch"
 INTERACTIVE_OUTPUT_COLLECTION = "anylogic_operational"
+CONFIRMATORY_EXPERIMENT_NAME = "CapacityRobustnessConfirmatory"
+CONFIRMATORY_OUTPUT_COLLECTION = "confirmatory_capacity"
+CONFIRMATORY_EXPERIMENT_ID = "1785162900001"
+CONFIRMATORY_TIMER_ID = "1785162900002"
+INTERACTIVE_PARAMETER_NAMES = (
+    "demand_multiplier",
+    "security_capacity",
+    "immigration_capacity",
+    "automation_uptake",
+    "automation_multiplier",
+)
+
+MODEL_BLOCK_POSITIONS = {
+    "travellerSource": (90, 280, -18, -24),
+    "securityService": (300, 270, -26, -24),
+    "securityResources": (310, 350, -34, -24),
+    "immigrationService": (580, 270, -34, -24),
+    "immigrationResources": (590, 350, -40, -24),
+    "checkpointSink": (850, 280, -10, -24),
+}
+
+MODEL_VARIABLE_POSITIONS = {
+    "admitted": (70, 455),
+    "completed": (830, 455),
+    "arrivals_closed": (70, 490),
+    "rejected_or_dropped_count": (830, 490),
+    "technology_count": (560, 525),
+    "additional_check_count": (560, 560),
+    "security_queue_count": (245, 455),
+    "security_in_service_count": (245, 490),
+    "immigration_queue_count": (525, 455),
+    "immigration_in_service_count": (525, 490),
+    "max_security_queue": (245, 525),
+    "max_immigration_queue": (700, 560),
+    "run_status": (830, 525),
+}
 
 
 def _read(path: Path) -> str:
@@ -96,6 +146,27 @@ def _load_scenarios() -> tuple[list[str], list[dict[str, str]]]:
     if len(scenario_ids) != len(set(scenario_ids)):
         raise RuntimeError("Operational scenario IDs must be unique")
     return fieldnames, rows
+
+
+def _load_confirmatory_inputs() -> tuple[
+    list[dict[str, str]], list[dict[str, str]], dict[str, object]
+]:
+    validation = validate_confirmatory_design(
+        CONFIRMATORY_DESIGN,
+        CONFIRMATORY_SEED_MANIFEST,
+    )
+    if validation["status"] != "PASS":
+        raise RuntimeError(
+            "Confirmatory design failed: "
+            + "; ".join(str(error) for error in validation["errors"])
+        )
+    rows = build_confirmatory_scenario_rows(CONFIRMATORY_DESIGN, SCENARIOS)
+    seed_rows = load_confirmatory_seed_rows(CONFIRMATORY_SEED_MANIFEST)
+    if len(rows) != 12 or len(seed_rows) != 150:
+        raise RuntimeError(
+            "CapacityRobustnessConfirmatory requires 12 cells and 150 seed groups"
+        )
+    return rows, seed_rows, validation
 
 
 def _ensure_split_references(
@@ -212,17 +283,23 @@ def _variables_xml(
     *,
     plain_base: int,
     parameter_base: int,
+    plain_positions: dict[str, tuple[int, int]] | None = None,
 ) -> str:
     blocks: list[str] = ['<?xml version="1.0" encoding="UTF-8"?>', "<Variables>"]
     for index, (name, value_type, initial, visible) in enumerate(plain):
+        default_position = (
+            40 + 260 * ((index // 12) % 4),
+            160 + 30 * (index % 12),
+        )
+        x, y = (plain_positions or {}).get(name, default_position)
         blocks.append(
             _plain_variable(
                 item_id=plain_base + 10 * index,
                 name=name,
                 value_type=value_type,
                 initial=initial,
-                x=40 + 260 * ((index // 12) % 4),
-                y=160 + 30 * (index % 12),
+                x=x,
+                y=y,
                 visible=visible,
             )
         )
@@ -282,8 +359,8 @@ TRAVELLER_VARIABLES = [
 MODEL_VARIABLES = [
     ("admitted", "int", "0", True),
     ("completed", "int", "0", True),
-    ("admitted_at_cutoff", "int", "0", True),
-    ("completed_at_cutoff", "int", "0", True),
+    ("admitted_at_cutoff", "int", "0", False),
+    ("completed_at_cutoff", "int", "0", False),
     ("arrivals_closed", "boolean", "false", True),
     ("guard_hit", "boolean", "false", False),
     ("rejected_or_dropped_count", "int", "0", True),
@@ -293,14 +370,14 @@ MODEL_VARIABLES = [
     ("security_in_service_count", "int", "0", True),
     ("immigration_queue_count", "int", "0", True),
     ("immigration_in_service_count", "int", "0", True),
-    ("security_queue_at_cutoff", "int", "0", True),
-    ("security_in_service_at_cutoff", "int", "0", True),
-    ("immigration_queue_at_cutoff", "int", "0", True),
-    ("immigration_in_service_at_cutoff", "int", "0", True),
+    ("security_queue_at_cutoff", "int", "0", False),
+    ("security_in_service_at_cutoff", "int", "0", False),
+    ("immigration_queue_at_cutoff", "int", "0", False),
+    ("immigration_in_service_at_cutoff", "int", "0", False),
     ("max_security_queue", "int", "0", True),
     ("max_immigration_queue", "int", "0", True),
     ("last_arrival_time", "double", "Double.NEGATIVE_INFINITY", False),
-    ("last_exit", "double", "Double.NaN", True),
+    ("last_exit", "double", "Double.NaN", False),
     ("security_busy_seconds", "double", "0.0", False),
     ("immigration_busy_seconds", "double", "0.0", False),
     ("exceed_600_count", "int", "0", False),
@@ -589,6 +666,276 @@ if ( completed == admitted ) {
 }"""
 
 
+def _presentation_rectangle(
+    *,
+    item_id: int,
+    name: str,
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+    line_color: int,
+    fill_color: int,
+) -> str:
+    return f"""\
+\t\t<Rectangle>
+\t\t\t<Id>{item_id}</Id>
+\t\t\t<Name><![CDATA[{name}]]></Name>
+\t\t\t<ExcludeFromBuild>false</ExcludeFromBuild>
+\t\t\t<X>{x}</X><Y>{y}</Y>
+\t\t\t<Label><X>10</X><Y>10</Y></Label>
+\t\t\t<PublicFlag>false</PublicFlag>
+\t\t\t<PresentationFlag>true</PresentationFlag>
+\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t<AsObject>true</AsObject>
+\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t<LineWidth>2</LineWidth>
+\t\t\t<LineColor>{line_color}</LineColor>
+\t\t\t<LineStyle>SOLID</LineStyle>
+\t\t\t<Width>{width}</Width>
+\t\t\t<Height>{height}</Height>
+\t\t\t<Rotation>0.0</Rotation>
+\t\t\t<FillColor>{fill_color}</FillColor>
+\t\t</Rectangle>"""
+
+
+def _presentation_text(
+    *,
+    item_id: int,
+    name: str,
+    text: str,
+    x: int,
+    y: int,
+    size: int,
+    color: int = -15788246,
+    style: int = 0,
+) -> str:
+    return f"""\
+\t\t<Text>
+\t\t\t<Id>{item_id}</Id>
+\t\t\t<Name><![CDATA[{name}]]></Name>
+\t\t\t<X>{x}</X><Y>{y}</Y>
+\t\t\t<Label><X>10</X><Y>0</Y></Label>
+\t\t\t<PublicFlag>false</PublicFlag>
+\t\t\t<PresentationFlag>true</PresentationFlag>
+\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t<Z>0</Z><Rotation>0.0</Rotation><Color>{color}</Color>
+\t\t\t<Text><![CDATA[{text}]]></Text>
+\t\t\t<Font><Name><![CDATA[SansSerif]]></Name><Size>{size}</Size><Style>{style}</Style></Font>
+\t\t\t<Alignment>LEFT</Alignment>
+\t\t</Text>"""
+
+
+def _decorate_model_aoc(text: str) -> str:
+    level_match = re.search(
+        r"\t<Presentation>\s*(<Level>.*?</Level>).*?\t</Presentation>",
+        text,
+        re.DOTALL,
+    )
+    if not level_match:
+        raise RuntimeError("OperationalCheckpointModel presentation is missing")
+    level = level_match.group(1)
+    rectangles = [
+        _presentation_rectangle(
+            item_id=1785218000001,
+            name="arrival_zone",
+            x=35,
+            y=190,
+            width=145,
+            height=205,
+            line_color=-14334997,
+            fill_color=-1050881,
+        ),
+        _presentation_rectangle(
+            item_id=1785218000011,
+            name="security_zone",
+            x=210,
+            y=190,
+            width=250,
+            height=205,
+            line_color=-15293622,
+            fill_color=-983564,
+        ),
+        _presentation_rectangle(
+            item_id=1785218000021,
+            name="immigration_zone",
+            x=490,
+            y=190,
+            width=250,
+            height=205,
+            line_color=-1419252,
+            fill_color=-2067,
+        ),
+        _presentation_rectangle(
+            item_id=1785218000031,
+            name="exit_zone",
+            x=770,
+            y=190,
+            width=165,
+            height=205,
+            line_color=-10193781,
+            fill_color=-460036,
+        ),
+        _presentation_rectangle(
+            item_id=1785218000041,
+            name="live_kpi_panel",
+            x=35,
+            y=425,
+            width=900,
+            height=165,
+            line_color=-10193781,
+            fill_color=-328966,
+        ),
+    ]
+    labels = [
+        _presentation_text(
+            item_id=1785218000101,
+            name="view_title",
+            text="HTX CHECKPOINT — OPERATIONAL ASSUMPTION SANDBOX",
+            x=35,
+            y=35,
+            size=24,
+            style=1,
+        ),
+        _presentation_text(
+            item_id=1785218000111,
+            name="view_subtitle",
+            text="Traveller-level DES | finite resources | pooled FCFS only | not calibrated",
+            x=35,
+            y=72,
+            size=14,
+            color=-10193781,
+        ),
+        _presentation_text(
+            item_id=1785218000121,
+            name="arrival_zone_title",
+            text="1  ARRIVAL",
+            x=55,
+            y=215,
+            size=17,
+            color=-14334997,
+            style=1,
+        ),
+        _presentation_text(
+            item_id=1785218000131,
+            name="security_zone_title",
+            text="2  SECURITY",
+            x=230,
+            y=215,
+            size=17,
+            color=-15293622,
+            style=1,
+        ),
+        _presentation_text(
+            item_id=1785218000141,
+            name="immigration_zone_title",
+            text="3  IMMIGRATION",
+            x=510,
+            y=215,
+            size=17,
+            color=-1419252,
+            style=1,
+        ),
+        _presentation_text(
+            item_id=1785218000151,
+            name="exit_zone_title",
+            text="4  EXIT",
+            x=790,
+            y=215,
+            size=17,
+            color=-10193781,
+            style=1,
+        ),
+        _presentation_text(
+            item_id=1785218000161,
+            name="security_zone_note",
+            text="Queue + service\\nfinite lane capacity",
+            x=230,
+            y=310,
+            size=12,
+            color=-10193781,
+        ),
+        _presentation_text(
+            item_id=1785218000171,
+            name="immigration_zone_note",
+            text="Pooled queue + service\\nautomation mixture",
+            x=510,
+            y=310,
+            size=12,
+            color=-10193781,
+        ),
+        _presentation_text(
+            item_id=1785218000181,
+            name="live_kpi_title",
+            text="LIVE STATE — values below update during the simulation",
+            x=55,
+            y=440,
+            size=15,
+            color=-10193781,
+            style=1,
+        ),
+        _presentation_text(
+            item_id=1785218000191,
+            name="control_note",
+            text=(
+                "Use the built-in Run / Pause / Stop controls. Stop and reopen "
+                "OperationalInteractive to reset structural inputs.\\n"
+                "Editable inputs: demand multiplier, Security/Immigration "
+                "capacity, automation uptake and multiplier. Queue policy is "
+                "not exposed because v1 implements pooled FCFS only."
+            ),
+            x=55,
+            y=105,
+            size=12,
+            color=-10193781,
+        ),
+    ]
+    replacement = (
+        "\t<Presentation>\n\t"
+        + level
+        + "\n"
+        + "\n".join(rectangles)
+        + "\n"
+        + "\n".join(labels)
+        + "\n\t</Presentation>"
+    )
+    result = text[: level_match.start()] + replacement + text[level_match.end() :]
+    result = re.sub(
+        r"<SceneBackgroundColor>.*?</SceneBackgroundColor>",
+        "<SceneBackgroundColor>-328966</SceneBackgroundColor>",
+        result,
+        count=1,
+    )
+    return result
+
+
+def _replace_embedded_position(
+    block: str,
+    *,
+    x: int,
+    y: int,
+    label_x: int,
+    label_y: int,
+) -> str:
+    block, count = re.subn(r"<X>-?\d+</X>", f"<X>{x}</X>", block, count=1)
+    if count != 1:
+        raise RuntimeError("Embedded object X coordinate is missing")
+    block, count = re.subn(r"<Y>-?\d+</Y>", f"<Y>{y}</Y>", block, count=1)
+    if count != 1:
+        raise RuntimeError("Embedded object Y coordinate is missing")
+    block, count = re.subn(
+        r"<Label>\s*<X>-?\d+</X>\s*<Y>-?\d+</Y>\s*</Label>",
+        f"<Label><X>{label_x}</X><Y>{label_y}</Y></Label>",
+        block,
+        count=1,
+    )
+    if count != 1:
+        raise RuntimeError("Embedded object label coordinates are missing")
+    return block
+
+
 def _parameter_fragment(name: str, value_class: str | None, code: str = "", unit: str = "") -> str:
     if value_class is None:
         return f"""\
@@ -638,6 +985,15 @@ def _transform_embedded_objects(op_traveller_generic_id: str) -> str:
         block = "\n\t<EmbeddedObject>" + raw
         name_match = re.search(r"<Name><!\[CDATA\[(.*?)\]\]></Name>", block)
         name = name_match.group(1) if name_match else ""
+        if name in MODEL_BLOCK_POSITIONS:
+            x, y, label_x, label_y = MODEL_BLOCK_POSITIONS[name]
+            block = _replace_embedded_position(
+                block,
+                x=x,
+                y=y,
+                label_x=label_x,
+                label_y=label_y,
+            )
         if name == "travellerSource":
             block = _replace_parameter(
                 block,
@@ -750,6 +1106,41 @@ def _transform_embedded_objects(op_traveller_generic_id: str) -> str:
     return "".join(transformed)
 
 
+def _transform_connectors() -> str:
+    text = _read(CHECKPOINT / "Connectors.xml")
+    text = text.replace("178508803", "178516313")
+    text = text.replace("CheckpointModel", "OperationalCheckpointModel")
+    point_map = {
+        "sourceToSecurity": ((120, 290), (300, 290)),
+        "securityToImmigration": ((360, 290), (580, 290)),
+        "immigrationToSink": ((640, 290), (850, 290)),
+    }
+    chunks = text.split("\n\t<Connector>")
+    transformed = [chunks[0]]
+    for raw in chunks[1:]:
+        block = "\n\t<Connector>" + raw
+        name_match = re.search(r"<Name><!\[CDATA\[(.*?)\]\]></Name>", block)
+        name = name_match.group(1) if name_match else ""
+        if name in point_map:
+            start, end = point_map[name]
+            points = f"""\
+\t\t<Points>
+\t\t\t<Point><X>{start[0]}</X><Y>{start[1]}</Y></Point>
+\t\t\t<Point><X>{end[0]}</X><Y>{end[1]}</Y></Point>
+\t\t</Points>"""
+            block, count = re.subn(
+                r"\t\t<Points>.*?\t\t</Points>",
+                points,
+                block,
+                count=1,
+                flags=re.DOTALL,
+            )
+            if count != 1:
+                raise RuntimeError(f"Connector {name} points are missing")
+        transformed.append(block)
+    return "".join(transformed)
+
+
 COMMON_BEFORE_RUN = """\
 if ( !"1.0".equals( root.schema_version ) )
 \tthrow new IllegalArgumentException( "schema_version must be 1.0" );
@@ -809,34 +1200,93 @@ if ( "NONE".equals( root.additional_check_semantics ) ) {
 if ( !"EMPTY_AND_IDLE".equals( root.start_state )
 \t|| !"NOT_CALIBRATED".equals( root.calibration_status )
 \t|| !"COMPARATIVE_WHAT_IF_ONLY".equals( root.claim_ceiling )
-\t|| !"NOT_TESTED".equals( root.crn_alignment_status ) )
+\t|| !( "NOT_TESTED".equals( root.crn_alignment_status )
+\t\t|| "PENDING_VALIDATION".equals( root.crn_alignment_status ) ) )
 \tthrow new IllegalArgumentException( "claim-boundary fields were weakened" );
 """
 
 
-INTERACTIVE_BEFORE_RUN = COMMON_BEFORE_RUN + """\
+INTERACTIVE_SETUP = """\
+if ( root.demand_multiplier < 0.5 || root.demand_multiplier > 2.0 )
+\tthrow new IllegalArgumentException(
+\t\t"demand_multiplier must be between 0.5 and 2.0"
+\t);
+if ( root.security_capacity < 1 || root.security_capacity > 200
+\t|| root.immigration_capacity < 1 || root.immigration_capacity > 200 )
+\tthrow new IllegalArgumentException(
+\t\t"interactive capacities must be integers between 1 and 200"
+\t);
+if ( root.automation_uptake < 0.0 || root.automation_uptake > 1.0 )
+\tthrow new IllegalArgumentException(
+\t\t"automation_uptake must be between 0 and 1"
+\t);
+if ( root.automation_uptake == 0.0 ) {
+\troot.automation_mapping_mode = "DISABLED";
+\troot.automation_multiplier = 1.0;
+} else {
+\tif ( !( root.automation_multiplier > 0.0
+\t\t&& root.automation_multiplier < 1.0 ) )
+\t\tthrow new IllegalArgumentException(
+\t\t\t"automation_multiplier must be between 0 and 1 when uptake is positive"
+\t\t);
+\troot.automation_mapping_mode = "MULTIPLIER";
+}
+root.output_collection_id = "anylogic_operational";
+root.config_id = "OP_INTERACTIVE_AD_HOC_V1";
+root.scenario_family = "INTERACTIVE_EXPLORATORY";
+root.reference_scenario_id = "REFERENCE_ASSUMPTION_SANDBOX_V1";
+root.input_sample_id = "LOCAL_WINDOW_HPP_BASE";
+root.replication_id = 0;
+root.scenario_id = String.format(
+\tjava.util.Locale.ROOT,
+\t"INTERACTIVE_D%03d_SEC%03d_IMM%03d_U%03d_M%03d",
+\t(int) Math.round( 100.0 * root.demand_multiplier ),
+\troot.security_capacity,
+\troot.immigration_capacity,
+\t(int) Math.round( 100.0 * root.automation_uptake ),
+\t(int) Math.round( 100.0 * root.automation_multiplier )
+);
+String interactiveCanonical = String.format(
+\tjava.util.Locale.ROOT,
+\t"model=TASK3_OPERATIONAL_POOLED_V1|queue=pooled|"
+\t+ "demand=%.9f|security_capacity=%d|immigration_capacity=%d|"
+\t+ "automation_mode=%s|automation_uptake=%.9f|"
+\t+ "automation_multiplier=%.9f",
+\troot.demand_multiplier,
+\troot.security_capacity,
+\troot.immigration_capacity,
+\troot.automation_mapping_mode,
+\troot.automation_uptake,
+\troot.automation_multiplier
+);
+try {
+\tjava.security.MessageDigest digest =
+\t\tjava.security.MessageDigest.getInstance( "SHA-256" );
+\tbyte[] hash = digest.digest(
+\t\tinteractiveCanonical.getBytes( java.nio.charset.StandardCharsets.UTF_8 )
+\t);
+\tStringBuilder hexadecimal = new StringBuilder();
+\tfor ( byte value : hash )
+\t\thexadecimal.append(
+\t\t\tString.format( java.util.Locale.ROOT, "%02x", value & 0xff )
+\t\t);
+\troot.config_sha256 = hexadecimal.toString();
+} catch ( java.security.NoSuchAlgorithmException exception ) {
+\tthrow new RuntimeException( "SHA-256 is unavailable", exception );
+}
+"""
+
+
+INTERACTIVE_BEFORE_RUN = INTERACTIVE_SETUP + COMMON_BEFORE_RUN + """\
 if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
-\t|| !"anylogic_operational".equals( root.output_collection_id )
-\t|| !"OP_REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.config_id )
-\t|| !"166e6c918cff63041b08f31ff5c17fbea49008b8cdd3047b1082b326faae3460".equals( root.config_sha256 )
-\t|| !"REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.scenario_id )
-\t|| !"REFERENCE".equals( root.scenario_family )
-\t|| !"REFERENCE_ASSUMPTION_SANDBOX_V1".equals( root.reference_scenario_id )
-\t|| !"LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
-\t|| root.replication_id != 0
 \t|| root.arrival_rate_per_second != 1.364213
-\t|| root.demand_multiplier != 1.0
 \t|| root.arrival_cutoff_seconds != 300.0
 \t|| root.arrival_guard != 5000
-\t|| root.security_capacity != 36
 \t|| root.security_queue_capacity != 5000
 \t|| root.security_service_p1_seconds != 21.818181818
-\t|| root.immigration_capacity != 21
 \t|| root.immigration_queue_capacity != 5000
 \t|| root.immigration_service_p1_seconds != 13.0
-\t|| !"DISABLED".equals( root.automation_mapping_mode )
-\t|| root.automation_uptake != 0.0
-\t|| root.automation_multiplier != 1.0
+\t|| !"pooled".equals( root.queue_policy )
 \t|| !"NONE".equals( root.additional_check_semantics )
 \t|| root.additional_check_probability_conventional != 0.0
 \t|| root.additional_check_probability_technology != 0.0
@@ -848,8 +1298,8 @@ if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
 \t|| root.routing_seed != 2026072803L
 \t|| root.tie_seed != 2026072804L )
 \tthrow new IllegalArgumentException(
-\t\t"OperationalInteractive is locked to the canonical reference row; "
-\t\t+ "use the future registry-driven batch experiment for scenario changes"
+\t\t"OperationalInteractive permits only the five exposed exploratory inputs; "
+\t\t+ "all other mechanism and lineage fields must remain fixed"
 \t);
 getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );"""
 
@@ -900,6 +1350,86 @@ root.arrival_seed = streamBase + 1L;
 root.service_seed = streamBase + 2L;
 root.routing_seed = streamBase + 3L;
 root.tie_seed = streamBase + 4L;
+getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );"""
+
+
+def _confirmatory_before_run(
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    cell_guards: list[str] = []
+    for index, row in enumerate(rows):
+        keyword = "if" if index == 0 else "else if"
+        scenario_id = json.dumps(row["scenario_id"])
+        input_sample_id = json.dumps(row["input_sample_id"])
+        config_id = json.dumps(row["config_id"])
+        config_hash = json.dumps(scenario_config_sha256(row))
+        cell_guards.append(
+            f"""{keyword} ( {scenario_id}.equals( root.scenario_id )
+\t&& {input_sample_id}.equals( root.input_sample_id ) ) {{
+\texpectedConfigId = {config_id};
+\texpectedConfigHash = {config_hash};
+}}"""
+        )
+
+    seed_guards: list[str] = []
+    for index, seed in enumerate(seed_rows):
+        keyword = "if" if index == 0 else "else if"
+        input_sample_id = json.dumps(seed["input_sample_id"])
+        replication_id = int(seed["replication_id"])
+        seed_guards.append(
+            f"""{keyword} ( {input_sample_id}.equals( root.input_sample_id )
+\t&& replication == {replication_id} ) {{
+\troot.arrival_seed = {int(seed["arrival_seed"])}L;
+\troot.service_seed = {int(seed["service_seed"])}L;
+\troot.routing_seed = {int(seed["routing_seed"])}L;
+\troot.tie_seed = {int(seed["tie_seed"])}L;
+\tseedGroupMatched = true;
+}}"""
+        )
+
+    masters = {int(row["master_seed"]) for row in seed_rows}
+    if len(masters) != 1:
+        raise RuntimeError("confirmatory seed manifest has multiple master seeds")
+    master_seed = next(iter(masters))
+    return COMMON_BEFORE_RUN + f"""\
+if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version ) )
+\tthrow new IllegalArgumentException(
+\t\t"CapacityRobustnessConfirmatory model_version mismatch"
+\t);
+if ( !"{CONFIRMATORY_OUTPUT_COLLECTION}".equals( root.output_collection_id ) )
+\tthrow new IllegalArgumentException(
+\t\t"CapacityRobustnessConfirmatory output collection mismatch"
+\t);
+if ( root.master_seed != {master_seed}L )
+\tthrow new IllegalArgumentException(
+\t\t"CapacityRobustnessConfirmatory master seed mismatch"
+\t);
+String expectedConfigId = null;
+String expectedConfigHash = null;
+{chr(10).join(cell_guards)}
+if ( expectedConfigId == null || expectedConfigHash == null )
+\tthrow new IllegalArgumentException(
+\t\t"CapacityRobustnessConfirmatory received an unknown scenario/input cell"
+\t);
+if ( !expectedConfigId.equals( root.config_id )
+\t|| !expectedConfigHash.equals( root.config_sha256 ) )
+\tthrow new IllegalArgumentException(
+\t\t"CapacityRobustnessConfirmatory lineage mismatch for "
+\t\t+ root.scenario_id + "/" + root.input_sample_id
+\t);
+int replication = getCurrentReplication();
+if ( replication < 1 || replication > 50 )
+\tthrow new IllegalArgumentException(
+\t\t"CapacityRobustnessConfirmatory replication must be 1..50"
+\t);
+root.replication_id = replication;
+boolean seedGroupMatched = false;
+{chr(10).join(seed_guards)}
+if ( !seedGroupMatched )
+\tthrow new IllegalArgumentException(
+\t\t"CapacityRobustnessConfirmatory seed group is not frozen"
+\t);
 getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );"""
 
 
@@ -1077,7 +1607,7 @@ def _experiment_xml(model_id: str, experiment_id: str, text_id: str) -> str:
     after = html.escape(AFTER_RUN, quote=False)
     params = "\n".join(
         f"\t\t\t<Parameter><ParameterName>{name}</ParameterName></Parameter>"
-        for name, _, _ in MODEL_PARAMETERS
+        for name in INTERACTIVE_PARAMETER_NAMES
     )
     return f"""\
 \t<SimulationExperiment ActiveObjectClassId="{model_id}">
@@ -1105,8 +1635,53 @@ def _experiment_xml(model_id: str, experiment_id: str, text_id: str) -> str:
 \t\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
 \t\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
 \t\t\t\t<Z>0</Z><Rotation>0.0</Rotation><Color>-12490271</Color>
-\t\t\t\t<Text><![CDATA[Operational assumption sandbox | pooled FCFS | not calibrated]]></Text>
+\t\t\t\t<Text><![CDATA[OperationalInteractive — editable exploratory run]]></Text>
 \t\t\t\t<Font><Name><![CDATA[SansSerif]]></Name><Size>22</Size><Style>0</Style></Font>
+\t\t\t\t<Alignment>LEFT</Alignment>
+\t\t\t</Text>
+\t\t\t<Text>
+\t\t\t\t<Id>1785218100001</Id>
+\t\t\t\t<Name><![CDATA[editable_parameters_note]]></Name>
+\t\t\t\t<X>40</X><Y>65</Y>
+\t\t\t\t<Label><X>10</X><Y>0</Y></Label>
+\t\t\t\t<PublicFlag>false</PublicFlag>
+\t\t\t\t<PresentationFlag>true</PresentationFlag>
+\t\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+\t\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t\t<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+\t\t\t\t<Text><![CDATA[Edit only the five fields shown below before Run: demand multiplier, Security capacity, Immigration capacity, automation uptake, and automation multiplier.]]></Text>
+\t\t\t\t<Font><Name><![CDATA[SansSerif]]></Name><Size>13</Size><Style>0</Style></Font>
+\t\t\t\t<Alignment>LEFT</Alignment>
+\t\t\t</Text>
+\t\t\t<Text>
+\t\t\t\t<Id>1785218100011</Id>
+\t\t\t\t<Name><![CDATA[automation_control_note]]></Name>
+\t\t\t\t<X>40</X><Y>92</Y>
+\t\t\t\t<Label><X>10</X><Y>0</Y></Label>
+\t\t\t\t<PublicFlag>false</PublicFlag>
+\t\t\t\t<PresentationFlag>true</PresentationFlag>
+\t\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+\t\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t\t<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+\t\t\t\t<Text><![CDATA[Automation: uptake = 0 disables the mixture; uptake > 0 requires a multiplier strictly between 0 and 1. Pooled FCFS is the only implemented queue policy.]]></Text>
+\t\t\t\t<Font><Name><![CDATA[SansSerif]]></Name><Size>12</Size><Style>0</Style></Font>
+\t\t\t\t<Alignment>LEFT</Alignment>
+\t\t\t</Text>
+\t\t\t<Text>
+\t\t\t\t<Id>1785218100021</Id>
+\t\t\t\t<Name><![CDATA[run_control_note]]></Name>
+\t\t\t\t<X>40</X><Y>118</Y>
+\t\t\t\t<Label><X>10</X><Y>0</Y></Label>
+\t\t\t\t<PublicFlag>false</PublicFlag>
+\t\t\t\t<PresentationFlag>true</PresentationFlag>
+\t\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+\t\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t\t<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+\t\t\t\t<Text><![CDATA[After Run, use AnyLogic's built-in Pause / Resume / Stop controls. Stop and reopen this experiment to reset structural inputs. Outputs are labelled ad-hoc exploratory and not calibrated.]]></Text>
+\t\t\t\t<Font><Name><![CDATA[SansSerif]]></Name><Size>12</Size><Style>0</Style></Font>
 \t\t\t\t<Alignment>LEFT</Alignment>
 \t\t\t</Text>
 \t\t</Presentation>
@@ -1116,7 +1691,7 @@ def _experiment_xml(model_id: str, experiment_id: str, text_id: str) -> str:
 \t\t<PresentationProperties>
 \t\t\t<EnableZoomAndPanning>true</EnableZoomAndPanning>
 \t\t\t<ExecutionMode>virtualTime</ExecutionMode>
-\t\t\t<Title>HTXCheckpointSimulation : OperationalInteractive</Title>
+\t\t\t<Title>HTXCheckpointSimulation : OperationalInteractive (exploratory)</Title>
 \t\t\t<EnableDeveloperPanel>true</EnableDeveloperPanel>
 \t\t\t<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
 \t\t\t<RealTimeScale>1.0</RealTimeScale>
@@ -1201,6 +1776,61 @@ def _pilot_parameter_expressions(
             else:
                 raise RuntimeError(
                     f"No OperationalPilot mapping for parameter {name}"
+                )
+            values.append(value)
+        expressions[name] = _indexed_expression(values)
+    return expressions
+
+
+def _confirmatory_parameter_expressions(
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> dict[str, str]:
+    defaults = {
+        name: default
+        for name, _, default in MODEL_PARAMETERS
+    }
+    first_seed_by_input = {
+        row["input_sample_id"]: row
+        for row in seed_rows
+        if row["replication_id"] == "1"
+    }
+    expressions: dict[str, str] = {}
+    for name, value_type, _ in MODEL_PARAMETERS:
+        values: list[str] = []
+        for row in rows:
+            if name == "output_collection_id":
+                value = _java_literal(
+                    value_type,
+                    CONFIRMATORY_OUTPUT_COLLECTION,
+                )
+            elif name == "config_sha256":
+                value = _java_literal(
+                    value_type,
+                    scenario_config_sha256(row),
+                )
+            elif name in {
+                "arrival_seed",
+                "service_seed",
+                "routing_seed",
+                "tie_seed",
+            }:
+                seed = first_seed_by_input.get(row["input_sample_id"])
+                if seed is None:
+                    raise RuntimeError(
+                        "confirmatory input sample has no replication-1 seed"
+                    )
+                value = _java_literal(value_type, seed[name])
+            elif name == "replication_id":
+                value = "0"
+            elif name in {"model_version", "start_state"}:
+                value = defaults[name]
+            elif name in row:
+                value = _java_literal(value_type, row[name])
+            else:
+                raise RuntimeError(
+                    "No CapacityRobustnessConfirmatory mapping for "
+                    f"parameter {name}"
                 )
             values.append(value)
         expressions[name] = _indexed_expression(values)
@@ -1302,6 +1932,105 @@ def _pilot_experiment_xml(
 \t</ParamVariationExperiment>"""
 
 
+def _confirmatory_experiment_xml(
+    model_id: str,
+    experiment_id: str,
+    timer_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    before = html.escape(
+        _confirmatory_before_run(rows, seed_rows),
+        quote=False,
+    )
+    after = html.escape(AFTER_RUN, quote=False)
+    expressions = _confirmatory_parameter_expressions(rows, seed_rows)
+    freeform_values: list[str] = []
+    range_values: list[str] = []
+    for index, (name, _, _) in enumerate(MODEL_PARAMETERS):
+        parameter_id = 1785163110001 + 10 * index
+        expression = expressions[name]
+        freeform_values.append(
+            f"""\t\t<FreeformParamValue>
+\t\t\t<Id>{parameter_id}</Id>
+\t\t\t<Expression Class="CodeValue">
+\t\t\t\t<Code><![CDATA[{expression}]]></Code>
+\t\t\t</Expression>
+\t\t</FreeformParamValue>"""
+        )
+        range_values.append(
+            f"""\t\t<RangeVariationParamValue>
+\t\t\t<Id>{parameter_id}</Id>
+\t\t\t<Type><![CDATA[FIXED]]></Type>
+\t\t</RangeVariationParamValue>"""
+        )
+    freeform = "\n".join(freeform_values)
+    ranges = "\n".join(range_values)
+    return f"""\
+\t<ParamVariationExperiment ActiveObjectClassId="{model_id}">
+\t\t<Id>{experiment_id}</Id>
+\t\t<Name><![CDATA[{CONFIRMATORY_EXPERIMENT_NAME}]]></Name>
+\t\t<CommandLineArguments/>
+\t\t<MaximumMemory>512</MaximumMemory>
+\t\t<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+\t\t<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+\t\t<BeforeSimulationRunCode>{before}</BeforeSimulationRunCode>
+\t\t<AfterSimulationRunCode>{after}</AfterSimulationRunCode>
+\t\t<SeedValue>1</SeedValue>
+\t\t<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+\t\t<VmArgs/>
+\t\t<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+\t\t<Variables>
+\t\t\t<Variable Class="PlainVariable">
+\t\t\t\t<Id>{timer_id}</Id>
+\t\t\t\t<Name><![CDATA[confirmatory_auto_start_timer]]></Name>
+\t\t\t\t<X>40</X><Y>120</Y>
+\t\t\t\t<Label><X>10</X><Y>0</Y></Label>
+\t\t\t\t<PublicFlag>false</PublicFlag>
+\t\t\t\t<PresentationFlag>false</PresentationFlag>
+\t\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t\t<Properties SaveInSnapshot="false"
+                Constant="false"
+                AccessType="private"
+                StaticVariable="false">
+\t\t\t\t\t<Type><![CDATA[javax.swing.Timer]]></Type>
+\t\t\t\t\t<InitialValue Class="CodeValue">
+\t\t\t\t\t\t<Code><![CDATA[new javax.swing.Timer(300, event -> {{ ((javax.swing.Timer) event.getSource()).stop(); CapacityRobustnessConfirmatory.this.run(); }}) {{{{ setRepeats(false); start(); }}}}]]></Code>
+\t\t\t\t\t</InitialValue>
+\t\t\t\t</Properties>
+\t\t\t</Variable>
+\t\t</Variables>
+\t\t<AllowParallelEvaluations>false</AllowParallelEvaluations>
+\t\t<UseFreeformParameters>true</UseFreeformParameters>
+\t\t<NumberOfRuns>{len(rows)}</NumberOfRuns>
+{freeform}
+{ranges}
+\t\t<ModelTimeProperties>
+\t\t\t<StopOption>Never</StopOption>
+\t\t\t<InitialDate>1785024000000</InitialDate>
+\t\t\t<InitialTime>0.0</InitialTime>
+\t\t\t<FinalDate>1787702400000</FinalDate>
+\t\t\t<FinalTime>300.0</FinalTime>
+\t\t</ModelTimeProperties>
+\t\t<PresentationProperties>
+\t\t\t<EnableZoomAndPanning>true</EnableZoomAndPanning>
+\t\t\t<Title>HTXCheckpointSimulation : CapacityRobustnessConfirmatory</Title>
+\t\t\t<EnableDeveloperPanel>true</EnableDeveloperPanel>
+\t\t\t<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+\t\t</PresentationProperties>
+\t\t<ReplicationsProperties>
+\t\t\t<UseReplication>true</UseReplication>
+\t\t\t<FixedReplicationsNumber>true</FixedReplicationsNumber>
+\t\t\t<ReplicationPerIteration>50</ReplicationPerIteration>
+\t\t\t<MinimumReplication>50</MinimumReplication>
+\t\t\t<MaximumReplication>50</MaximumReplication>
+\t\t\t<ConfidenceLevel>LEVEL_95</ConfidenceLevel>
+\t\t\t<ErrorPercent>0.05</ErrorPercent>
+\t\t\t<ExpressionForConfidenceComputation>0</ExpressionForConfidenceComputation>
+\t\t</ReplicationsProperties>
+\t</ParamVariationExperiment>"""
+
+
 def _replace_operational_experiment(text: str, model_id: str) -> str:
     pattern = re.compile(
         rf"\t<SimulationExperiment ActiveObjectClassId=\"{model_id}\">.*?"
@@ -1373,8 +2102,210 @@ def _replace_operational_pilot_experiment(
     return text[: match.start()] + replacement + text[match.end() :]
 
 
+def _upsert_confirmatory_experiment(
+    text: str,
+    model_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    pattern = re.compile(
+        rf"\t<ParamVariationExperiment ActiveObjectClassId=\"{model_id}\">.*?"
+        r"\t</ParamVariationExperiment>",
+        re.DOTALL,
+    )
+    matches = [
+        match
+        for match in pattern.finditer(text)
+        if (
+            re.search(r"<Name><!\[CDATA\[(.*?)\]\]></Name>", match.group(0))
+            and re.search(
+                r"<Name><!\[CDATA\[(.*?)\]\]></Name>",
+                match.group(0),
+            ).group(1)
+            == CONFIRMATORY_EXPERIMENT_NAME
+        )
+    ]
+    if len(matches) > 1:
+        raise RuntimeError(
+            f"Expected at most one {CONFIRMATORY_EXPERIMENT_NAME}; "
+            f"found {len(matches)}"
+        )
+    if matches:
+        match = matches[0]
+        old = match.group(0)
+        experiment_match = re.search(r"<Id>(\d+)</Id>", old)
+        timer_match = re.search(
+            r"<Variable Class=\"PlainVariable\">\s*"
+            r"<Id>(\d+)</Id>\s*"
+            r"<Name><!\[CDATA\[confirmatory_auto_start_timer\]\]></Name>",
+            old,
+        )
+        if not experiment_match:
+            raise RuntimeError("confirmatory experiment ID is missing")
+        experiment_id = experiment_match.group(1)
+        timer_id = (
+            timer_match.group(1)
+            if timer_match
+            else str(int(experiment_id) + 1)
+        )
+        replacement = _confirmatory_experiment_xml(
+            model_id,
+            experiment_id,
+            timer_id,
+            rows,
+            seed_rows,
+        )
+        return text[: match.start()] + replacement + text[match.end() :]
+
+    for item_id in (CONFIRMATORY_EXPERIMENT_ID, CONFIRMATORY_TIMER_ID):
+        if re.search(rf"<Id>{item_id}</Id>", text):
+            raise RuntimeError(f"confirmatory insertion ID {item_id} is in use")
+    marker = "</Experiments>"
+    if text.count(marker) != 1:
+        raise RuntimeError("split experiment root is not canonical")
+    block = _confirmatory_experiment_xml(
+        model_id,
+        CONFIRMATORY_EXPERIMENT_ID,
+        CONFIRMATORY_TIMER_ID,
+        rows,
+        seed_rows,
+    )
+    return text.replace(marker, block + "\n" + marker, 1)
+
+
+def _xml_root_without_declaration(path: Path) -> str:
+    return re.sub(
+        r"\A<\?xml[^>]*\?>\s*",
+        "",
+        _read(path),
+        count=1,
+    ).strip()
+
+
+def _balanced_element_span(text: str, tag: str, start: int) -> tuple[int, int]:
+    token_pattern = re.compile(
+        rf"<{re.escape(tag)}(?:\s[^>]*)?>|</{re.escape(tag)}>"
+    )
+    depth = 0
+    for token in token_pattern.finditer(text, start):
+        if token.start() < start:
+            continue
+        if token.group(0).startswith(f"</{tag}"):
+            depth -= 1
+            if depth == 0:
+                return start, token.end()
+        elif not token.group(0).endswith("/>"):
+            depth += 1
+    raise RuntimeError(f"Cannot find balanced {tag} element")
+
+
+def _named_top_level_span(
+    text: str,
+    *,
+    tag: str,
+    name: str,
+) -> tuple[int, int]:
+    for match in re.finditer(rf"<{re.escape(tag)}(?:\s[^>]*)?>", text):
+        start, end = _balanced_element_span(text, tag, match.start())
+        opening_region = text[start : min(end, start + 800)]
+        nested_start = opening_region.find(f"<{tag}", len(match.group(0)))
+        direct_region = (
+            opening_region
+            if nested_start < 0
+            else opening_region[:nested_start]
+        )
+        if f"<Name><![CDATA[{name}]]></Name>" in direct_region:
+            return start, end
+    raise RuntimeError(f"Cannot locate {tag} named {name}")
+
+
+def _indent_xml(block: str, prefix: str) -> str:
+    return "\n".join(
+        prefix + line if line else line
+        for line in block.splitlines()
+    )
+
+
+def _inline_operational_model() -> str:
+    model = _xml_root_without_declaration(
+        OP_MODEL / "AOC.OperationalCheckpointModel.xml"
+    )
+    variables = _xml_root_without_declaration(OP_MODEL / "Variables.xml")
+    connectors = _xml_root_without_declaration(OP_MODEL / "Connectors.xml")
+    events = _xml_root_without_declaration(OP_MODEL / "Code" / "Events.xml")
+    embedded = _xml_root_without_declaration(OP_MODEL / "EmbeddedObjects.xml")
+    events, count = re.subn(
+        r"<Action(?:\s[^>]*)?/>",
+        f"<Action><![CDATA[{CUTOFF_ACTION}]]></Action>",
+        events,
+        count=1,
+    )
+    if count != 1:
+        raise RuntimeError("Operational cutoff action placeholder is missing")
+    replacements = {
+        '<Variables xmlns:al="http://anylogic.com"/>': (
+            variables + "\n" + connectors
+        ),
+        '<Events xmlns:al="http://anylogic.com"/>': events,
+        '<EmbeddedObjects xmlns:al="http://anylogic.com"/>': embedded,
+    }
+    for marker, replacement in replacements.items():
+        if model.count(marker) != 1:
+            raise RuntimeError(f"Expected one split marker {marker}")
+        model = model.replace(marker, replacement, 1)
+    return model
+
+
+def _sync_single_file(
+    *,
+    model_id: str,
+) -> None:
+    if not SINGLE_ALP.is_file():
+        raise RuntimeError(f"Single-file launcher is missing: {SINGLE_ALP}")
+    text = _read(SINGLE_ALP)
+    class_start, class_end = _named_top_level_span(
+        text,
+        tag="ActiveObjectClass",
+        name="OperationalCheckpointModel",
+    )
+    line_start = text.rfind("\n", 0, class_start) + 1
+    if text[line_start:class_start].strip():
+        raise RuntimeError(
+            "OperationalCheckpointModel must begin on its own XML line"
+        )
+    class_start = line_start
+    inline_model = _indent_xml(_inline_operational_model(), "\t\t")
+    text = text[:class_start] + inline_model + text[class_end:]
+
+    experiment_match = re.search(r"<Experiments>", text)
+    if not experiment_match:
+        raise RuntimeError("single-file launcher has no Experiments block")
+    experiment_start, experiment_end = _balanced_element_span(
+        text,
+        "Experiments",
+        experiment_match.start(),
+    )
+    experiment_line_start = text.rfind("\n", 0, experiment_start) + 1
+    prefix = text[experiment_line_start:experiment_start]
+    if not prefix or prefix.strip():
+        raise RuntimeError("single-file Experiments must begin on its own line")
+    inline_experiments = _indent_xml(
+        _xml_root_without_declaration(EXPERIMENTS),
+        prefix,
+    )
+    text = (
+        text[:experiment_line_start]
+        + inline_experiments
+        + text[experiment_end:]
+    )
+    _write(SINGLE_ALP, text)
+
+
 def generate() -> None:
     _, scenario_rows = _load_scenarios()
+    confirmatory_rows, confirmatory_seed_rows, confirmatory_validation = (
+        _load_confirmatory_inputs()
+    )
     traveller_aoc = OP_TRAVELLER / "AOC.OperationalTraveller.xml"
     model_aoc = OP_MODEL / "AOC.OperationalCheckpointModel.xml"
     if not traveller_aoc.is_file() or not model_aoc.is_file():
@@ -1395,6 +2326,7 @@ def generate() -> None:
         events=True,
         embedded_objects=True,
     )
+    _write(model_aoc, _decorate_model_aoc(_read(model_aoc)))
 
     _write(
         OP_TRAVELLER / "Variables.xml",
@@ -1412,6 +2344,7 @@ def generate() -> None:
             MODEL_PARAMETERS,
             plain_base=1785163100001,
             parameter_base=1785163110001,
+            plain_positions=MODEL_VARIABLE_POSITIONS,
         ),
     )
     _write(
@@ -1419,10 +2352,7 @@ def generate() -> None:
         _transform_embedded_objects(op_traveller_generic_id),
     )
 
-    connectors = _read(CHECKPOINT / "Connectors.xml")
-    connectors = connectors.replace("178508803", "178516313")
-    connectors = connectors.replace("CheckpointModel", "OperationalCheckpointModel")
-    _write(OP_MODEL / "Connectors.xml", connectors)
+    _write(OP_MODEL / "Connectors.xml", _transform_connectors())
 
     event_xml = _read(CHECKPOINT / "Code" / "Events.xml")
     for old, new in {
@@ -1444,7 +2374,14 @@ void arrivalCutoff()
         op_model_id,
         scenario_rows,
     )
+    experiment_text = _upsert_confirmatory_experiment(
+        experiment_text,
+        op_model_id,
+        confirmatory_rows,
+        confirmatory_seed_rows,
+    )
     _write(EXPERIMENTS, experiment_text)
+    _sync_single_file(model_id=op_model_id)
 
     print(f"OperationalTraveller class ID: {op_traveller_id}")
     print(f"OperationalCheckpointModel class ID: {op_model_id}")
@@ -1452,7 +2389,12 @@ void arrivalCutoff()
         f"OperationalPilot: {len(scenario_rows)} scenarios x "
         "10 replications (serial)"
     )
-    print("Generated operational AnyLogic split fragments")
+    print(
+        "CapacityRobustnessConfirmatory: "
+        f"{len(confirmatory_rows)} cells x 50 replications "
+        f"({confirmatory_validation['total_run_cap']} capped runs, serial)"
+    )
+    print("Generated operational AnyLogic split fragments and single-file launcher")
 
 
 if __name__ == "__main__":

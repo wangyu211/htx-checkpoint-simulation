@@ -1,0 +1,11 @@
+{
+  "claim_boundary": "Schema and software-invariant validation only; not operational validation or calibration.",
+  "contract": "TASK3_OPERATIONAL_RESULTS_V1",
+  "entity_count": 61218,
+  "errors": [],
+  "expected_pilot_run_count": 150,
+  "pilot_coverage_required": true,
+  "results_dir": "results/raw/operational",
+  "run_count": 150,
+  "status": "PASS"
+}

@@ -24,6 +24,12 @@ DEFAULT_SOURCE_ROOT = (
     PROJECT_ROOT / "results" / "raw" / "anylogic_operational_batch"
 )
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "raw" / "operational"
+DEFAULT_CONFIRMATORY_SOURCE_ROOT = (
+    PROJECT_ROOT / "results" / "raw" / "confirmatory_capacity"
+)
+DEFAULT_CONFIRMATORY_OUTPUT_DIR = (
+    PROJECT_ROOT / "results" / "raw" / "confirmatory_capacity_consolidated"
+)
 REPLICATION_DIRECTORY = re.compile(r"^replication_(\d{3,})$")
 
 
@@ -189,21 +195,54 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Allow consolidation of an intentionally incomplete pilot batch.",
     )
+    parser.add_argument(
+        "--confirmatory",
+        action="store_true",
+        help=(
+            "Use confirmatory source/output defaults and require the exact "
+            "12-cell x 50-replication contract."
+        ),
+    )
     return parser
 
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.confirmatory and args.allow_partial:
+        print(
+            json.dumps(
+                {
+                    "contract": "TASK3_OPERATIONAL_CONSOLIDATION_V1",
+                    "status": "FAIL",
+                    "errors": [
+                        "--confirmatory and --allow-partial are mutually exclusive"
+                    ],
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 1
+    source_root = args.source_root
+    output_dir = args.output_dir
+    if args.confirmatory:
+        if source_root == DEFAULT_SOURCE_ROOT:
+            source_root = DEFAULT_CONFIRMATORY_SOURCE_ROOT
+        if output_dir == DEFAULT_OUTPUT_DIR:
+            output_dir = DEFAULT_CONFIRMATORY_OUTPUT_DIR
     try:
         report = consolidate_operational_results(
-            args.source_root.resolve(),
-            args.output_dir.resolve(),
+            source_root.resolve(),
+            output_dir.resolve(),
             schema_registry_path=args.schema_registry.resolve(),
         )
         validation = validate_operational_results(
-            args.output_dir.resolve(),
+            output_dir.resolve(),
             schema_registry_path=args.schema_registry.resolve(),
-            require_pilot_coverage=not args.allow_partial,
+            require_pilot_coverage=(
+                not args.allow_partial and not args.confirmatory
+            ),
+            require_confirmatory_coverage=args.confirmatory,
         )
     except (FileNotFoundError, KeyError, ValueError) as exc:
         print(
@@ -220,6 +259,14 @@ def main() -> int:
         return 1
     report["validation_status"] = validation["status"]
     report["validation_errors"] = validation["errors"]
+    report["status"] = validation["status"]
+    manifest_path = output_dir / "consolidation_manifest.json"
+    temporary = manifest_path.with_suffix(manifest_path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(manifest_path)
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if validation["status"] == "PASS" else 1
 

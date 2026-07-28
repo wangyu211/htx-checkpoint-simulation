@@ -17,7 +17,7 @@
 	<ElementsLimitValue>100</ElementsLimitValue>
 	<MakeDefaultViewArea>true</MakeDefaultViewArea>
 	<SceneGridColor/>
-	<SceneBackgroundColor>-4144960</SceneBackgroundColor>
+	<SceneBackgroundColor>-328966</SceneBackgroundColor>
 	<EnvironmentResourceRef/>
 	<EnvironmentType>NONE</EnvironmentType>
 	<EnvironmentRotationX>0</EnvironmentRotationX>
@@ -127,7 +127,7 @@
 	</AgentLinks>
 	<EmbeddedObjects xmlns:al="http://anylogic.com"/>
 	<Presentation>
-		<Level>
+	<Level>
 			<Id>1785162520370</Id>
 			<Name><![CDATA[level]]></Name>
 			<X>0</X>
@@ -143,5 +143,250 @@
 			<Z>0</Z>
 			<LevelVisibility>DIM_NON_CURRENT</LevelVisibility>
 		</Level>
+		<Rectangle>
+			<Id>1785218000001</Id>
+			<Name><![CDATA[arrival_zone]]></Name>
+			<ExcludeFromBuild>false</ExcludeFromBuild>
+			<X>35</X><Y>190</Y>
+			<Label><X>10</X><Y>10</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<AsObject>true</AsObject>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<LineWidth>2</LineWidth>
+			<LineColor>-14334997</LineColor>
+			<LineStyle>SOLID</LineStyle>
+			<Width>145</Width>
+			<Height>205</Height>
+			<Rotation>0.0</Rotation>
+			<FillColor>-1050881</FillColor>
+		</Rectangle>
+		<Rectangle>
+			<Id>1785218000011</Id>
+			<Name><![CDATA[security_zone]]></Name>
+			<ExcludeFromBuild>false</ExcludeFromBuild>
+			<X>210</X><Y>190</Y>
+			<Label><X>10</X><Y>10</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<AsObject>true</AsObject>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<LineWidth>2</LineWidth>
+			<LineColor>-15293622</LineColor>
+			<LineStyle>SOLID</LineStyle>
+			<Width>250</Width>
+			<Height>205</Height>
+			<Rotation>0.0</Rotation>
+			<FillColor>-983564</FillColor>
+		</Rectangle>
+		<Rectangle>
+			<Id>1785218000021</Id>
+			<Name><![CDATA[immigration_zone]]></Name>
+			<ExcludeFromBuild>false</ExcludeFromBuild>
+			<X>490</X><Y>190</Y>
+			<Label><X>10</X><Y>10</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<AsObject>true</AsObject>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<LineWidth>2</LineWidth>
+			<LineColor>-1419252</LineColor>
+			<LineStyle>SOLID</LineStyle>
+			<Width>250</Width>
+			<Height>205</Height>
+			<Rotation>0.0</Rotation>
+			<FillColor>-2067</FillColor>
+		</Rectangle>
+		<Rectangle>
+			<Id>1785218000031</Id>
+			<Name><![CDATA[exit_zone]]></Name>
+			<ExcludeFromBuild>false</ExcludeFromBuild>
+			<X>770</X><Y>190</Y>
+			<Label><X>10</X><Y>10</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<AsObject>true</AsObject>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<LineWidth>2</LineWidth>
+			<LineColor>-10193781</LineColor>
+			<LineStyle>SOLID</LineStyle>
+			<Width>165</Width>
+			<Height>205</Height>
+			<Rotation>0.0</Rotation>
+			<FillColor>-460036</FillColor>
+		</Rectangle>
+		<Rectangle>
+			<Id>1785218000041</Id>
+			<Name><![CDATA[live_kpi_panel]]></Name>
+			<ExcludeFromBuild>false</ExcludeFromBuild>
+			<X>35</X><Y>425</Y>
+			<Label><X>10</X><Y>10</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<AsObject>true</AsObject>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<LineWidth>2</LineWidth>
+			<LineColor>-10193781</LineColor>
+			<LineStyle>SOLID</LineStyle>
+			<Width>900</Width>
+			<Height>165</Height>
+			<Rotation>0.0</Rotation>
+			<FillColor>-328966</FillColor>
+		</Rectangle>
+		<Text>
+			<Id>1785218000101</Id>
+			<Name><![CDATA[view_title]]></Name>
+			<X>35</X><Y>35</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-15788246</Color>
+			<Text><![CDATA[HTX CHECKPOINT — OPERATIONAL ASSUMPTION SANDBOX]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>24</Size><Style>1</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000111</Id>
+			<Name><![CDATA[view_subtitle]]></Name>
+			<X>35</X><Y>72</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+			<Text><![CDATA[Traveller-level DES | finite resources | pooled FCFS only | not calibrated]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>14</Size><Style>0</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000121</Id>
+			<Name><![CDATA[arrival_zone_title]]></Name>
+			<X>55</X><Y>215</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-14334997</Color>
+			<Text><![CDATA[1  ARRIVAL]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>17</Size><Style>1</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000131</Id>
+			<Name><![CDATA[security_zone_title]]></Name>
+			<X>230</X><Y>215</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-15293622</Color>
+			<Text><![CDATA[2  SECURITY]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>17</Size><Style>1</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000141</Id>
+			<Name><![CDATA[immigration_zone_title]]></Name>
+			<X>510</X><Y>215</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-1419252</Color>
+			<Text><![CDATA[3  IMMIGRATION]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>17</Size><Style>1</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000151</Id>
+			<Name><![CDATA[exit_zone_title]]></Name>
+			<X>790</X><Y>215</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+			<Text><![CDATA[4  EXIT]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>17</Size><Style>1</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000161</Id>
+			<Name><![CDATA[security_zone_note]]></Name>
+			<X>230</X><Y>310</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+			<Text><![CDATA[Queue + service\nfinite lane capacity]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>12</Size><Style>0</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000171</Id>
+			<Name><![CDATA[immigration_zone_note]]></Name>
+			<X>510</X><Y>310</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+			<Text><![CDATA[Pooled queue + service\nautomation mixture]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>12</Size><Style>0</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000181</Id>
+			<Name><![CDATA[live_kpi_title]]></Name>
+			<X>55</X><Y>440</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+			<Text><![CDATA[LIVE STATE — values below update during the simulation]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>15</Size><Style>1</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
+		<Text>
+			<Id>1785218000191</Id>
+			<Name><![CDATA[control_note]]></Name>
+			<X>55</X><Y>105</Y>
+			<Label><X>10</X><Y>0</Y></Label>
+			<PublicFlag>false</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
+			<Text><![CDATA[Use the built-in Run / Pause / Stop controls. Stop and reopen OperationalInteractive to reset structural inputs.\nEditable inputs: demand multiplier, Security/Immigration capacity, automation uptake and multiplier. Queue policy is not exposed because v1 implements pooled FCFS only.]]></Text>
+			<Font><Name><![CDATA[SansSerif]]></Name><Size>12</Size><Style>0</Style></Font>
+			<Alignment>LEFT</Alignment>
+		</Text>
 	</Presentation>
 </ActiveObjectClass>

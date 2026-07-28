@@ -8,7 +8,7 @@ Status values: `PLANNED`, `IN PROGRESS`, `VERIFIED`.
 |---|---|---|
 | Model a real operational system | Executable two-stage event-driven DES and explicit assumption boundary | VERIFIED |
 | Basic AI inference for data collection | Person detection, tracking, directional aggregate, human adjudication and fallback audit | VERIFIED |
-| Interactive simulation | Minimal executable GUI plus post-run dashboard; richer controls/layout excluded | IN PROGRESS |
+| Interactive simulation | Four-zone 2D process view, live state metrics, exactly five bounded pre-run controls, and built-in run controls | VERIFIED |
 | Maintainable solution | External contracts, generated model fragments, schemas, validators and extension documentation | VERIFIED |
 | Actionable insights | Controlled pilot scenarios, uncertainty and conditional findings | VERIFIED |
 | Clear communication | Task 1-3 reports and five claim-driven content slides | COMPLETE |
@@ -70,7 +70,8 @@ claimed to estimate long-run checkpoint demand.
   finite resources, a live 300-second cutoff, and full drain.
 - [x] Task 2-to-Task 3 consistency for the implemented v1 pooled flow,
   technology service multiplier, and counter-held additional-work proxy.
-- [ ] Visual checkpoint layout.
+- [x] `OperationalInteractive` four-zone 2D
+  Arrival → Security → Immigration → Exit presentation.
 - [x] Traveller flow through Security and Immigration for the deterministic
   mechanism milestone.
 - [x] Queueing and one-unit finite resource constraints at both stages for the
@@ -87,24 +88,39 @@ claimed to estimate long-run checkpoint demand.
   intervals, and scenario contrasts.
 - [ ] Genuinely separate per-counter queues versus pooled FCFS; v1 implements
   pooled FCFS only, so no queue-policy effect is claimed.
-- [ ] Traveller-level common-random-number alignment; status is `NOT_TESTED`,
-  so the pilot uses independent Welch intervals.
-- [ ] Rich interactive controls and a live dashboard; the executable GUI is
-  intentionally minimal.
+- [ ] Pilot traveller-level common-random-number alignment; pilot status
+  remains `NOT_TESTED`, so its contrasts use independent Welch intervals.
+- [x] `CapacityRobustnessConfirmatory` auto-starts in the visible Parameter
+  Variation window and executes 12 cells × 50 replications serially. Exact
+  600/600 coverage and 253,756 entities passed strict validation.
+- [x] Confirmatory traveller-level CRN alignment: `PASS` across 150 within-rate
+  replication groups, enabling the pre-specified paired analysis.
+- [x] Interactive controls and live state: exactly five genuine pre-run fields
+  (`demand_multiplier`, `security_capacity`, `immigration_capacity`,
+  `automation_uptake`, and `automation_multiplier`) plus live queue,
+  in-service, completed, and status metrics.
+- [x] Pooled FCFS is the only implemented queue policy; no fake queue-policy
+  selector is exposed.
 
 The historical HPP milestone still verifies only the demand mechanism. The
-operational pilot is a separate, not-calibrated assumption sandbox: its
-service times, capacities, queue guards, automation mappings, and risk bounds
-are registered context or transparent sensitivity inputs, not parameters
-identified from the video. Results are therefore comparative and conditional,
-not site forecasts or final staffing recommendations.
+operational pilot and confirmatory study are separate, not-calibrated
+assumption-sandbox executions: their service times, capacities, queue guards,
+automation mappings, and risk bounds are registered context or transparent
+sensitivity inputs, not parameters identified from the video. The interactive
+run is exploratory/ad-hoc; reportable claims come from validated replication
+outputs. Results remain comparative and conditional, not site forecasts or
+final staffing recommendations.
 
 Recorded evidence:
 
 - [`Task 3 results report`](task3_results.md)
 - [`results/analysis/operational/README.md`](../results/analysis/operational/README.md)
 - [`operational dashboard`](../results/analysis/operational/operational_dashboard.png)
-- [`strict validation report`](../results/intermediate/operational_results/validation.json)
+- [`strict validation report`](../results/analysis/operational/validation.json)
+- [`confirmatory compact audit manifest`](../results/analysis/confirmatory_capacity/audit_manifest.json)
+- [`confirmatory strict validation`](../results/analysis/confirmatory_capacity/validation.json)
+- [`confirmatory CRN alignment`](../results/analysis/confirmatory_capacity/crn_alignment.json)
+- [`confirmatory primary result`](../results/analysis/confirmatory_capacity/primary_result.json)
 
 ## Task 4 - presentation
 

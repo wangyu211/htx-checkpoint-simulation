@@ -44,6 +44,16 @@ DEFAULT_ALIGNMENT_REPORT = (
 ANALYSIS_SCHEMA_VERSION = "1.0"
 ESTIMAND = "MEAN_OF_REPLICATION_LEVEL_METRIC"
 
+
+def portable_path(path: Path) -> str:
+    """Return a repository-relative POSIX path when possible."""
+
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
 METRICS = (
     "total_queue_wait_p95_seconds",
     "total_queue_wait_mean_seconds",
@@ -393,7 +403,10 @@ def main() -> int:
         "default_unverified_comparison": "INDEPENDENT_WELCH_T",
         "estimate_rows": len(estimates),
         "contrast_rows": len(contrasts),
-        "outputs": [str(estimates_path), str(contrasts_path)],
+        "outputs": [
+            portable_path(estimates_path),
+            portable_path(contrasts_path),
+        ],
         "claim_boundary": (
             "Monte Carlo uncertainty conditional on the assumption scenarios; "
             "not input uncertainty or operational calibration."
