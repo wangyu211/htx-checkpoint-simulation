@@ -250,6 +250,51 @@ Tracked response-surface evidence:
 - [bottleneck map](../results/analysis/capacity_response_surface/stage_bottleneck_map.csv)
 - [deterministic ideal comparator](../results/analysis/capacity_response_surface/ideal_case_comparator.csv)
 
+## Conditional pooled-versus-separate queue replay
+
+A separate fail-closed counterfactual replays the immutable confirmatory
+reference ledger under two genuine mechanisms: pooled FCFS and one
+shortest-number-in-lane queue per counter with deterministic logged ties and
+no jockeying. Replayed Security completions feed Immigration, and both layouts
+retain each traveller's arrival, service demands, additional-check flag and
+tie draw.
+
+The reference pooled replay passed 164,976 timestamp/wait comparisons and 50
+registered within-replication P95 comparisons with zero mismatches (maximum
+absolute error about `1.01e-9 s`). Both within-cell traveller-input/CRN gates
+passed.
+
+| Frozen cell | Pooled mean P95 | Separate mean P95 | Separate minus pooled, paired 95% CI | Peak-total queue contrast |
+|---|---:|---:|---:|---:|
+| Reference `36/21`, 300 s | `3.929 s` | `11.509 s` | `+7.580 s` `[6.969, 8.192]` | `+1.78` `[1.35, 2.21]` |
+| Illustrative normalized `6/4`, arrivals ×5, 1,500 s | `69.396 s` | `76.436 s` | `+7.040 s` `[6.238, 7.843]` | `+1.62` `[1.38, 1.86]` |
+
+Separate-lane fragmentation occupied an additional `0.289` of the summed
+stage observation spans at reference scale (95% CI `[0.264, 0.314]`) and
+`0.143` at the illustrative normalized scale (95% CI `[0.136, 0.149]`).
+Raw fragmentation seconds are retained within each cell but deliberately
+excluded from the cross-scale summary because the horizons differ. The
+dimensionless fraction uses each stage's first-arrival-to-final-completion
+span, with the total denominator equal to the sum of the two stage spans.
+
+The `6/4` cell is a transparent mechanism-only normalization: source arrival
+times are multiplied by five while service requirements, flags and tie draws
+remain fixed. It runs only after the exact reference replay gate passes and is
+not claimed as a separate AnyLogic run, current HTX/ICA queue policy, site
+validation, or staffing recommendation. The AnyLogic operational UI remains
+pooled FCFS.
+
+Tracked queue-layout evidence:
+
+- [public synthetic replay source and privacy/hash manifest](../data/derived/queue_layout_replay_source/)
+- [frozen design and claim boundary](task3_queue_layout_replay_design.md)
+- [analysis manifest](../results/analysis/queue_layout_replay/analysis_manifest.json)
+- [exact pooled replay gate](../results/analysis/queue_layout_replay/pooled_replay_validation.json)
+- [within-cell CRN gates](../results/analysis/queue_layout_replay/crn_validation.json)
+- [paired contrasts](../results/analysis/queue_layout_replay/paired_contrasts.csv)
+- [dimensionless cross-scale summary](../results/analysis/queue_layout_replay/cross_scale_mechanism_summary.csv)
+- [compact local-event audit digest](../results/analysis/queue_layout_replay/counter_event_audit_digest.json)
+
 ## Pilot evidence retained
 
 The earlier `15 × 10 = 150` run pilot remains useful for pipeline verification,
@@ -382,8 +427,9 @@ ICA operations.
 - Confidence intervals quantify Monte Carlo error conditional on fixed
   assumptions; they omit input uncertainty and model-form error.
 - The 154 contrasts are exploratory and have no multiplicity adjustment.
-- Only pooled FCFS is implemented, so no separate-versus-pooled effect is
-  claimed.
+- The executable AnyLogic model and interactive UI remain pooled FCFS.
+  A separate layout exists only as the exact-gated offline entity-ledger
+  counterfactual above; it does not identify the current site queue policy.
 - Fixed service times, homogeneous resources, HPP arrivals, and empty/idle
   starts suppress important real-world variability.
 - The directional corridor rate is conditionally routed into one pooled model;

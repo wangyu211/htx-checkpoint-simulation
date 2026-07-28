@@ -1,0 +1,1918 @@
+{
+  "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+  "status": "PASS",
+  "study_cells": {
+    "ILLUSTRATIVE_NORMALIZED_SMALL_SCALE": {
+      "replication_count": 50,
+      "replications": {
+        "1": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "37e8caf74e93915e837ca5b21b724671fe5692fc718e38960cbd104034434c57",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 396,
+          "traveller_sets_identical": true
+        },
+        "10": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "cbc92b46c8c69b407b55fcd608252f5be66ac69a4c09c0042dc1ea8fc7305dad",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 394,
+          "traveller_sets_identical": true
+        },
+        "11": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "04fd733bf0c75e2c282004d4b8c8a9bbffda5dffd41e2bd94b4812a8eb926e1c",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 409,
+          "traveller_sets_identical": true
+        },
+        "12": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "6d9760ea9165ec7d36fcc8806e522775150e55fbbbfde8d2721442aaeeef5b01",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 423,
+          "traveller_sets_identical": true
+        },
+        "13": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "2a53f179634ffdad178e62fe142efffddf1ac0657b5665aa9a8b8cc01ce2575e",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 455,
+          "traveller_sets_identical": true
+        },
+        "14": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "9b59f8f4c527fdc8b8595ee9db433b62eadb026ff0d683c206be645b2b026993",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 374,
+          "traveller_sets_identical": true
+        },
+        "15": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "518b4e28aced098d4b2c15752ad9c32e716950179384b03630b1075f9508d045",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 386,
+          "traveller_sets_identical": true
+        },
+        "16": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "dadd0f9953765b43ee5d57bff96b28054f2d5bb739bc646b673d6717fa65aab5",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 401,
+          "traveller_sets_identical": true
+        },
+        "17": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "00f1099954da9aef941a78a5a30067201d52bbf088d46ac60e1b9f679e93a308",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 429,
+          "traveller_sets_identical": true
+        },
+        "18": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "c87b77af3f95e3b3ceb91fb5fccc8d45c6e6028857b95d17b75a05e54a91dadf",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 419,
+          "traveller_sets_identical": true
+        },
+        "19": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "6ad4254c43144a602f4cc8b9032f4566ed6db5d2b255cedac12ceba9b31222b7",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 445,
+          "traveller_sets_identical": true
+        },
+        "2": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "72be3197235cbb571d3eabe7afb065df90d3e328003b6e0b6fe71f9a13efaf02",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 442,
+          "traveller_sets_identical": true
+        },
+        "20": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "62b97c24a279d530af8f148be4d5a6a905638cb7291ce0726a5e9f2e8e408112",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 418,
+          "traveller_sets_identical": true
+        },
+        "21": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "5d7698b223b80d9305dec6351a52c2b375090b59787cacc8d026afbc74fcefa3",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 417,
+          "traveller_sets_identical": true
+        },
+        "22": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "db9627f0e40774290f8371cbca58f0ae823bce2e238032ba78c31bcf955045c7",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 410,
+          "traveller_sets_identical": true
+        },
+        "23": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "0b86e51144e7353b1763be296bc41f4ef134942adc4a782a2c9588b780f76ded",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 439,
+          "traveller_sets_identical": true
+        },
+        "24": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "ba315da6f328446adb1c8b4939fc6bc87629944dae1aadb646b66b294739333c",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 412,
+          "traveller_sets_identical": true
+        },
+        "25": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "dcd600f972528431554c164d7f2fc04d34961eeef8a2ba4cb85659ce2f1bb427",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 424,
+          "traveller_sets_identical": true
+        },
+        "26": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "4c8d89461190755f11579e103b6b7039ff8de74815549330d538eb2dc4edc0fe",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 419,
+          "traveller_sets_identical": true
+        },
+        "27": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "718ea48c034e21f446daa2d4aaf044a0497923955fd8009aeadde0c5a954b622",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 410,
+          "traveller_sets_identical": true
+        },
+        "28": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "7b7295c4caf47d8dec0a78c4bcdda73640ae9c7921c35f946ae3ffdd0a6b4231",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 392,
+          "traveller_sets_identical": true
+        },
+        "29": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "3964f4681fbd2cb3a3f14bc88c96212b75d1208ee2c08ae0906ce827ecf6745d",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 424,
+          "traveller_sets_identical": true
+        },
+        "3": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "66fd97a1f6b17aad51248e985cf76740f5bc02fa722815b56124fbbfc611dd8a",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 393,
+          "traveller_sets_identical": true
+        },
+        "30": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "7207cef88e8a99e1274dd6d7948959564b97d43659936bcfac0d968a9f9b8ff7",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 408,
+          "traveller_sets_identical": true
+        },
+        "31": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "b9975314dba5c10b497bd82d3d7c977951cf50efaf6ff59a44bf8e8186a8bd9c",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 425,
+          "traveller_sets_identical": true
+        },
+        "32": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "84185b92a05006e9ab76056d4445a8bed1fd62caafeb062a2e5e728eb15760dc",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 395,
+          "traveller_sets_identical": true
+        },
+        "33": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "ed33afcd7ba5cb0cf6347cec4a77978c20bf6cbae49b7fb566dcddcaa71febb8",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 428,
+          "traveller_sets_identical": true
+        },
+        "34": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "6733c3b7c8e00c3656736c68af6e8ee74f428ab235bc272b9fda6cf7969d5300",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 426,
+          "traveller_sets_identical": true
+        },
+        "35": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "860125102bcfb28b9807e8b10de21b3bbc1a25c475d93b726976f0a192d5cf37",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 451,
+          "traveller_sets_identical": true
+        },
+        "36": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "03ab1422dac6ec91d27b8b401d64d0723404f1608f7bbb001df72fedabd58943",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 414,
+          "traveller_sets_identical": true
+        },
+        "37": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "82b23f6483de79ae09e34a3f359466bef90c82fa28881b8c5183730a148a5f96",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 408,
+          "traveller_sets_identical": true
+        },
+        "38": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "0d3af411528f2827b01f879b3ccc191d4cba13546abf498f2a2871dede415b41",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 406,
+          "traveller_sets_identical": true
+        },
+        "39": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "b87867b984063960c6bd627457cd21ce0087e5aa8aea9d22b6b62885981484f5",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 388,
+          "traveller_sets_identical": true
+        },
+        "4": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "13e530df2adcb695f6d526d1a5784c197acc599616699a60c2bc9d270cec3002",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 410,
+          "traveller_sets_identical": true
+        },
+        "40": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "a810c3cea8f74064915a8b682a606019e0a2431432d6e11ed79c5708270cd104",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 399,
+          "traveller_sets_identical": true
+        },
+        "41": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "135ec6f67275f3f921d2a3c25e655a18cab6d8d6eafb03bc5e8ebc0d4aeb79f5",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 416,
+          "traveller_sets_identical": true
+        },
+        "42": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "a12c49ee6a51fb7c2c2975ef329a1995208ad7d28f9fa9d441e2b46e0f2a5ee0",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 403,
+          "traveller_sets_identical": true
+        },
+        "43": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "aa5b54a58321b688592bd5ae1785bbdc8fe0caa277570f7bffccd09e9efb4174",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 407,
+          "traveller_sets_identical": true
+        },
+        "44": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "998c0328fea79896a988ecc1d9f9ec6d83fde1f99eacf2ea363ff24df926b436",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 366,
+          "traveller_sets_identical": true
+        },
+        "45": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "0244e9c44c837ea22aed8822b2f85d4670ccf3c42dbf8a3a58012c9bed1fc22e",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 399,
+          "traveller_sets_identical": true
+        },
+        "46": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "8e573e90a0bf4751981478b681c823d231e2ada6aad6fb5b932ad1bdb3c28288",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 452,
+          "traveller_sets_identical": true
+        },
+        "47": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "b8ee8a81c0f21b8bf20e0aa6ac0cc23912b9e1b6e7004f6a1d2bdc6a2c057e1e",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 385,
+          "traveller_sets_identical": true
+        },
+        "48": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "9806135f1d83ccb522ec601b6bb6dc02dbb5909c11f5f4068f0709742f26a057",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 416,
+          "traveller_sets_identical": true
+        },
+        "49": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "dca4fd537780292ce500fa63e6f8ba5ca50c9e2a0295d86f99cf149a44816035",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 423,
+          "traveller_sets_identical": true
+        },
+        "5": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "37939e53271433e98ae26b26cd0e623512275e141fd8b8c27de6d0ced2449f2d",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 388,
+          "traveller_sets_identical": true
+        },
+        "50": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "e7152dec21840594dab7630f7ef47c8d770a15528dca94a3ed54493bc61de847",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 414,
+          "traveller_sets_identical": true
+        },
+        "6": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "141942dcad3c4ef197857e242119f3ac6874372e8e4b658bd22e6af3a3be4274",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 419,
+          "traveller_sets_identical": true
+        },
+        "7": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "ec5ff467ed186d3559401453c792e0dee927407377e509c7361a5c605c6f798d",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 408,
+          "traveller_sets_identical": true
+        },
+        "8": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "2076e9ff338e109359fb6ddd7981eca558237762774f8037403e1e8acb81e5b5",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 442,
+          "traveller_sets_identical": true
+        },
+        "9": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "48ab50384d2c6789cf93b8d39b120a6223cbf628a872c472fb5f8941b9edb117",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 395,
+          "traveller_sets_identical": true
+        }
+      },
+      "status": "PASS"
+    },
+    "REFERENCE_SCALE": {
+      "replication_count": 50,
+      "replications": {
+        "1": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "bc9620c3b85f8506e16b295a83f92e2211f26a5d1c72066d980129777b8f63ad",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 396,
+          "traveller_sets_identical": true
+        },
+        "10": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "a8d48ca4025296907714327dee599795b7921f57baac604ebd6b7e271fc8aba1",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 394,
+          "traveller_sets_identical": true
+        },
+        "11": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "0f77b869380d29bae442627fe0f332946ae2ef68e291414c66d49918da2f8367",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 409,
+          "traveller_sets_identical": true
+        },
+        "12": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "34fd9dcc86c712ed88b2324c4213f84ee3c52bf6d9eaf6a4d558252cd62cc8cb",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 423,
+          "traveller_sets_identical": true
+        },
+        "13": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "ccb5cb3bd06f210be046acf31e68f491570e084b4de7a53dacb0afaa64c0fc20",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 455,
+          "traveller_sets_identical": true
+        },
+        "14": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "362f2c1098dc90b75eaf3dfc0113bcaa5e55e4f503e9bd182ced0937c31251f5",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 374,
+          "traveller_sets_identical": true
+        },
+        "15": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "8d73debbc937e6fd1d57fdfc3fdb717eb150b700f78bbc06713c494c919b9489",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 386,
+          "traveller_sets_identical": true
+        },
+        "16": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "6aec6d93b004116d801c6f27010ae99d6a6d822f382b8e9077856612cc78cb3f",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 401,
+          "traveller_sets_identical": true
+        },
+        "17": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "f1ac0cecb9da7988461b07f5d4ec62eba326266d2999b10085a2c4b5f53c72d5",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 429,
+          "traveller_sets_identical": true
+        },
+        "18": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "3714bdc9e51b458fc379e9ce952f59d5a177039e1c0bbfc0344309ec88c2fc02",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 419,
+          "traveller_sets_identical": true
+        },
+        "19": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "83bae9f47c504abf6516e47deeb216c36f8f036c8a5f4e7dc720c48032d2bb14",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 445,
+          "traveller_sets_identical": true
+        },
+        "2": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "ac1b797a8fcf1e677c505869257e4f91f25c22924ba69d907b3da3077a624c9e",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 442,
+          "traveller_sets_identical": true
+        },
+        "20": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "1b53287edf46985db99431f502e1f8e2cfc9c51260bed11fb396f8d4a5990f40",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 418,
+          "traveller_sets_identical": true
+        },
+        "21": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "c88aa4ad6d5d34ce7d5fb287c6fa2a21245c9648e99758ffd6dd1b86eddf3ef4",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 417,
+          "traveller_sets_identical": true
+        },
+        "22": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "97ecc05fb9cb9173f4d858ae2fc6754b891beb5875418ec9d7757f77ed4f2b7d",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 410,
+          "traveller_sets_identical": true
+        },
+        "23": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "b34d91026c6dece5d757322e4f6e812c8b5212b81c84765bc95eb58ea8c9c668",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 439,
+          "traveller_sets_identical": true
+        },
+        "24": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "4bd65269aa0f258ecd3381f633795f55c609f84ec396da3714f4d01ec9562932",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 412,
+          "traveller_sets_identical": true
+        },
+        "25": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "19429cabab5422fc7b781181a91499729f2fc94f41a47d2b3f458eaa77ae1c75",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 424,
+          "traveller_sets_identical": true
+        },
+        "26": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "f377cd2d8565690b3e5f795fbc03ab9474bb92926c626e874fc84ca76e2e03e3",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 419,
+          "traveller_sets_identical": true
+        },
+        "27": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "cbdc9b5dd00717eac6cc8c7edcb7c7e6f7e440e15e861792f775e982cabe44c0",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 410,
+          "traveller_sets_identical": true
+        },
+        "28": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "0e3e439a9ac0a44a136e477ccb941d2e6334f7f963b343343e52b47d87075c5f",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 392,
+          "traveller_sets_identical": true
+        },
+        "29": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "f7083045a10f120b3a6190a9434e539f3606cbe1bc81189e6fc2d91a8737032a",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 424,
+          "traveller_sets_identical": true
+        },
+        "3": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "934b2e7c04a0a9030bd46d673cc930775a597d37c419d67e4100e55cdc3ffc94",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 393,
+          "traveller_sets_identical": true
+        },
+        "30": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "c461d7386350253122baf46c87333b2779619311887a4673bad3407a90ebadbc",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 408,
+          "traveller_sets_identical": true
+        },
+        "31": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "82dce0f01582bf27878337d5d99cdf60b639449544e3096cbb7bbb2a6bfe4dbb",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 425,
+          "traveller_sets_identical": true
+        },
+        "32": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "b0590b9af10544f913e457e46b9c4935ce1da3b71d3e7b9226a12426b200233c",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 395,
+          "traveller_sets_identical": true
+        },
+        "33": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "0513d350f241a9796339e27b580d1f5bbd90221b42b112adf4d3958c2c4337ea",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 428,
+          "traveller_sets_identical": true
+        },
+        "34": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "83fbd68d41368548cb0b7d472db73f6f5ddbb71b77100814cac5a4f5e1057140",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 426,
+          "traveller_sets_identical": true
+        },
+        "35": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "1baac918b1e365e07d32fe091160d12174874580bf6ccf5873336283ae8c6304",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 451,
+          "traveller_sets_identical": true
+        },
+        "36": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "82fc71f07dff777ed5692b65ad9cea30887fa12b50bda9db153f3a69bcbd8af7",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 414,
+          "traveller_sets_identical": true
+        },
+        "37": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "d687b3609a77b8633759bb4e2a2c47ee668b31292fc56ec967aeac1e7783b60c",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 408,
+          "traveller_sets_identical": true
+        },
+        "38": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "0f905157d866a504c559baca3fcfe9a5316a1fc9a5b76277b2bb7f1d6a2d0f16",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 406,
+          "traveller_sets_identical": true
+        },
+        "39": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "2d1a5c315e3902883c37685c204a0fa20a7cb91ce3584c7b9cccf8688e277b52",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 388,
+          "traveller_sets_identical": true
+        },
+        "4": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "75a02ecf12c610f0c335ad8055977a87c94c06e4f3aded702555a896a5c98543",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 410,
+          "traveller_sets_identical": true
+        },
+        "40": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "6059cd2da2ff539824b3f6d18483c7a22efac69d35d1f7ccf87a92d130241abd",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 399,
+          "traveller_sets_identical": true
+        },
+        "41": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "f35340ff1975ee0b0cd92122e6107d4ed6cf0d64304458bf2da1a41e6ed7af4f",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 416,
+          "traveller_sets_identical": true
+        },
+        "42": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "c935d80f16deec115b5470667dccc9304847eaf793765f210c5a888988505aa5",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 403,
+          "traveller_sets_identical": true
+        },
+        "43": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "060d407ad84ef52cd6ee32e87beaf6c5050b1d3a8812188694a24f6de61d12c2",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 407,
+          "traveller_sets_identical": true
+        },
+        "44": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "35cff6ae5661a317167ebdfbd8bd23b3bf49f044d2f9827f6db19204f12cd112",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 366,
+          "traveller_sets_identical": true
+        },
+        "45": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "5e01ef310c8bcea99c7b24069605f662088071ec0927b4b289a57a979e22aad2",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 399,
+          "traveller_sets_identical": true
+        },
+        "46": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "2cffab7e8b9d95da567a4b0cfa24e879a8232db429a8723b7cfe5ac54e615c47",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 452,
+          "traveller_sets_identical": true
+        },
+        "47": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "ce592dace1e3264858cf66e7e595ca759e48b520a08d8952eec2a09ba37334d9",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 385,
+          "traveller_sets_identical": true
+        },
+        "48": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "c75969d69496d2acf2a6de07532cab6854e878cee13e83c612d80f274d1ec261",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 416,
+          "traveller_sets_identical": true
+        },
+        "49": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "72e18af7745d5c612bf4488304b96e1d077fc7b5d272d900584bfb87026546c4",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 423,
+          "traveller_sets_identical": true
+        },
+        "5": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "434bea1332585483848cf72516563be15037605d24680d074480498b334b6769",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 388,
+          "traveller_sets_identical": true
+        },
+        "50": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "219364c483a53208f338d5ea2f03b0e067d3bd22d379163bebb79b1b0fa54341",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 414,
+          "traveller_sets_identical": true
+        },
+        "6": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "d90d0ebfb1803ca5ac6ad075310229a9931f431669186cd9d1a52b58d0fced64",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 419,
+          "traveller_sets_identical": true
+        },
+        "7": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "bd94589f00fec48b43544f51fbb23dca7e88c1ee87029b1503eff20152804d58",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 408,
+          "traveller_sets_identical": true
+        },
+        "8": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "68dfb69793975f9962ca61dc06fc202ebb21559aaf843298a125a978ae0d175b",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 442,
+          "traveller_sets_identical": true
+        },
+        "9": {
+          "gate_id": "QUEUE_LAYOUT_CRN_GATE_V1",
+          "immutable_fields": [
+            "traveller_id",
+            "arrival_seconds",
+            "security_service_demand_seconds",
+            "immigration_primary_service_demand_seconds",
+            "additional_check_flag",
+            "additional_check_service_demand_seconds",
+            "lane_tie_u"
+          ],
+          "immutable_input_sha256": "d71ec109fd1d8cd6ba14022d82557a4ee99c95774171782a5a2ae1144715b5c7",
+          "pooled_input_hash_matches_source": true,
+          "security_to_immigration_conservation": true,
+          "separate_input_hash_matches_source": true,
+          "status": "PASS",
+          "traveller_count": 395,
+          "traveller_sets_identical": true
+        }
+      },
+      "status": "PASS"
+    }
+  }
+}

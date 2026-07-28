@@ -29,6 +29,11 @@ the public repository.
 - Earlier candidate totals and the 27/29 right-to-left review counts are
   superseded historical method/review evidence. They are not alternative
   statistical samples, confidence bounds, or approved simulation inputs.
+- [`queue_layout_replay_source/`](queue_layout_replay_source/) is a separate
+  public reproducibility package containing only synthetic AnyLogic events.
+  Its project-scoped simulated traveller IDs are not video tracker identities
+  or real-person identifiers. A field allowlist and byte-level privacy/hash
+  audit are recorded in that package's `manifest.json`.
 
 See [`docs/privacy_and_data_governance.md`](../../docs/privacy_and_data_governance.md)
 for the public/private boundary and fail-closed release audit.

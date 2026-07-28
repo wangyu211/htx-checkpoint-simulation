@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "study_id": "TASK3_QUEUE_LAYOUT_REPLAY_REFERENCE_SCALE_V1",
+  "design_status": "FROZEN_PRE_ANALYSIS",
+  "frozen_on": "2026-07-29",
+  "claim_ceiling": "CONDITIONAL_TWO_CELL_QUEUE_LAYOUT_COUNTERFACTUAL_ONLY",
+  "source_ledger": {
+    "collection_id": "CONFIRMATORY_CAPACITY_CONSOLIDATED",
+    "table_name": "entity_log.csv",
+    "kpi_collection_id": "CONFIRMATORY_CAPACITY_ANALYSIS",
+    "kpi_table_name": "replication_kpis.csv",
+    "model_version": "TASK3_OPERATIONAL_POOLED_V1",
+    "config_id": "OP_CONFIRM_MLE_BASE_REFERENCE_ASSUMPTION_SANDBOX_V1",
+    "config_sha256": "369372d7e06066baf12416f63c9b12a0af11b1ef17459431e126a703ba4c7eae",
+    "scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+    "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "replication_ids": {
+      "first": 1,
+      "last": 50,
+      "count": 50
+    },
+    "arrival_cutoff_seconds": 300.0,
+    "start_state": "EMPTY_AND_IDLE",
+    "drain_rule": "FULL_DRAIN",
+    "run_status": "COMPLETE",
+    "security_capacity": 36,
+    "immigration_capacity": 21
+  },
+  "public_curated_source": {
+    "dataset_id": "QUEUE_LAYOUT_REPLAY_CURATED_SYNTHETIC_LEDGER_V1",
+    "entity_ledger": "data/derived/queue_layout_replay_source/entity_ledger.csv",
+    "registered_p95": "data/derived/queue_layout_replay_source/registered_p95.csv",
+    "manifest": "data/derived/queue_layout_replay_source/manifest.json",
+    "classification": "SYNTHETIC_ANYLOGIC_EVENT_LEDGER",
+    "contains_video_person_data": false,
+    "contains_real_person_identifiers": false
+  },
+  "immutable_traveller_inputs": [
+    "traveller_id",
+    "arrival_seconds",
+    "security_service_demand_seconds",
+    "immigration_primary_service_demand_seconds",
+    "additional_check_flag",
+    "additional_check_service_demand_seconds",
+    "lane_tie_u"
+  ],
+  "serial_process": {
+    "stages": [
+      "SECURITY",
+      "IMMIGRATION"
+    ],
+    "immigration_arrival_definition": "REPLAYED_SECURITY_COMPLETION",
+    "immigration_counter_hold_definition": "PRIMARY_PLUS_SELECTED_ADDITIONAL_CHECK_SERVICE",
+    "same_traveller_inputs_across_layouts": true
+  },
+  "study_cells": [
+    {
+      "study_cell_id": "REFERENCE_SCALE",
+      "role": "REGISTERED_REFERENCE_REPLAY",
+      "arrival_time_scale": 1.0,
+      "arrival_cutoff_seconds": 300.0,
+      "security_capacity": 36,
+      "immigration_capacity": 21,
+      "pooled_validation_scope": "EXACT_AGAINST_ANYLOGIC_TIMESTAMPS_AND_REGISTERED_P95",
+      "claim_status": "CONDITIONAL_REFERENCE_SCALE_COUNTERFACTUAL"
+    },
+    {
+      "study_cell_id": "ILLUSTRATIVE_NORMALIZED_SMALL_SCALE",
+      "role": "TRANSPARENT_ASSUMPTION_MECHANISM_ONLY",
+      "arrival_time_scale": 5.0,
+      "arrival_cutoff_seconds": 1500.0,
+      "approximate_arrival_rate_per_second": 0.2728426593944015,
+      "security_capacity": 6,
+      "immigration_capacity": 4,
+      "transformation": "MULTIPLY_EVERY_SOURCE_ARRIVAL_SECONDS_BY_5; HOLD_SERVICE_DEMANDS_FLAGS_AND_LANE_TIE_U_FIXED",
+      "execution_prerequisite": "REFERENCE_SCALE_POOLED_REPLAY_GATE_PASS",
+      "pooled_validation_scope": "NOT_VALIDATED_AGAINST_ANYLOGIC; ALGORITHM_ALREADY_GATED_AT_REFERENCE_SCALE",
+      "claim_status": "TRANSPARENT_ASSUMPTION_MECHANISM_ONLY_NOT_SITE_VALIDATED"
+    }
+  ],
+  "layouts": {
+    "pooled_fcfs": {
+      "layout_id": "POOLED_FCFS",
+      "queue_count_per_stage": 1,
+      "discipline": "FCFS",
+      "server_selection": "EARLIEST_AVAILABLE_THEN_LOWEST_COUNTER_ID",
+      "same_timestamp_arrival_order": "ARRIVAL_SECONDS_THEN_TRAVELLER_ID"
+    },
+    "separate_jsq": {
+      "layout_id": "SEPARATE_JSQ_NO_JOCKEYING",
+      "queue_count_per_stage": "ONE_PER_COUNTER",
+      "assignment_epoch": "STAGE_ARRIVAL_ONLY",
+      "assignment_rule": "SHORTEST_NUMBER_IN_LANE",
+      "lane_length_definition": "COUNT_ASSIGNED_WITH_SERVICE_END_AFTER_ARRIVAL_INCLUDING_AT_MOST_ONE_IN_SERVICE",
+      "tie_candidates_order": "ASCENDING_COUNTER_ID",
+      "tie_draw_field": "lane_tie_u",
+      "tie_index_rule": "MIN(FLOOR(lane_tie_u * number_of_tied_counters), number_of_tied_counters - 1)",
+      "same_draw_reused_at_both_stages": true,
+      "jockeying": "PROHIBITED"
+    }
+  },
+  "validation_gates": {
+    "pooled_replay": {
+      "status_before_execution": "PENDING",
+      "timestamp_absolute_tolerance_seconds": 1e-06,
+      "required_fields": [
+        "security_queue_join_seconds",
+        "security_start_seconds",
+        "security_end_seconds",
+        "immigration_queue_join_seconds",
+        "immigration_start_seconds",
+        "exit_seconds",
+        "derived_security_wait_seconds",
+        "derived_immigration_wait_seconds",
+        "replication_kpis.total_queue_wait_p95_seconds"
+      ],
+      "pass_rule": "EVERY_REPLAYED_TIMESTAMP_MATCHES_EVERY_LOGGED_TIMESTAMP_WITHIN_TOLERANCE"
+    },
+    "common_random_numbers": {
+      "status_before_execution": "PENDING",
+      "pass_rule": "IDENTICAL_TRAVELLER_SET_AND_SHA256_OF_SORTED_IMMUTABLE_TRAVELLER_INPUTS_ACROSS_LAYOUTS"
+    },
+    "paired_inference": {
+      "enabled_only_if": [
+        "POOLED_REPLAY_GATE_PASS",
+        "COMMON_RANDOM_NUMBERS_GATE_PASS",
+        "ALL_50_REPLICATIONS_PRESENT"
+      ],
+      "failure_action": "DO_NOT_COMPUTE_OR_WRITE_PAIRED_CONTRASTS"
+    }
+  },
+  "metrics": {
+    "replication_level": [
+      "total_queue_wait_p95_seconds",
+      "peak_security_waiting_queue",
+      "peak_immigration_waiting_queue",
+      "peak_total_waiting_queue",
+      "peak_security_lane_waiting_queue",
+      "peak_immigration_lane_waiting_queue",
+      "security_fragmentation_seconds",
+      "immigration_fragmentation_seconds",
+      "total_fragmentation_seconds",
+      "security_fragmentation_fraction",
+      "immigration_fragmentation_fraction",
+      "total_fragmentation_fraction"
+    ],
+    "p95_quantile_definition": "NEAREST_RANK_INDEX_CEIL_0.95N_MINUS_1",
+    "waiting_interval_definition": "HALF_OPEN_QUEUE_JOIN_TO_SERVICE_START",
+    "equal_timestamp_sweep_rule": "END_BEFORE_START",
+    "fragmentation_definition": "MEASURE_OF_TIME_ANY_COUNTER_IS_IDLE_WHILE_A_DIFFERENT_COUNTER_LANE_HAS_AT_LEAST_ONE_WAITING_TRAVELLER",
+    "fragmentation_window": "FIRST_STAGE_ARRIVAL_THROUGH_STAGE_FINAL_COMPLETION",
+    "security_fragmentation_fraction_denominator": "SECURITY_FINAL_COMPLETION_MINUS_SECURITY_FIRST_ARRIVAL",
+    "immigration_fragmentation_fraction_denominator": "IMMIGRATION_FINAL_COMPLETION_MINUS_IMMIGRATION_FIRST_ARRIVAL",
+    "total_fragmentation_fraction_denominator": "SUM_OF_SECURITY_AND_IMMIGRATION_STAGE_OBSERVATION_SPANS",
+    "cross_scale_fragmentation_rule": "COMPARE_DIMENSIONLESS_FRACTIONS_ONLY; RAW_FRAGMENTATION_SECONDS_REMAIN_WITHIN_CELL_METRICS"
+  },
+  "inference": {
+    "separate_contrasts_by_study_cell": true,
+    "difference_direction": "SEPARATE_JSQ_NO_JOCKEYING_MINUS_POOLED_FCFS",
+    "estimand": "MEAN_OF_REPLICATION_LEVEL_PAIRED_DIFFERENCES",
+    "method": "PAIRED_STUDENT_T",
+    "confidence_level": 0.95,
+    "multiplicity_status": "DESCRIPTIVE_MECHANISM_STUDY"
+  },
+  "scale_boundary": {
+    "reference_scale_first": true,
+    "arrival_window_seconds": 300.0,
+    "security_capacity": 36,
+    "immigration_capacity": 21,
+    "warning": "Pooling effects may be small or zero at this high-capacity short-window reference scale. The illustrative normalized small scale is a transparent mechanism probe, not a claim about an HTX/ICA site. Neither cell may be generalized to heterogeneous-skill, physical-space, or behavioural settings."
+  },
+  "output_contract": {
+    "real_results_committed_by_design": false,
+    "public_files_written_only_after_explicit_cli_execution": [
+      "replication_metrics.csv",
+      "pooled_replay_validation.json",
+      "crn_validation.json",
+      "paired_contrasts.csv",
+      "cross_scale_mechanism_summary.csv",
+      "counter_event_audit_digest.json",
+      "analysis_manifest.json"
+    ],
+    "local_intermediate_files": [
+      "results/intermediate/queue_layout_replay/replay_events.public_source_lf.csv"
+    ],
+    "local_counter_event_log_publication_status": "DO_NOT_COMMIT_OR_PACKAGE",
+    "counter_event_log_required": true
+  }
+}

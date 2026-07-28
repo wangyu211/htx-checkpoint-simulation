@@ -43,12 +43,13 @@ on `[0, 300)` seconds, then the Source closes and the complete admitted cohort
 drains. A run cannot pass if a traveller is dropped, rejected, silently
 truncated, or left in the system.
 
-Pooled FCFS is the only implemented queue policy. V1 does **not** implement
-counter-specific Immigration queues. A genuine
-separate-queue comparison requires replicated queue objects, an explicit lane
-assignment/tie rule, and counter-specific event logging. It remains a future
-mechanism rather than a scenario-label change, and the interactive experiment
-does not offer a misleading queue-policy selector.
+Pooled FCFS is the only queue policy implemented in the executable AnyLogic
+model and interactive surface. The UI therefore does not offer a misleading
+queue-policy selector. A separate per-counter mechanism now exists only as an
+exact-gated offline replay of the immutable synthetic entity ledger, with
+shortest-number-in-lane assignment, deterministic logged ties, no jockeying
+and counter-specific event logging. That conditional replay is not an
+AnyLogic UI feature and does not identify the current site policy.
 
 Additional checks use a `COUNTER_HELD_RISK_REFERRAL_PROXY`: selected
 travellers retain an Immigration resource for the declared extra work. This

@@ -144,9 +144,12 @@ supporting evidence, not ICA SLAs.
 four labelled Arrival → Security → Immigration → Exit zones, live queue and
 in-service state, run status, and exactly five genuine pre-run controls
 (demand multiplier, both capacities, automation uptake, and automation
-multiplier). Pooled FCFS remains the only implemented queue policy; no
-non-functional policy selector is shown. Interactive runs are exploratory and
-are excluded from reportable replicated evidence.
+multiplier). Within this AnyLogic surface, pooled FCFS is the only implemented
+queue policy; no non-functional policy selector is shown. The separate-queue
+mechanism exists
+only as an exact-gated offline synthetic-ledger replay and does not identify
+the current site policy. Interactive runs are exploratory and are excluded
+from reportable replicated evidence.
 
 ## Licensing and deployment boundary
 

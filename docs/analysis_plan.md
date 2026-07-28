@@ -68,9 +68,11 @@ a result.
   if the other stage constrains the flow. The pilot includes Security-only,
   Immigration-only, and joint-capacity scenarios.
 - **H2 — Queue pooling.** A pooled queue may reduce lane imbalance relative to
-  genuinely separate queues. This hypothesis is **not tested in v1**:
-  `OperationalCheckpointModel` implements pooled FCFS only, so no
-  separate-versus-pooled effect is claimed.
+  genuinely separate queues. The executable AnyLogic model and interactive UI
+  remain pooled FCFS. The hypothesis is tested only through an exact-gated
+  offline replay of the immutable synthetic entity ledger, with deterministic
+  shortest-queue ties and no jockeying. That conditional replay does not
+  identify the current site's queue policy.
 - **H3 — Effective-uptake threshold.** Technology effects depend jointly on
   effective uptake and service-time reduction. The pilot includes named
   multiplier/uptake combinations as comparative scenarios, not adoption

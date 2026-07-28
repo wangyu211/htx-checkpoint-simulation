@@ -105,8 +105,10 @@ layout or spatial digital twin.
   per-resource interval-overlap audit has not been performed.
 - [x] Post-run scenario dashboard, replication-level estimates, 95% confidence
   intervals, and scenario contrasts.
-- [ ] Genuinely separate per-counter queues versus pooled FCFS; v1 implements
-  pooled FCFS only, so no queue-policy effect is claimed.
+- [x] Genuinely separate per-counter queues versus pooled FCFS are compared
+  through an exact-gated offline replay of the immutable synthetic entity
+  ledger. The executable AnyLogic model/UI remains pooled FCFS, and the replay
+  does not identify the current site queue policy.
 - [ ] Pilot traveller-level common-random-number alignment; pilot status
   remains `NOT_TESTED`, so its contrasts use independent Welch intervals.
 - [x] `CapacityRobustnessConfirmatory` auto-starts in the visible Parameter
@@ -132,8 +134,9 @@ layout or spatial digital twin.
   (`demand_multiplier`, `security_capacity`, `immigration_capacity`,
   `automation_uptake`, and `automation_multiplier`) plus live queue,
   in-service, completed, and status metrics.
-- [x] Pooled FCFS is the only implemented queue policy; no fake queue-policy
-  selector is exposed.
+- [x] Pooled FCFS is the only queue policy in the executable AnyLogic/UI; no
+  fake selector is exposed. The accepted separate-layout evidence is an
+  offline conditional replay, not an interactive-policy claim.
 
 The historical HPP milestone still verifies only the demand mechanism. The
 operational pilot and confirmatory study are separate, not-calibrated

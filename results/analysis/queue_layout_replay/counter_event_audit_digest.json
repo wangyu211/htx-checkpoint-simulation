@@ -1,0 +1,68 @@
+{
+  "by_study_cell_layout_stage": {
+    "ILLUSTRATIVE_NORMALIZED_SMALL_SCALE|POOLED_FCFS|IMMIGRATION": {
+      "counter_count_observed": 4,
+      "maximum_wait_seconds": 11.348260915000083,
+      "positive_wait_count": 7457,
+      "replication_count": 50,
+      "row_count": 20622
+    },
+    "ILLUSTRATIVE_NORMALIZED_SMALL_SCALE|POOLED_FCFS|SECURITY": {
+      "counter_count_observed": 6,
+      "maximum_wait_seconds": 208.42451326599905,
+      "positive_wait_count": 18170,
+      "replication_count": 50,
+      "row_count": 20622
+    },
+    "ILLUSTRATIVE_NORMALIZED_SMALL_SCALE|SEPARATE_JSQ_NO_JOCKEYING|IMMIGRATION": {
+      "counter_count_observed": 4,
+      "maximum_wait_seconds": 12.998637220998944,
+      "positive_wait_count": 8952,
+      "replication_count": 50,
+      "row_count": 20622
+    },
+    "ILLUSTRATIVE_NORMALIZED_SMALL_SCALE|SEPARATE_JSQ_NO_JOCKEYING|SECURITY": {
+      "counter_count_observed": 6,
+      "maximum_wait_seconds": 214.3308730369995,
+      "positive_wait_count": 17578,
+      "replication_count": 50,
+      "row_count": 20622
+    },
+    "REFERENCE_SCALE|POOLED_FCFS|IMMIGRATION": {
+      "counter_count_observed": 21,
+      "maximum_wait_seconds": 8.407290668999991,
+      "positive_wait_count": 6152,
+      "replication_count": 50,
+      "row_count": 20622
+    },
+    "REFERENCE_SCALE|POOLED_FCFS|SECURITY": {
+      "counter_count_observed": 36,
+      "maximum_wait_seconds": 18.285826998000005,
+      "positive_wait_count": 3267,
+      "replication_count": 50,
+      "row_count": 20622
+    },
+    "REFERENCE_SCALE|SEPARATE_JSQ_NO_JOCKEYING|IMMIGRATION": {
+      "counter_count_observed": 21,
+      "maximum_wait_seconds": 12.995993515999999,
+      "positive_wait_count": 3075,
+      "replication_count": 50,
+      "row_count": 20622
+    },
+    "REFERENCE_SCALE|SEPARATE_JSQ_NO_JOCKEYING|SECURITY": {
+      "counter_count_observed": 36,
+      "maximum_wait_seconds": 21.809738144999983,
+      "positive_wait_count": 1535,
+      "replication_count": 50,
+      "row_count": 20622
+    }
+  },
+  "claim_boundary": "This digest proves the local counter-event artifact identity and basic coverage; it is not a substitute for the gated replay.",
+  "counter_event_log": "results/intermediate/queue_layout_replay/replay_events.public_source_lf.csv",
+  "counter_event_log_publication_status": "LOCAL_INTERMEDIATE_ONLY",
+  "counter_event_log_sha256": "0ee7d51748e79eb14eaace121a8136176384f1c64a9baf3aa5f26afba5078311",
+  "counter_event_row_count": 164976,
+  "schema_version": "1.0",
+  "status": "PASS",
+  "study_id": "TASK3_QUEUE_LAYOUT_REPLAY_REFERENCE_SCALE_V1"
+}

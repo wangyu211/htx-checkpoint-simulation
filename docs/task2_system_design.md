@@ -79,15 +79,22 @@ has an invalid event sequence.
 | Capacity, demand, and fixed service contexts | `IMPLEMENTED_EXECUTED` | conditional comparisons |
 | Effective automation uptake × multiplier | `IMPLEMENTED_PROXY` | technology-service sensitivity |
 | Counter-held additional work | `IMPLEMENTED_PROXY` | pessimistic risk boundary |
-| Separate per-counter Immigration queues | `DESIGNED_DEFERRED` | no v1 queue-policy effect is claimed |
+| Separate per-counter queues at both stages (offline entity-ledger replay) | `EVIDENCE_ACCEPTED_CONDITIONAL_REPLAY` | paired mechanism contrast at two frozen scales; not an AnyLogic UI/site-policy claim |
 | Time-of-day demand and stochastic service | `BLOCKED_INPUT` | require timestamp and variability evidence |
 | Separate secondary queue/resources | `BLOCKED_INPUT` | require routing, capacity, and service evidence |
 | Calibrated walking and physical congestion | `OUT_OF_SCOPE_V1` | no spatial-performance claim |
 
-A genuine separate-queue comparison requires replicated queues, an explicit
-lane-assignment and tie rule, no-jockeying semantics, and counter-specific
-logging. V1 rejects a configuration that merely relabels the pooled mechanism
-as `separate`.
+A genuine separate-queue comparison now exists as a fail-closed replay of the
+immutable `OperationalCheckpointModel` entity ledger. It implements one lane
+per counter at both stages, shortest-number-in-lane assignment at arrival,
+deterministic logged ties, no jockeying, serial Security-to-Immigration flow,
+and counter-specific event logs. The reference pooled replay reproduced all
+logged timestamps/waits and registered P95s before any paired contrast was
+enabled; see
+[`task3_queue_layout_replay_design.md`](task3_queue_layout_replay_design.md).
+This is an offline validated counterfactual. The AnyLogic operational model
+and interactive UI remain pooled FCFS, so no UI selector or current-site
+queue-policy claim is implied.
 
 ## B. System Components
 
@@ -183,8 +190,9 @@ checkpoint utilization.
 `OperationalInteractive` exposes exactly five editable pre-run parameters:
 `demand_multiplier`, `security_capacity`, `immigration_capacity`,
 `automation_uptake`, and `automation_multiplier`. The queue policy is not an
-interactive control: pooled FCFS is the only implemented v1 mechanism, so a
-queue-policy selector would misrepresent the model.
+interactive control: pooled FCFS remains the only AnyLogic v1 mechanism. The
+separate-queue evidence is a gated offline ledger replay, so exposing it as an
+in-model selector would misrepresent where that counterfactual is implemented.
 
 ### Scenario matrix
 
@@ -330,7 +338,7 @@ zero.
 | Confirmatory coverage / entity rows | `600 / 600 PASS` / `253,756` |
 | Confirmatory CRN alignment | `PASS`, 150 within-rate replication groups |
 | Deterministic two-stage oracle | `PASS`, exact six-traveller trace |
-| Pilot CRN / separate queues / field calibration | `NOT_TESTED / NOT IMPLEMENTED / NOT PERFORMED` |
+| Pilot CRN / queue-layout replay / field calibration | `NOT_TESTED / EVIDENCE_ACCEPTED_CONDITIONAL_REPLAY / NOT PERFORMED` |
 
 `OperationalInteractive` provides a four-zone 2D process view from Arrival to
 Security to Immigration to Exit. During a run it shows admitted/completed

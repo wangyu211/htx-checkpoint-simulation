@@ -3,6 +3,9 @@
 This register separates four states that must never be conflated:
 
 - `EVIDENCE_ACCEPTED`: implemented, executed, validated, and safe to report;
+- `EVIDENCE_ACCEPTED_CONDITIONAL_REPLAY`: an executed, exactly gated
+  counterfactual replay that is safe to report only with its model/scale
+  boundary and is not evidence of the current site mechanism;
 - `IMPLEMENTED_NOT_EXECUTED`: executable and contract-tested, but has no
   accepted real result;
 - `INFRASTRUCTURE_READY_HUMAN_REVIEW_PENDING`: tooling exists, but a required
@@ -24,7 +27,7 @@ It is an internal release gate, not an assessment result.
 | Registered capacity studies and response surface | `EVIDENCE_ACCEPTED` | Frozen configurations, exact run coverage, CRN gates, uncertainty, and claim boundaries are checked in. |
 | Mean-preserving service-time CV sensitivity | `IMPLEMENTED_NOT_EXECUTED` | AnyLogic 9×50 batch and fail-closed analyser exist; all 450 runs must pass before a result is released. |
 | 5–120 minute peak-duration sensitivity | `IMPLEMENTED_NOT_EXECUTED` | AnyLogic 20×50 batch and finite-horizon analyser exist; all 1,000 runs and nested-prefix checks must pass. |
-| Pooled vs separate queue layout | `IN_PROGRESS` | Must implement shortest-queue assignment, deterministic ties, no jockeying, counter logs, and paired replay validation before any pooling claim. |
+| Pooled vs separate queue layout | `EVIDENCE_ACCEPTED_CONDITIONAL_REPLAY` | Reference pooled replay matched 164,976 timestamps/waits plus 50 registered P95s with zero mismatches; shortest-number-in-lane routing, deterministic ties, no jockeying, serial stages, counter logs, CRN gates and paired CIs are accepted. The `6/4` normalized cell is transparent mechanism-only; neither cell identifies the current site policy, and the AnyLogic UI remains pooled. |
 | Traveller-type service effects | `DEFERRED_ABSENT_EVIDENCE` | Type shares and multipliers are not identified by the supplied clip; any future implementation must be labelled transparent sensitivity assumptions. |
 | Time-of-day arrival pattern | `DEFERRED_ABSENT_EVIDENCE` | A 24.9-second clip cannot identify a daily profile. A signed event ledger can test only within-window timing, not time of day. |
 | Physical walking time between stages | `DEFERRED_ABSENT_EVIDENCE` | Pixel speed lacks a checkpoint path/homography mapping; the current DES does not claim a calibrated walking delay. |
