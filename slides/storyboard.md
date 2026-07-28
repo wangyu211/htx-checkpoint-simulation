@@ -15,8 +15,9 @@ inference, exploratory sensitivity, and deployment evidence visibly separate.
 > From 24.9 seconds of video to an auditable checkpoint what-if model
 
 - Accepted local aggregate: 12 left-to-right and 34 right-to-left.
-- The 34 accepted right-to-left crossings anchor a conditional model; they do
-  not calibrate long-run site demand.
+- The 34 accepted right-to-left corridor crossings anchor a conditional model;
+  they establish neither long-run site demand nor allocation into a processing
+  unit.
 - Two studies test different questions:
   - 600 confirmatory runs test a frozen capacity mechanism.
   - 2,700 exploratory runs map its conditional operating boundary.
@@ -25,7 +26,8 @@ inference, exploratory sensitivity, and deployment evidence visibly separate.
 
 > Measurement, model and inference stay separate—and visible
 
-- **Measure:** human-adjudicated count and a bounded HPP arrival-rate interval.
+- **Measure:** human-adjudicated directional corridor count and a bounded HPP
+  arrival-rate interval.
 - **Model:** executable two-stage traveller-level DES; pooled FCFS, finite
   resources, fixed service-time assumptions, a 300-second arrival window, and
   full drain.
@@ -54,10 +56,12 @@ inference, exploratory sensitivity, and deployment evidence visibly separate.
 - The deterministic comparator uses regular arrivals and fixed service. It is
   an explanatory control, not a site forecast. Only integer capacities were
   simulated; connecting lines are visual guides.
+- Across the full surface, cell-mean P95 is `3.93–35.92 s` under this
+  300-second empty-start cohort; no local SLA was supplied.
 
 ## Slide 4 — Capacity surface and bottleneck migration
 
-> The active bottleneck—not two shortages added—sets total delay
+> The bottleneck shifts—but waits stay sub-minute at this model scale
 
 - The full 9 × 6 heatmap contains all 54 simulated capacity cells at fixed
   Base demand, with 50 replications per cell.
@@ -70,15 +74,16 @@ inference, exploratory sensitivity, and deployment evidence visibly separate.
   difference-in-differences is `−4.02 s` (`95% CI [−4.72, −3.32]`).
   The negative interaction means serial-flow sub-additivity; it does not mean
   that removing capacity is beneficial.
-- The response surface is conditional exploratory evidence, not a staffing
-  recommendation.
+- The response surface is conditional exploratory evidence for this
+  300-second cohort—not a steady-state forecast or staffing recommendation.
 
 ## Slide 5 — Bounded decision and next evidence
 
 > Calibrate the site, locate the bottleneck, then pilot relief
 
-1. **Calibrate:** measure time-of-day arrivals, stage service, exceptions, and
-   downtime.
+1. **Calibrate:** measure time-of-day arrivals, corridor-to-processing-unit
+   allocation, stage-service distributions, open-resource schedules,
+   exceptions, and downtime.
 2. **Locate:** place the observed site on the capacity response surface.
 3. **Pilot:** relieve Security, Immigration, or both according to the active
    bottleneck.
@@ -87,9 +92,9 @@ inference, exploratory sensitivity, and deployment evidence visibly separate.
 The immediate decision is to advance the validated mechanism to site
 calibration—not to approve a roster. A field pilot additionally needs:
 
-- a signed time-of-day event ledger;
+- a signed time-of-day event ledger and processing-unit allocation;
 - stage service, exception, and downtime distributions;
-- observed queues, open resources, and rosters;
+- observed per-unit routing shares, queues, open positions, and rosters;
 - a costed bottleneck-aware intervention; and
 - production computer-vision licensing and security controls.
 
@@ -100,6 +105,8 @@ calibration—not to approve a roster. A field pilot additionally needs:
 - Configuration lineage, conservation, full drain, CRN alignment, and
   cross-batch reproducibility pass.
 - `36/21` is a derived reference capacity—not observed staffing.
+- `1.364213/s` is a corridor aggregate conditionally mapped into one pooled
+  abstraction; the physical processing-unit allocation is unobserved.
 - Results are conditional mechanism and sensitivity evidence under a
   non-calibrated, fixed-service-time pooled-FCFS sandbox—not measured HTX
   performance, a site forecast, a staffing answer, an economic optimum, or
