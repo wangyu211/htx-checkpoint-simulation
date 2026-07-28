@@ -11,6 +11,7 @@ from tools.clean_clone_audit import (
     forbidden_history_paths,
 )
 from tools.precheck import (
+    PROJECT_ROOT,
     _absolute_windows_path_hits,
     check_absolute_windows_paths,
     check_generator_determinism,
@@ -41,7 +42,7 @@ class PortablePathTests(unittest.TestCase):
         self,
     ) -> None:
         drive = "C:" + "\\Users\\owner\\private.csv"
-        file_uri = "file:" + "///D:/private/output.csv"
+        file_uri = "file:" + "///" + "D" + ":/private/output.csv"
         unc = "\\" * 2 + "server\\share\\private.csv"
         data = (
             f"{drive}\n{file_uri}\n{unc}\n"
@@ -76,6 +77,14 @@ class PortablePathTests(unittest.TestCase):
             any("ppt/slides/slide1.xml" in error for error in errors),
             errors,
         )
+
+    def test_detection_fixtures_do_not_leak_absolute_paths(self) -> None:
+        errors, scanned = check_absolute_windows_paths(
+            {"tests/test_release_readiness.py"},
+            root=PROJECT_ROOT,
+        )
+        self.assertEqual(scanned, 1)
+        self.assertEqual(errors, [])
 
 
 class DocumentedCommandTests(unittest.TestCase):

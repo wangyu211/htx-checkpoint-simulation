@@ -312,7 +312,12 @@ The reviewer-friendly single-file copy can be launched from the repository
 root with:
 
 ```powershell
-& "C:\Program Files\AnyLogic 8.9 Personal Learning Edition\AnyLogic.exe" `
+$anyLogic = Join-Path $env:ProgramFiles `
+  "AnyLogic 8.9 Personal Learning Edition\AnyLogic.exe"
+if (-not (Test-Path -LiteralPath $anyLogic)) {
+  throw "AnyLogic PLE 8.9.9 was not found under Program Files."
+}
+& $anyLogic `
   -r "$PWD\simulation\anylogic\HTXCheckpointSimulationCLI\HTXCheckpointSimulationCLI.alp" `
   "GatePV2x3"
 ```
@@ -417,7 +422,9 @@ the estimates. The checked-in
 records the response slices, paired finite differences, interaction surface,
 bottleneck map, and deterministic ideal comparator.
 
-Run the release gate:
+Run the release gate. It includes a fail-closed check for tracked or embedded
+source pixels, restricted media, identity/appearance fields, and reviewer alias
+rules:
 
 ```powershell
 .\.venv\Scripts\python.exe tools\precheck.py --run-tests
@@ -456,15 +463,23 @@ launching, not a standalone application.
 
 ## Restricted input
 
-The assessment video is not redistributed in this public repository.
+The target public release does not redistribute the assessment video.
 
 1. Obtain `TestVidTask.mov` from the link supplied in the assessment.
 2. Place it at `data/raw/TestVidTask.mov`.
 3. Run the documented pipeline locally.
 
 Generated videos or frames containing original pixels are also kept local.
-Public documentation uses numerical audit tables and trajectory/counting-line
-schematics that do not reproduce the source video.
+Public documentation must use numerical audit tables and
+trajectory/counting-line schematics that do not reproduce the source video.
+The complete retention, reviewer-alias, no-re-identification, and release policy
+is [`docs/privacy_and_data_governance.md`](docs/privacy_and_data_governance.md).
+
+As recorded by the 2026-07-29 audit, the current canonical Task 4 deck still
+contains two embedded copies of a source-video-derived frame. The deck may be
+used only within the intended assessment workflow if the assessment terms
+permit; it blocks a public repository release until those images are replaced
+and the fail-closed media audit passes.
 
 ## Repository map
 
@@ -479,7 +494,9 @@ results/      reproducible pilot and confirmatory evidence packages
 slides/       Task 4 presentation
 ```
 
-The public release contains the Task 1 approach/results, Task 2 system design,
-Task 3 design, execution and results documentation, and the Task 4 slide deck.
+The assessment submission contains the Task 1 approach/results, Task 2 system
+design, Task 3 design, execution and results documentation, and the Task 4
+slide deck. Public release remains conditional on the governance and licensing
+gates.
 The completed five-slide deck is
 [`slides/HTX_Task4_Operational_Insights.pptx`](slides/HTX_Task4_Operational_Insights.pptx).

@@ -290,7 +290,12 @@ capacity-mechanism evidence, not a site forecast or staffing recommendation.
 From the repository root:
 
 ```powershell
-& "C:\Program Files\AnyLogic 8.9 Personal Learning Edition\AnyLogic.exe" `
+$anyLogic = Join-Path $env:ProgramFiles `
+  "AnyLogic 8.9 Personal Learning Edition\AnyLogic.exe"
+if (-not (Test-Path -LiteralPath $anyLogic)) {
+  throw "AnyLogic PLE 8.9.9 was not found under Program Files."
+}
+& $anyLogic `
   -r "$PWD\simulation\anylogic\HTXCheckpointSimulationCLI\HTXCheckpointSimulationCLI.alp" `
   "GatePV2x3"
 ```
