@@ -8,6 +8,8 @@ This register separates four states that must never be conflated:
   boundary and is not evidence of the current site mechanism;
 - `IMPLEMENTED_NOT_EXECUTED`: executable and contract-tested, but has no
   accepted real result;
+- `RELEASE_BLOCKED`: the release audit has executed and found a concrete
+  public-delivery blocker that must be removed before submission;
 - `INFRASTRUCTURE_READY_HUMAN_REVIEW_PENDING`: tooling exists, but a required
   human adjudication has not been signed;
 - `DEFERRED_ABSENT_EVIDENCE`: deliberately not represented as a calibrated
@@ -33,8 +35,8 @@ It is an internal release gate, not an assessment result.
 | Physical walking time between stages | `DEFERRED_ABSENT_EVIDENCE` | Pixel speed lacks a checkpoint path/homography mapping; the current DES does not claim a calibrated walking delay. |
 | Independent secondary-check resource | `DEFERRED_ABSENT_EVIDENCE` | The executable v1 exposes only a counter-held referral proxy; routing and service evidence for a real secondary system are absent. |
 | Independent automated channel and fallback | `DEFERRED_ABSENT_EVIDENCE` | The executable v1 uses an uptake × service multiplier proxy and does not claim an eGate resource model. |
-| Animation-speed invariance evidence | `PENDING_VERIFICATION` | Same scenario/seed must be compared at different animation speeds and with animation disabled. |
-| Privacy and retention release check | `PENDING_DOCUMENTATION` | Public artifacts must contain event/aggregate evidence only; no supplied video, identity feature, or cross-camera re-identification artifact. |
+| Animation-speed invariance evidence | `IMPLEMENTED_NOT_EXECUTED` | The [registered three-run protocol](task3_animation_speed_invariance_protocol.md), immutable capture helper, exact field comparator, and fail-closed tests exist. No invariance claim is permitted until genuine GUI 1x, GUI 10x, and virtual-time captures pass together. |
+| Privacy and retention release check | `RELEASE_BLOCKED` | Policy, scanner, retention boundary, role aliases, and event/aggregate-only public rules are implemented. The executed audit currently rejects two copies of a supplied-video-derived frame embedded in the canonical deck; replace them with a non-pixel schematic before release. |
 | Linux clean-environment workflow | `PENDING_VERIFICATION` | Run after the final source and documentation set is frozen. |
 | Final deck and short demonstration | `PENDING_FINAL_EVIDENCE` | Update only after new studies are accepted; do not place planned values on slides. |
 | Remote publication | `NOT_AUTHORISED_YET` | Local commits are allowed. Do not push or make public until final approval. |
