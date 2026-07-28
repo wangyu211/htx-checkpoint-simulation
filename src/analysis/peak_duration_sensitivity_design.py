@@ -711,6 +711,21 @@ def validate_peak_duration_design(
     if execution.get("completed_run_count") != 0:
         errors.append("completed_run_count must remain zero before execution")
 
+    analysis_plan = design.get("analysis_plan", {})
+    if analysis_plan.get("late_arrival_definition") != (
+        "Within each replication, travellers with arrival_seconds in "
+        "[0.8*T,T); report their nearest-rank total queue-wait P95."
+    ):
+        errors.append("late-arrival P95 definition drifted")
+    if analysis_plan.get("growth_window_definition") != [
+        "[0.5T,0.6T)",
+        "[0.6T,0.7T)",
+        "[0.7T,0.8T)",
+        "[0.8T,0.9T)",
+        "[0.9T,T)",
+    ]:
+        errors.append("five-window growth design drifted")
+
     boundary = design.get("calibration_boundary", {})
     for field in (
         "stationary_rate_extension_is_observed_peak",

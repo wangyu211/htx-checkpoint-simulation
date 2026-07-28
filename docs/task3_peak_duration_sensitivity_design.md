@@ -123,7 +123,12 @@ for:
 4. cohort clear time after cutoff.
 
 Supporting views include mean wait, time-weighted mean queue, stage P95 waits,
-late-arrival wait, and arrival-window queue-growth slope.
+and the nearest-rank total-wait P95 among travellers arriving in
+`[0.8T,T)`. Queue-growth evidence is reconstructed separately within every
+replication: calculate the time-weighted mean total waiting queue over
+`[0.5T,0.6T)`, `[0.6T,0.7T)`, `[0.7T,0.8T)`, `[0.8T,0.9T)`, and `[0.9T,T)`,
+then fit OLS against the five window midpoint times. Replication-level slopes,
+not pooled event rows, receive the 95% Student-t interval.
 
 Where the offered-work utilization proxy is at or above one, a steady-state
 service-level interpretation is invalid. Those cells are instead described

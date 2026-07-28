@@ -141,9 +141,18 @@
       "time_weighted_mean_total_waiting_queue",
       "security_wait_p95_seconds",
       "immigration_wait_p95_seconds",
-      "late_arrival_total_queue_wait_seconds",
+      "late_arrival_total_queue_wait_p95_seconds",
       "arrival_window_queue_growth_slope"
     ],
+    "late_arrival_definition": "Within each replication, travellers with arrival_seconds in [0.8*T,T); report their nearest-rank total queue-wait P95.",
+    "growth_window_definition": [
+      "[0.5T,0.6T)",
+      "[0.6T,0.7T)",
+      "[0.7T,0.8T)",
+      "[0.8T,0.9T)",
+      "[0.9T,T)"
+    ],
+    "growth_estimator": "Within each replication, reconstruct the time-weighted mean total waiting queue in each of the five windows and fit OLS against window midpoint seconds. Summarise the replication-level slopes with a 95 percent Student-t interval.",
     "finite_horizon_policy": "All KPIs are terminating-cohort outputs indexed by arrival-window duration. Do not describe them as steady-state estimates.",
     "rho_greater_or_equal_one_policy": "Where the offered-work utilization proxy is at or above one, do not report a stationary service-level KPI. Report cutoff backlog, arrival-window queue growth, late-arrival wait, and recovery/clear time as finite-horizon stress outputs.",
     "uncertainty": "After execution, report replication-level means with 95 percent intervals. Paired differences are allowed only after CRN alignment passes.",
