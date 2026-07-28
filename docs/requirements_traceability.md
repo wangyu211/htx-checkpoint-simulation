@@ -52,7 +52,7 @@ claimed to estimate long-run checkpoint demand.
 | Finite processing resources | Separate finite AnyLogic `ResourcePool` objects for both stages | VERIFIED |
 | User-adjustable inputs | Five genuine pre-run controls: demand, two capacities, uptake, and automation multiplier | VERIFIED |
 | Operational outputs | Live state plus post-run queue, wait, utilization, throughput, cutoff, and recovery evidence | VERIFIED |
-| Multiple scenarios / experiments | 15 × 10 pilot and frozen 4 × 3 × 50 confirmatory capacity study | VERIFIED |
+| Multiple scenarios / experiments | 15 × 10 pilot, Part 1 4 × 3 × 50 expansion, Part 2 4 × 3 × 50 capacity availability, and exploratory 9 × 6 × 50 capacity response surface | VERIFIED |
 
 The four-zone display is a schematic process view, not a calibrated physical
 layout or spatial digital twin.
@@ -110,6 +110,20 @@ layout or spatial digital twin.
   600/600 coverage and 253,756 entities passed strict validation.
 - [x] Confirmatory traveller-level CRN alignment: `PASS` across 150 within-rate
   replication groups, enabling the pre-specified paired analysis.
+- [x] `CapacityAvailabilityStress` Part 2 design frozen before execution:
+  four reduced-capacity arms × three arrival rates × 50 replications = 600
+  new runs; analysis reuses 150 immutable Reference runs only after
+  lineage, hash, coverage, and traveller-level CRN gates.
+- [x] Part 2 600/600-run capacity-availability execution and 750-run merged
+  analysis. Coverage, lineage, conservation, full drain, and CRN alignment
+  passed. The registered base-rate `32/18 minus 36/21` peak-total-queue
+  contrast is `+10.10` travellers (paired 95% CI `[8.23, 11.97]`).
+- [x] Post-outcome Base-demand capacity response surface completed all
+  `54 × 50 = 2,700` new runs. Exact coverage, frozen hashes, lineage, seeds,
+  conservation, full drain, traveller-level CRN, and five-cell cross-batch
+  reproducibility passed. The resulting nonlinearity, bottleneck migration,
+  upstream metering, and deterministic-ideal comparison are explicitly
+  exploratory and non-calibrated.
 - [x] Interactive controls and live state: exactly five genuine pre-run fields
   (`demand_multiplier`, `security_capacity`, `immigration_capacity`,
   `automation_uptake`, and `automation_multiplier`) plus live queue,
@@ -136,6 +150,8 @@ Recorded evidence:
 - [`confirmatory strict validation`](../results/analysis/confirmatory_capacity/validation.json)
 - [`confirmatory CRN alignment`](../results/analysis/confirmatory_capacity/crn_alignment.json)
 - [`confirmatory primary result`](../results/analysis/confirmatory_capacity/primary_result.json)
+- [`capacity response-surface design and execution`](task3_capacity_response_surface_design.md)
+- [`capacity response-surface compact package`](../results/analysis/capacity_response_surface/README.md)
 
 ## Task 4 - presentation
 

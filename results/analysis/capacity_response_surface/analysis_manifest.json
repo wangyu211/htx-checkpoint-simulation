@@ -1,0 +1,128 @@
+{
+  "analysis": "TASK3_CAPACITY_RESPONSE_SURFACE_ANALYSIS_V1",
+  "analysis_role": "EXPLORATORY_SENSITIVITY_NOT_CONFIRMATORY",
+  "claim_boundary": "CONDITIONAL_RESPONSE_SURFACE_EVIDENCE_ONLY",
+  "coverage": {
+    "cell_count": 54,
+    "immigration_capacity_count": 6,
+    "replications_per_cell": 50,
+    "run_count": 2700,
+    "security_capacity_count": 9
+  },
+  "cross_batch_reproducibility_status": "PASS",
+  "ideal_case_comparator": {
+    "arrival_process": "Perfectly regular arrivals at k/lambda for positive k strictly before the cutoff",
+    "cell_count": 54,
+    "comparator_id": "DETERMINISTIC_IDEAL_CONTROL_V1",
+    "linear_quantity": "stage throughput capacity c/service_time",
+    "nonlinear_quantity": "delay and queue outcomes are computed, never linearly forced",
+    "service_process": "Fixed service times; work-conserving pooled FCFS servers"
+  },
+  "outputs": {
+    "README.md": {
+      "path": "results/analysis/capacity_response_surface/README.md",
+      "row_count": 1,
+      "sha256": "9fa170a68b5dcde91309667576c361498b52780718f9dc49a99bcc72a7e25dc1"
+    },
+    "adjacent_marginal_penalties.csv": {
+      "path": "results/analysis/capacity_response_surface/adjacent_marginal_penalties.csv",
+      "row_count": 744,
+      "sha256": "ecdd1bcba5bf5ea43c725767bb2b2a66214c331a2ae3226ed7a152581f6ff033"
+    },
+    "balanced_joint_slice.csv": {
+      "path": "results/analysis/capacity_response_surface/balanced_joint_slice.csv",
+      "row_count": 9,
+      "sha256": "9551569e461ebd4608b8f6a6270e7d23e5d2b04394dbd266e67d31bd6e84ac3b"
+    },
+    "cell_estimates.csv": {
+      "path": "results/analysis/capacity_response_surface/cell_estimates.csv",
+      "row_count": 432,
+      "sha256": "ea7befbd8a094e2b3a2248bc68063c125683ba1fd6812a8c6620969763501589"
+    },
+    "crn_alignment.json": {
+      "path": "results/analysis/capacity_response_surface/crn_alignment.json",
+      "row_count": 1,
+      "sha256": "57409a0969919bf9be75d103526de830ddd08c11d537256c9ea73c9ec44d3b5a"
+    },
+    "cross_batch_reproducibility.json": {
+      "path": "results/analysis/capacity_response_surface/cross_batch_reproducibility.json",
+      "row_count": 1,
+      "sha256": "7ee51f97272f1997ccd545fc0cd97fe1c704209da7dacb2a75ae433b3b175c87"
+    },
+    "heatmap.csv": {
+      "path": "results/analysis/capacity_response_surface/heatmap.csv",
+      "row_count": 54,
+      "sha256": "95b4a511b029fdae6ae8b0f8de49f664ec85029af018b20d65c0655d1dfede38"
+    },
+    "ideal_case_comparator.csv": {
+      "path": "results/analysis/capacity_response_surface/ideal_case_comparator.csv",
+      "row_count": 54,
+      "sha256": "a617bab6d5c363ee32f3ff7a106ab4adf16819b12bba89d3923ef1bc6859e5d1"
+    },
+    "immigration_only_slice.csv": {
+      "path": "results/analysis/capacity_response_surface/immigration_only_slice.csv",
+      "row_count": 6,
+      "sha256": "0336a149ede6ae76cbc563f93ca7646e32415fa80a75b2d5fad059d7db379748"
+    },
+    "local_interactions.csv": {
+      "path": "results/analysis/capacity_response_surface/local_interactions.csv",
+      "row_count": 320,
+      "sha256": "471e847ea818cd773e133cdd054d9d85f16d2ef29de1f28424c6af6326219284"
+    },
+    "queueing_theory_overlay.csv": {
+      "path": "results/analysis/capacity_response_surface/queueing_theory_overlay.csv",
+      "row_count": 54,
+      "sha256": "4f16cfff62802cfc3fc3d986df1115c34c9f2af83e83d14a727706dbaafe2f1f"
+    },
+    "response_surface_by_replication.csv": {
+      "path": "results/analysis/capacity_response_surface/response_surface_by_replication.csv",
+      "row_count": 2700,
+      "sha256": "5ec40ff13ee33744084c9217b2dbd6c1c728dfafa3b69a3f2e0ddc534df89f75"
+    },
+    "second_finite_differences.csv": {
+      "path": "results/analysis/capacity_response_surface/second_finite_differences.csv",
+      "row_count": 624,
+      "sha256": "eb72ac51d335cb982b10577a79eb30d6a57584571cd9764c02ae8fecfa8dd97a"
+    },
+    "security_only_slice.csv": {
+      "path": "results/analysis/capacity_response_surface/security_only_slice.csv",
+      "row_count": 9,
+      "sha256": "8c04a37b68cf1de86199619f4e7803091fa7b35d4cb9d9dff8fb8aa1c686a38b"
+    },
+    "stage_bottleneck_map.csv": {
+      "path": "results/analysis/capacity_response_surface/stage_bottleneck_map.csv",
+      "row_count": 54,
+      "sha256": "df3c2a12f722c6f092894ddae9fb684d99f7ea10f0bf48528f0f8637ba948534"
+    },
+    "validation.json": {
+      "path": "results/analysis/capacity_response_surface/validation.json",
+      "row_count": 1,
+      "sha256": "4e9e195a630ee335daa132eeae51e5e4eae1695fac7202bcf6505925239b4f31"
+    }
+  },
+  "paired_analysis_gate": {
+    "comparison_method": "PAIRED_STUDENT_T",
+    "crn_alignment_status": "PASS"
+  },
+  "queue_reconstruction": {
+    "interval_semantics": "[queue_join,service_start), end events before starts on ties",
+    "peak_window": "FULL_DRAIN",
+    "time_weighted_mean_window": "[0,300)"
+  },
+  "schema_version": "1.0",
+  "source": {
+    "artifact_hashes": {
+      "design_sha256": "081155a5a1b0fbd88e7ea1aa4bfbdcbeab83846a062f59ede5a2c4cfc1d0a47c",
+      "scenarios_sha256": "23267fede639f480a553019605e433beebc13dd5d90c8197611a6cdf23c64ae5",
+      "schema_registry_sha256": "c26bbe0006f45b8b8f10c184ed5339920ffb73e7987471473a20ffcfd1911b05",
+      "seed_manifest_sha256": "7cf34c3d0f60b7a9019986a04c7f3a336911ff449d27ec3981e21f58d639e10c"
+    },
+    "entity_logs_copied_to_analysis_package": false,
+    "entity_row_count": 1113588,
+    "raw_file_count": 8100,
+    "raw_results_root": "results/raw/capacity_response_surface",
+    "raw_tree_sha256": "7421e2dbb3ad2713e1ff4fe27c6d920586396cce40f61bf87acd89b8b44ec88a"
+  },
+  "status": "PASS",
+  "study_id": "TASK3_CAPACITY_RESPONSE_SURFACE_EXPLORATORY_V1"
+}

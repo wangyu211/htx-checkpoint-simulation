@@ -32,12 +32,31 @@ from src.analysis.confirmatory_design import (  # noqa: E402
     load_confirmatory_seed_rows,
     validate_confirmatory_design,
 )
+from src.analysis.capacity_availability_design import (  # noqa: E402
+    DEFAULT_DESIGN as AVAILABILITY_DESIGN,
+    DEFAULT_SEED_MANIFEST as AVAILABILITY_SEED_MANIFEST,
+    load_capacity_availability_scenario_rows,
+    load_capacity_availability_seed_rows,
+    validate_capacity_availability_design,
+)
+from src.analysis.capacity_response_surface_design import (  # noqa: E402
+    DEFAULT_DESIGN as RESPONSE_SURFACE_DESIGN,
+    DEFAULT_SEED_MANIFEST as RESPONSE_SURFACE_SEED_MANIFEST,
+    load_response_surface_scenario_rows,
+    load_response_surface_seed_rows,
+    validate_response_surface_design,
+)
 
 ALP = REPO / "simulation" / "anylogic" / "HTXCheckpointSimulation" / "_alp"
+SPLIT_ALPX = ALP.parent / "HTXCheckpointSimulation.alpx"
 AGENTS = ALP / "Agents"
 CHECKPOINT = AGENTS / "CheckpointModel"
 OP_MODEL = AGENTS / "OperationalCheckpointModel"
 OP_TRAVELLER = AGENTS / "OperationalTraveller"
+OP_MODEL_ADDITIONAL_CLASS = OP_MODEL / "Code" / "AdditionalClass.java"
+OP_MODEL_ADDITIONAL_CLASS_CODE = (
+    OP_MODEL / "Code" / "AdditionalClassCode.java"
+)
 EXPERIMENTS = ALP / "Experiments.xml"
 SCENARIOS = REPO / "config" / "operational_scenarios.csv"
 SINGLE_ALP = (
@@ -55,6 +74,14 @@ CONFIRMATORY_EXPERIMENT_NAME = "CapacityRobustnessConfirmatory"
 CONFIRMATORY_OUTPUT_COLLECTION = "confirmatory_capacity"
 CONFIRMATORY_EXPERIMENT_ID = "1785162900001"
 CONFIRMATORY_TIMER_ID = "1785162900002"
+AVAILABILITY_EXPERIMENT_NAME = "CapacityAvailabilityStress"
+AVAILABILITY_OUTPUT_COLLECTION = "capacity_availability"
+AVAILABILITY_EXPERIMENT_ID = "1785162950001"
+AVAILABILITY_TIMER_ID = "1785162950002"
+RESPONSE_SURFACE_EXPERIMENT_NAME = "CapacityResponseSurfaceExploratory"
+RESPONSE_SURFACE_OUTPUT_COLLECTION = "capacity_response_surface"
+RESPONSE_SURFACE_EXPERIMENT_ID = "1785162960001"
+RESPONSE_SURFACE_TIMER_ID = "1785162960002"
 INTERACTIVE_PARAMETER_NAMES = (
     "demand_multiplier",
     "security_capacity",
@@ -63,29 +90,33 @@ INTERACTIVE_PARAMETER_NAMES = (
     "automation_multiplier",
 )
 
+TRAVELLER_POPULATION_NAME = "operationalTravellers"
+TRAVELLER_POPULATION_ID = "1785218300001"
+TRAVELLER_POPULATION_PRESENTATION_ID = "1785218300002"
+
 MODEL_BLOCK_POSITIONS = {
     "travellerSource": (90, 280, -18, -24),
     "securityService": (300, 270, -26, -24),
-    "securityResources": (310, 350, -34, -24),
+    "securityResources": (310, 390, -34, -20),
     "immigrationService": (580, 270, -34, -24),
-    "immigrationResources": (590, 350, -40, -24),
+    "immigrationResources": (590, 390, -40, -20),
     "checkpointSink": (850, 280, -10, -24),
 }
 
 MODEL_VARIABLE_POSITIONS = {
-    "admitted": (70, 455),
-    "completed": (830, 455),
-    "arrivals_closed": (70, 490),
-    "rejected_or_dropped_count": (830, 490),
-    "technology_count": (560, 525),
-    "additional_check_count": (560, 560),
-    "security_queue_count": (245, 455),
-    "security_in_service_count": (245, 490),
-    "immigration_queue_count": (525, 455),
-    "immigration_in_service_count": (525, 490),
-    "max_security_queue": (245, 525),
-    "max_immigration_queue": (700, 560),
-    "run_status": (830, 525),
+    "admitted": (70, 480),
+    "completed": (830, 480),
+    "arrivals_closed": (70, 515),
+    "rejected_or_dropped_count": (830, 515),
+    "technology_count": (560, 550),
+    "additional_check_count": (560, 585),
+    "security_queue_count": (245, 480),
+    "security_in_service_count": (245, 515),
+    "immigration_queue_count": (525, 480),
+    "immigration_in_service_count": (525, 515),
+    "max_security_queue": (245, 550),
+    "max_immigration_queue": (700, 585),
+    "run_status": (830, 550),
 }
 
 
@@ -100,6 +131,29 @@ def _write(path: Path, text: str) -> None:
     # dirty on Windows even when the XML/Java content was unchanged.
     with path.open("w", encoding="utf-8", newline="\n") as stream:
         stream.write(text.replace("\r\n", "\n"))
+
+
+def _write_split_event_code(path: Path, text: str) -> None:
+    """Write ALCODE markers using the parent ALPX's physical line ending.
+
+    AnyLogic 8.9's split-model loader matches the marker plus its following
+    line break as raw bytes.  A sidecar with LF markers is therefore silently
+    treated as an empty action when the parent ALPX on disk uses CRLF.
+    """
+
+    parent_raw = SPLIT_ALPX.read_bytes()
+    first_lf = parent_raw.find(b"\n")
+    if first_lf < 0:
+        raise RuntimeError(f"Split parent has no line break: {SPLIT_ALPX}")
+    line_break = (
+        "\r\n"
+        if first_lf > 0 and parent_raw[first_lf - 1 : first_lf + 1] == b"\r\n"
+        else "\n"
+    )
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as stream:
+        stream.write(normalized.replace("\n", line_break))
 
 
 def _class_id(path: Path) -> str:
@@ -169,6 +223,54 @@ def _load_confirmatory_inputs() -> tuple[
     if len(rows) != 12 or len(seed_rows) != 150:
         raise RuntimeError(
             "CapacityRobustnessConfirmatory requires 12 cells and 150 seed groups"
+        )
+    return rows, seed_rows, validation
+
+
+def _load_availability_inputs() -> tuple[
+    list[dict[str, str]], list[dict[str, str]], dict[str, object]
+]:
+    validation = validate_capacity_availability_design(
+        design_path=AVAILABILITY_DESIGN,
+        seed_manifest_path=AVAILABILITY_SEED_MANIFEST,
+    )
+    if validation["status"] != "PASS":
+        raise RuntimeError(
+            "Capacity availability design failed: "
+            + "; ".join(str(error) for error in validation["errors"])
+        )
+    rows = load_capacity_availability_scenario_rows()
+    seed_rows = load_capacity_availability_seed_rows(
+        AVAILABILITY_SEED_MANIFEST
+    )
+    if len(rows) != 12 or len(seed_rows) != 150:
+        raise RuntimeError(
+            "CapacityAvailabilityStress requires 12 execution cells "
+            "and 150 seed groups"
+        )
+    return rows, seed_rows, validation
+
+
+def _load_response_surface_inputs() -> tuple[
+    list[dict[str, str]], list[dict[str, str]], dict[str, object]
+]:
+    validation = validate_response_surface_design(
+        design_path=RESPONSE_SURFACE_DESIGN,
+        seed_manifest_path=RESPONSE_SURFACE_SEED_MANIFEST,
+    )
+    if validation["status"] != "PASS":
+        raise RuntimeError(
+            "Capacity response-surface design failed: "
+            + "; ".join(str(error) for error in validation["errors"])
+        )
+    rows = load_response_surface_scenario_rows()
+    seed_rows = load_response_surface_seed_rows(
+        RESPONSE_SURFACE_SEED_MANIFEST
+    )
+    if len(rows) != 54 or len(seed_rows) != 50:
+        raise RuntimeError(
+            "CapacityResponseSurfaceExploratory requires 54 execution cells "
+            "and 50 Base-demand seed groups"
         )
     return rows, seed_rows, validation
 
@@ -388,6 +490,7 @@ MODEL_VARIABLES = [
     ("exceed_900_count", "int", "0", False),
     ("exceed_1200_count", "int", "0", False),
     ("run_status", "String", '"RUNNING"', True),
+    ("presentation_animation_enabled", "boolean", "false", False),
     (
         "security_waits",
         "java.util.ArrayList<Double>",
@@ -487,6 +590,56 @@ MODEL_PARAMETERS = [
 ]
 
 
+PRESENTATION_ANIMATION_CLASS_CODE = """\
+/* PRESENTATION_ONLY_BEGIN
+ * Deterministic DES-state animation.  These methods only relocate the
+ * presentation of agents already held by the Process Modeling Library.
+ * They do not add model time, events, random draws, or process blocks.
+ */
+private void placePresentationAgent(
+\tOperationalTraveller traveller,
+\tdouble baseX,
+\tdouble baseY,
+\tint index
+) {
+\tif ( !presentation_animation_enabled ) return;
+\tfinal int iconLimit = 25;
+\tif ( index < 0 || index >= iconLimit ) {
+\t\ttraveller.jumpTo( -1000.0, -1000.0 );
+\t\treturn;
+\t}
+\ttraveller.jumpTo(
+\t\tbaseX + 15.0 * ( index % 5 ),
+\t\tbaseY + 15.0 * ( index / 5 )
+\t);
+}
+
+private void refreshPresentationAnimation() {
+\tif ( !presentation_animation_enabled ) return;
+\tfor ( int i = 0; i < securityService.queueSize(); i++ )
+\t\tplacePresentationAgent(
+\t\t\t(OperationalTraveller) securityService.queueGet( i ),
+\t\t\t225.0, 320.0, i
+\t\t);
+\tfor ( int i = 0; i < securityService.delaySize(); i++ )
+\t\tplacePresentationAgent(
+\t\t\t(OperationalTraveller) securityService.delayGet( i ),
+\t\t\t375.0, 320.0, i
+\t\t);
+\tfor ( int i = 0; i < immigrationService.queueSize(); i++ )
+\t\tplacePresentationAgent(
+\t\t\t(OperationalTraveller) immigrationService.queueGet( i ),
+\t\t\t505.0, 320.0, i
+\t\t);
+\tfor ( int i = 0; i < immigrationService.delaySize(); i++ )
+\t\tplacePresentationAgent(
+\t\t\t(OperationalTraveller) immigrationService.delayGet( i ),
+\t\t\t655.0, 320.0, i
+\t\t);
+}
+/* PRESENTATION_ONLY_END */"""
+
+
 SOURCE_ON_EXIT = """\
 if ( admitted + 1 >= arrival_guard ) {
 \tguard_hit = true;
@@ -535,7 +688,11 @@ traveller.additional_check_flag =
 traveller.additional_check_service_demand =
 \ttraveller.additional_check_flag ? additional_check_service_p1_seconds : 0.0;
 if ( traveller.additional_check_flag ) additional_check_count++;
-traveller.lane_tie_u = tie_rng.nextDouble();"""
+traveller.lane_tie_u = tie_rng.nextDouble();
+if ( presentation_animation_enabled ) {
+\ttraveller.jumpTo( 110.0, 290.0 );
+\trefreshPresentationAnimation();
+}"""
 
 
 SECURITY_ENTER = """\
@@ -546,21 +703,37 @@ if ( security_queue_count >= security_queue_capacity ) {
 OperationalTraveller traveller = (OperationalTraveller) agent;
 traveller.security_queue_join = time();
 security_queue_count++;
-max_security_queue = Math.max( max_security_queue, security_queue_count );"""
+max_security_queue = Math.max( max_security_queue, security_queue_count );
+if ( presentation_animation_enabled ) {
+\trefreshPresentationAnimation();
+\tplacePresentationAgent(
+\t\ttraveller, 225.0, 320.0, security_queue_count - 1
+\t);
+}"""
 
 
 SECURITY_DELAY_ENTER = """\
 OperationalTraveller traveller = (OperationalTraveller) agent;
 security_queue_count--;
 security_in_service_count++;
-traveller.security_start = time();"""
+traveller.security_start = time();
+if ( presentation_animation_enabled ) {
+\trefreshPresentationAnimation();
+\tplacePresentationAgent(
+\t\ttraveller, 375.0, 320.0, security_in_service_count - 1
+\t);
+}"""
 
 
 SECURITY_EXIT = """\
 OperationalTraveller traveller = (OperationalTraveller) agent;
 security_in_service_count--;
 traveller.security_end = time();
-security_busy_seconds += traveller.security_service_demand;"""
+security_busy_seconds += traveller.security_service_demand;
+if ( presentation_animation_enabled ) {
+\trefreshPresentationAnimation();
+\ttraveller.jumpTo( 475.0, 290.0 );
+}"""
 
 
 IMMIGRATION_ENTER = """\
@@ -572,7 +745,13 @@ OperationalTraveller traveller = (OperationalTraveller) agent;
 traveller.immigration_queue_join = time();
 traveller.immigration_lane_id = "IMMIGRATION_POOLED";
 immigration_queue_count++;
-max_immigration_queue = Math.max( max_immigration_queue, immigration_queue_count );"""
+max_immigration_queue = Math.max( max_immigration_queue, immigration_queue_count );
+if ( presentation_animation_enabled ) {
+\trefreshPresentationAnimation();
+\tplacePresentationAgent(
+\t\ttraveller, 505.0, 320.0, immigration_queue_count - 1
+\t);
+}"""
 
 
 IMMIGRATION_DELAY_ENTER = """\
@@ -581,7 +760,13 @@ immigration_queue_count--;
 immigration_in_service_count++;
 traveller.immigration_start = time();
 traveller.immigration_primary_end =
-\ttraveller.immigration_start + traveller.immigration_primary_service_demand;"""
+\ttraveller.immigration_start + traveller.immigration_primary_service_demand;
+if ( presentation_animation_enabled ) {
+\trefreshPresentationAnimation();
+\tplacePresentationAgent(
+\t\ttraveller, 655.0, 320.0, immigration_in_service_count - 1
+\t);
+}"""
 
 
 IMMIGRATION_EXIT = """\
@@ -590,7 +775,11 @@ immigration_in_service_count--;
 if ( traveller.additional_check_flag ) traveller.additional_check_end = time();
 immigration_busy_seconds +=
 \ttraveller.immigration_primary_service_demand
-\t+ traveller.additional_check_service_demand;"""
+\t+ traveller.additional_check_service_demand;
+if ( presentation_animation_enabled ) {
+\trefreshPresentationAnimation();
+\ttraveller.jumpTo( 790.0, 290.0 );
+}"""
 
 
 SINK_ENTER = """\
@@ -598,6 +787,10 @@ OperationalTraveller traveller = (OperationalTraveller) agent;
 traveller.exit = time();
 completed++;
 last_exit = traveller.exit;
+if ( presentation_animation_enabled ) {
+\trefreshPresentationAnimation();
+\ttraveller.jumpTo( 850.0, 290.0 );
+}
 double securityWait = traveller.security_start - traveller.security_queue_join;
 double immigrationWait = traveller.immigration_start - traveller.immigration_queue_join;
 double totalQueueWait = securityWait + immigrationWait;
@@ -657,6 +850,11 @@ if ( arrivals_closed && completed == admitted ) {
 
 CUTOFF_ACTION = """\
 travellerSource.set_rate( 0.0, PER_SECOND );
+// Match the already-verified CheckpointModel cutoff mechanism. Source.RATE
+// owns both an arrival timeout and a reschedule timeout; reset both so no
+// event already on the calendar can inject a traveller at or after cutoff.
+travellerSource.arrival.reset();
+travellerSource.reschedule.reset();
 arrivals_closed = true;
 admitted_at_cutoff = admitted;
 completed_at_cutoff = completed;
@@ -691,15 +889,20 @@ def _presentation_rectangle(
 \t\t\t<PublicFlag>false</PublicFlag>
 \t\t\t<PresentationFlag>true</PresentationFlag>
 \t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
 \t\t\t<AsObject>true</AsObject>
 \t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t<Z>0</Z>
+\t\t\t<ZHeight>0</ZHeight>
 \t\t\t<LineWidth>2</LineWidth>
 \t\t\t<LineColor>{line_color}</LineColor>
+\t\t\t<LineMaterial>null</LineMaterial>
 \t\t\t<LineStyle>SOLID</LineStyle>
 \t\t\t<Width>{width}</Width>
 \t\t\t<Height>{height}</Height>
 \t\t\t<Rotation>0.0</Rotation>
 \t\t\t<FillColor>{fill_color}</FillColor>
+\t\t\t<FillMaterial>null</FillMaterial>
 \t\t</Rectangle>"""
 
 
@@ -732,7 +935,137 @@ def _presentation_text(
 \t\t</Text>"""
 
 
+def _presentation_state_token(
+    *,
+    item_id: int,
+    name: str,
+    visible_code: str,
+    x: int,
+    y: int,
+    fill_color: int,
+) -> str:
+    return f"""\
+\t\t<Rectangle>
+\t\t\t<Id>{item_id}</Id>
+\t\t\t<Name><![CDATA[{name}]]></Name>
+\t\t\t<ExcludeFromBuild>false</ExcludeFromBuild>
+\t\t\t<X>{x}</X><Y>{y}</Y>
+\t\t\t<Label><X>10</X><Y>10</Y></Label>
+\t\t\t<PublicFlag>false</PublicFlag>
+\t\t\t<PresentationFlag>true</PresentationFlag>
+\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+\t\t\t<VisibleCode><![CDATA[{visible_code}]]></VisibleCode>
+\t\t\t<AsObject>true</AsObject>
+\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t<Z>0</Z>
+\t\t\t<ZHeight>0</ZHeight>
+\t\t\t<LineWidth>1</LineWidth>
+\t\t\t<LineColor>-1</LineColor>
+\t\t\t<LineMaterial>null</LineMaterial>
+\t\t\t<LineStyle>SOLID</LineStyle>
+\t\t\t<Width>10</Width>
+\t\t\t<Height>10</Height>
+\t\t\t<Rotation>0.0</Rotation>
+\t\t\t<FillColor>{fill_color}</FillColor>
+\t\t\t<FillMaterial>null</FillMaterial>
+\t\t</Rectangle>"""
+
+
+def _traveller_population_presentation() -> str:
+    return f"""\
+\t\t<EmbeddedObjectPresentation>
+\t\t\t<Id>{TRAVELLER_POPULATION_PRESENTATION_ID}</Id>
+\t\t\t<Name><![CDATA[{TRAVELLER_POPULATION_NAME}_presentation]]></Name>
+\t\t\t<X>0</X><Y>0</Y>
+\t\t\t<Label><X>10</X><Y>0</Y></Label>
+\t\t\t<PublicFlag>true</PublicFlag>
+\t\t\t<PresentationFlag>true</PresentationFlag>
+\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t<Z>0</Z>
+\t\t\t<Rotation>0.0</Rotation>
+\t\t\t<DrawingMode>AGENT_CURRENT_POSITION</DrawingMode>
+\t\t\t<ScaleType>AUTOMATICALLY_CALCULATED</ScaleType>
+\t\t\t<GISScaleForRealEmbeddedObjectPresentationSize>1000</GISScaleForRealEmbeddedObjectPresentationSize>
+\t\t\t<GISScaleForFixedEmbeddedObjectPresentationSize>1000000000</GISScaleForFixedEmbeddedObjectPresentationSize>
+\t\t\t<Latitude>0.0</Latitude>
+\t\t\t<Longitude>0.0</Longitude>
+\t\t</EmbeddedObjectPresentation>"""
+
+
+def _decorate_traveller_aoc(text: str) -> str:
+    level_match = re.search(
+        r"\t<Presentation>\s*(<Level>.*?</Level>).*?\t</Presentation>",
+        text,
+        re.DOTALL,
+    )
+    if not level_match:
+        raise RuntimeError("OperationalTraveller presentation is missing")
+    level = level_match.group(1)
+    marker = """\
+\t\t<Rectangle>
+\t\t\t<Id>1785218200001</Id>
+\t\t\t<Name><![CDATA[traveller_marker]]></Name>
+\t\t\t<ExcludeFromBuild>false</ExcludeFromBuild>
+\t\t\t<X>-5</X><Y>-5</Y>
+\t\t\t<Label><X>10</X><Y>10</Y></Label>
+\t\t\t<PublicFlag>true</PublicFlag>
+\t\t\t<PresentationFlag>true</PresentationFlag>
+\t\t\t<ShowLabel>false</ShowLabel>
+\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+\t\t\t<AsObject>true</AsObject>
+\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
+\t\t\t<Z>0</Z>
+\t\t\t<ZHeight>0</ZHeight>
+\t\t\t<LineWidth>1</LineWidth>
+\t\t\t<LineColor>-1</LineColor>
+\t\t\t<LineMaterial>null</LineMaterial>
+\t\t\t<LineStyle>SOLID</LineStyle>
+\t\t\t<Width>10</Width>
+\t\t\t<Height>10</Height>
+\t\t\t<Rotation>0.0</Rotation>
+\t\t\t<FillColor>-14334997</FillColor>
+\t\t\t<FillMaterial>null</FillMaterial>
+\t\t</Rectangle>"""
+    replacement = (
+        "\t<Presentation>\n\t"
+        + level
+        + "\n"
+        + marker
+        + "\n\t</Presentation>"
+    )
+    return (
+        text[: level_match.start()]
+        + replacement
+        + text[level_match.end() :]
+    )
+
+
+def _upsert_presentation_animation_code(text: str) -> str:
+    # AnyLogic's split ALPX format stores this code in
+    # AnyLogic 8.9's ALPX merger reads Code/AdditionalClassCode.java, while
+    # its direct model loader asks for Code/AdditionalClass.java. The
+    # generator therefore emits identical compatibility sidecars for both
+    # paths. The XML retains only the standard split marker.
+    block = "\t<AdditionalClassCode/>"
+    pattern = re.compile(
+        r"\t<AdditionalClassCode(?:\s[^>]*)?(?:/>|>.*?</AdditionalClassCode>)",
+        re.DOTALL,
+    )
+    if pattern.search(text):
+        return pattern.sub(block, text, count=1)
+    name_marker = (
+        "\t<Name><![CDATA[OperationalCheckpointModel]]></Name>"
+    )
+    if text.count(name_marker) != 1:
+        raise RuntimeError("OperationalCheckpointModel name marker is missing")
+    return text.replace(name_marker, name_marker + "\n" + block, 1)
+
+
 def _decorate_model_aoc(text: str) -> str:
+    text = _upsert_presentation_animation_code(text)
     level_match = re.search(
         r"\t<Presentation>\s*(<Level>.*?</Level>).*?\t</Presentation>",
         text,
@@ -786,9 +1119,9 @@ def _decorate_model_aoc(text: str) -> str:
             item_id=1785218000041,
             name="live_kpi_panel",
             x=35,
-            y=425,
+            y=435,
             width=900,
-            height=165,
+            height=190,
             line_color=-10193781,
             fill_color=-328966,
         ),
@@ -797,7 +1130,7 @@ def _decorate_model_aoc(text: str) -> str:
         _presentation_text(
             item_id=1785218000101,
             name="view_title",
-            text="HTX CHECKPOINT — OPERATIONAL ASSUMPTION SANDBOX",
+            text="HTX CHECKPOINT | OPERATIONAL ASSUMPTION SANDBOX",
             x=35,
             y=35,
             size=24,
@@ -855,27 +1188,27 @@ def _decorate_model_aoc(text: str) -> str:
         _presentation_text(
             item_id=1785218000161,
             name="security_zone_note",
-            text="Queue + service\\nfinite lane capacity",
+            text="QUEUE (left)  |  IN SERVICE (right)",
             x=230,
-            y=310,
-            size=12,
+            y=250,
+            size=11,
             color=-10193781,
         ),
         _presentation_text(
             item_id=1785218000171,
             name="immigration_zone_note",
-            text="Pooled queue + service\\nautomation mixture",
+            text="QUEUE (left)  |  IN SERVICE (right)",
             x=510,
-            y=310,
-            size=12,
+            y=250,
+            size=11,
             color=-10193781,
         ),
         _presentation_text(
             item_id=1785218000181,
             name="live_kpi_title",
-            text="LIVE STATE — values below update during the simulation",
+            text="LIVE STATE | values below update during the simulation",
             x=55,
-            y=440,
+            y=452,
             size=15,
             color=-10193781,
             style=1,
@@ -884,18 +1217,95 @@ def _decorate_model_aoc(text: str) -> str:
             item_id=1785218000191,
             name="control_note",
             text=(
-                "Use the built-in Run / Pause / Stop controls. Stop and reopen "
-                "OperationalInteractive to reset structural inputs.\\n"
-                "Editable inputs: demand multiplier, Security/Immigration "
-                "capacity, automation uptake and multiplier. Queue policy is "
-                "not exposed because v1 implements pooled FCFS only."
+                "Use Run / Pause / Stop. Stop and reopen OperationalInteractive "
+                "to reset structural inputs."
             ),
             x=55,
             y=105,
             size=12,
             color=-10193781,
         ),
+        _presentation_text(
+            item_id=1785218000201,
+            name="input_note",
+            text=(
+                "Inputs: demand multiplier, Security/Immigration capacity, "
+                "automation uptake and multiplier. Queue policy is not exposed."
+            ),
+            x=55,
+            y=128,
+            size=11,
+            color=-10193781,
+        ),
+        _presentation_text(
+            item_id=1785218000211,
+            name="animation_scope_note",
+            text=(
+                "Live squares are state tokens driven by real DES travellers; "
+                "max 25/state. Counters show the full state."
+            ),
+            x=55,
+            y=151,
+            size=11,
+            color=-10193781,
+        ),
     ]
+    tokens: list[str] = []
+    token_states = (
+        (
+            "security_queue",
+            "security_queue_count",
+            225,
+            315,
+            -10193781,
+        ),
+        (
+            "security_service",
+            "security_in_service_count",
+            375,
+            315,
+            -15293622,
+        ),
+        (
+            "immigration_queue",
+            "immigration_queue_count",
+            505,
+            315,
+            -10193781,
+        ),
+        (
+            "immigration_service",
+            "immigration_in_service_count",
+            655,
+            315,
+            -1419252,
+        ),
+    )
+    for state_index, (
+        state_name,
+        counter_name,
+        base_x,
+        base_y,
+        fill_color,
+    ) in enumerate(token_states):
+        for token_index in range(25):
+            tokens.append(
+                _presentation_state_token(
+                    item_id=(
+                        1785218400001
+                        + 100 * state_index
+                        + token_index
+                    ),
+                    name=f"{state_name}_token_{token_index + 1:02d}",
+                    visible_code=(
+                        "presentation_animation_enabled"
+                        f" && {counter_name} > {token_index}"
+                    ),
+                    x=base_x + 15 * (token_index % 5),
+                    y=base_y + 15 * (token_index // 5),
+                    fill_color=fill_color,
+                )
+            )
     replacement = (
         "\t<Presentation>\n\t"
         + level
@@ -903,6 +1313,10 @@ def _decorate_model_aoc(text: str) -> str:
         + "\n".join(rectangles)
         + "\n"
         + "\n".join(labels)
+        + "\n"
+        + _traveller_population_presentation()
+        + "\n"
+        + "\n".join(tokens)
         + "\n\t</Presentation>"
     )
     result = text[: level_match.start()] + replacement + text[level_match.end() :]
@@ -974,6 +1388,51 @@ def _replace_parameter(block: str, name: str, replacement: str) -> str:
     return result
 
 
+def _traveller_population_xml(op_traveller_generic_id: str) -> str:
+    return f"""\
+\t<EmbeddedObject>
+\t\t<Id>{TRAVELLER_POPULATION_ID}</Id>
+\t\t<Name><![CDATA[{TRAVELLER_POPULATION_NAME}]]></Name>
+\t\t<X>40</X><Y>650</Y>
+\t\t<Label><X>20</X><Y>0</Y></Label>
+\t\t<PublicFlag>false</PublicFlag>
+\t\t<PresentationFlag>true</PresentationFlag>
+\t\t<ShowLabel>false</ShowLabel>
+\t\t<PresentationId>{TRAVELLER_POPULATION_PRESENTATION_ID}</PresentationId>
+\t\t<ActiveObjectClass>
+\t\t\t<PackageName><![CDATA[htx.checkpoint]]></PackageName>
+\t\t\t<ClassName><![CDATA[OperationalTraveller]]></ClassName>
+\t\t</ActiveObjectClass>
+\t\t<GenericParameterSubstitute>
+\t\t\t<GenericParameterSubstituteReference>
+\t\t\t\t<PackageName><![CDATA[htx.checkpoint]]></PackageName>
+\t\t\t\t<ClassName><![CDATA[OperationalTraveller]]></ClassName>
+\t\t\t\t<ItemName><![CDATA[{op_traveller_generic_id}]]></ItemName>
+\t\t\t</GenericParameterSubstituteReference>
+\t\t</GenericParameterSubstitute>
+\t\t<Parameters/>
+\t\t<ReplicationFlag>true</ReplicationFlag>
+\t\t<Replication Class="CodeValue">
+\t\t\t<Code><![CDATA[100]]></Code>
+\t\t</Replication>
+\t\t<CollectionType>ARRAY_LIST_BASED</CollectionType>
+\t\t<InEnvironment>true</InEnvironment>
+\t\t<InitialLocationType>AT_ANIMATION_POSITION</InitialLocationType>
+\t\t<XCode Class="CodeValue"><Code><![CDATA[0]]></Code></XCode>
+\t\t<YCode Class="CodeValue"><Code><![CDATA[0]]></Code></YCode>
+\t\t<ZCode Class="CodeValue"><Code><![CDATA[0]]></Code></ZCode>
+\t\t<ColumnCode Class="CodeValue"><Code><![CDATA[0]]></Code></ColumnCode>
+\t\t<RowCode Class="CodeValue"><Code><![CDATA[0]]></Code></RowCode>
+\t\t<LatitudeCode Class="CodeValue"><Code><![CDATA[0]]></Code></LatitudeCode>
+\t\t<LongitudeCode Class="CodeValue"><Code><![CDATA[0]]></Code></LongitudeCode>
+\t\t<LocationNameCode Class="CodeValue"><Code><![CDATA[""]]></Code></LocationNameCode>
+\t\t<InitializationType>EMPTY</InitializationType>
+\t\t<InitializationDatabaseTableQuery><TableReference/></InitializationDatabaseTableQuery>
+\t\t<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+\t\t<QuantityColumn/>
+\t</EmbeddedObject>"""
+
+
 def _transform_embedded_objects(op_traveller_generic_id: str) -> str:
     text = _read(CHECKPOINT / "EmbeddedObjects.xml")
     for old, new in {
@@ -1020,6 +1479,24 @@ def _transform_embedded_objects(op_traveller_generic_id: str) -> str:
             )
             block = _replace_parameter(
                 block, "maxArrivals", _parameter_fragment("maxArrivals", None)
+            )
+            block = _replace_parameter(
+                block,
+                "addToCustomPopulation",
+                _parameter_fragment(
+                    "addToCustomPopulation",
+                    "CodeValue",
+                    "true",
+                ),
+            )
+            block = _replace_parameter(
+                block,
+                "population",
+                _parameter_fragment(
+                    "population",
+                    "CodeValue",
+                    TRAVELLER_POPULATION_NAME,
+                ),
             )
             block = _replace_parameter(
                 block,
@@ -1107,7 +1584,15 @@ def _transform_embedded_objects(op_traveller_generic_id: str) -> str:
                 block, "onEnter", _parameter_fragment("onEnter", "CodeValue", SINK_ENTER)
             )
         transformed.append(block)
-    return "".join(transformed)
+    result = "".join(transformed)
+    closing = "\n</EmbeddedObjects>"
+    if result.count(closing) != 1:
+        raise RuntimeError("EmbeddedObjects closing tag is missing")
+    return result.replace(
+        closing,
+        "\n" + _traveller_population_xml(op_traveller_generic_id) + closing,
+        1,
+    )
 
 
 def _transform_connectors() -> str:
@@ -1146,6 +1631,7 @@ def _transform_connectors() -> str:
 
 
 COMMON_BEFORE_RUN = """\
+root.presentation_animation_enabled = false;
 if ( !"1.0".equals( root.schema_version ) )
 \tthrow new IllegalArgumentException( "schema_version must be 1.0" );
 if ( !root.config_sha256.matches( "[0-9a-f]{64}" ) )
@@ -1305,7 +1791,8 @@ if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
 \t\t"OperationalInteractive permits only the five exposed exploratory inputs; "
 \t\t+ "all other mechanism and lineage fields must remain fixed"
 \t);
-getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );"""
+getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );
+root.presentation_animation_enabled = true;"""
 
 
 def _pilot_before_run(
@@ -1684,7 +2171,7 @@ def _experiment_xml(model_id: str, experiment_id: str, text_id: str) -> str:
 \t\t\t\t<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
 \t\t\t\t<EmbeddedIcon>false</EmbeddedIcon>
 \t\t\t\t<Z>0</Z><Rotation>0.0</Rotation><Color>-10193781</Color>
-\t\t\t\t<Text><![CDATA[After Run, use AnyLogic's built-in Pause / Resume / Stop controls. Stop and reopen this experiment to reset structural inputs. Outputs are labelled ad-hoc exploratory and not calibrated.]]></Text>
+\t\t\t\t<Text><![CDATA[After Run, the animation starts at x5 real-time scale; use AnyLogic's built-in speed, Pause / Resume / Stop controls. Stop and reopen this experiment to reset structural inputs. Outputs are ad-hoc exploratory and not calibrated.]]></Text>
 \t\t\t\t<Font><Name><![CDATA[SansSerif]]></Name><Size>12</Size><Style>0</Style></Font>
 \t\t\t\t<Alignment>LEFT</Alignment>
 \t\t\t</Text>
@@ -1694,11 +2181,11 @@ def _experiment_xml(model_id: str, experiment_id: str, text_id: str) -> str:
 \t\t</Parameters>
 \t\t<PresentationProperties>
 \t\t\t<EnableZoomAndPanning>true</EnableZoomAndPanning>
-\t\t\t<ExecutionMode>virtualTime</ExecutionMode>
+\t\t\t<ExecutionMode>realTimeScaled</ExecutionMode>
 \t\t\t<Title>HTXCheckpointSimulation : OperationalInteractive (exploratory)</Title>
 \t\t\t<EnableDeveloperPanel>true</EnableDeveloperPanel>
 \t\t\t<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
-\t\t\t<RealTimeScale>1.0</RealTimeScale>
+\t\t\t<RealTimeScale>5.0</RealTimeScale>
 \t\t</PresentationProperties>
 \t\t<ModelTimeProperties>
 \t\t\t<StopOption>Never</StopOption>
@@ -2035,6 +2522,70 @@ def _confirmatory_experiment_xml(
 \t</ParamVariationExperiment>"""
 
 
+def _availability_experiment_xml(
+    model_id: str,
+    experiment_id: str,
+    timer_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    """Create the independent Part 2 batch from the audited Part 1 shell."""
+
+    block = _confirmatory_experiment_xml(
+        model_id,
+        experiment_id,
+        timer_id,
+        rows,
+        seed_rows,
+    )
+    return (
+        block.replace(
+            CONFIRMATORY_EXPERIMENT_NAME,
+            AVAILABILITY_EXPERIMENT_NAME,
+        )
+        .replace(
+            "confirmatory_auto_start_timer",
+            "availability_auto_start_timer",
+        )
+        .replace(
+            f'"{CONFIRMATORY_OUTPUT_COLLECTION}"',
+            f'"{AVAILABILITY_OUTPUT_COLLECTION}"',
+        )
+    )
+
+
+def _response_surface_experiment_xml(
+    model_id: str,
+    experiment_id: str,
+    timer_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    """Create the self-contained Base-demand capacity response surface."""
+
+    block = _confirmatory_experiment_xml(
+        model_id,
+        experiment_id,
+        timer_id,
+        rows,
+        seed_rows,
+    )
+    return (
+        block.replace(
+            CONFIRMATORY_EXPERIMENT_NAME,
+            RESPONSE_SURFACE_EXPERIMENT_NAME,
+        )
+        .replace(
+            "confirmatory_auto_start_timer",
+            "response_surface_auto_start_timer",
+        )
+        .replace(
+            f'"{CONFIRMATORY_OUTPUT_COLLECTION}"',
+            f'"{RESPONSE_SURFACE_OUTPUT_COLLECTION}"',
+        )
+    )
+
+
 def _replace_operational_experiment(text: str, model_id: str) -> str:
     pattern = re.compile(
         rf"\t<SimulationExperiment ActiveObjectClassId=\"{model_id}\">.*?"
@@ -2177,6 +2728,155 @@ def _upsert_confirmatory_experiment(
     return text.replace(marker, block + "\n" + marker, 1)
 
 
+def _upsert_availability_experiment(
+    text: str,
+    model_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    pattern = re.compile(
+        rf"\t<ParamVariationExperiment ActiveObjectClassId=\"{model_id}\">.*?"
+        r"\t</ParamVariationExperiment>",
+        re.DOTALL,
+    )
+    matches = [
+        match
+        for match in pattern.finditer(text)
+        if (
+            re.search(r"<Name><!\[CDATA\[(.*?)\]\]></Name>", match.group(0))
+            and re.search(
+                r"<Name><!\[CDATA\[(.*?)\]\]></Name>",
+                match.group(0),
+            ).group(1)
+            == AVAILABILITY_EXPERIMENT_NAME
+        )
+    ]
+    if len(matches) > 1:
+        raise RuntimeError(
+            f"Expected at most one {AVAILABILITY_EXPERIMENT_NAME}; "
+            f"found {len(matches)}"
+        )
+    if matches:
+        match = matches[0]
+        old = match.group(0)
+        experiment_match = re.search(r"<Id>(\d+)</Id>", old)
+        timer_match = re.search(
+            r"<Variable Class=\"PlainVariable\">\s*"
+            r"<Id>(\d+)</Id>\s*"
+            r"<Name><!\[CDATA\[availability_auto_start_timer\]\]></Name>",
+            old,
+        )
+        if not experiment_match:
+            raise RuntimeError("capacity availability experiment ID is missing")
+        experiment_id = experiment_match.group(1)
+        timer_id = (
+            timer_match.group(1)
+            if timer_match
+            else str(int(experiment_id) + 1)
+        )
+        replacement = _availability_experiment_xml(
+            model_id,
+            experiment_id,
+            timer_id,
+            rows,
+            seed_rows,
+        )
+        return text[: match.start()] + replacement + text[match.end() :]
+
+    for item_id in (AVAILABILITY_EXPERIMENT_ID, AVAILABILITY_TIMER_ID):
+        if re.search(rf"<Id>{item_id}</Id>", text):
+            raise RuntimeError(
+                f"capacity availability insertion ID {item_id} is in use"
+            )
+    marker = "</Experiments>"
+    if text.count(marker) != 1:
+        raise RuntimeError("split experiment root is not canonical")
+    block = _availability_experiment_xml(
+        model_id,
+        AVAILABILITY_EXPERIMENT_ID,
+        AVAILABILITY_TIMER_ID,
+        rows,
+        seed_rows,
+    )
+    return text.replace(marker, block + "\n" + marker, 1)
+
+
+def _upsert_response_surface_experiment(
+    text: str,
+    model_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    pattern = re.compile(
+        rf"\t<ParamVariationExperiment ActiveObjectClassId=\"{model_id}\">.*?"
+        r"\t</ParamVariationExperiment>",
+        re.DOTALL,
+    )
+    matches = [
+        match
+        for match in pattern.finditer(text)
+        if (
+            re.search(r"<Name><!\[CDATA\[(.*?)\]\]></Name>", match.group(0))
+            and re.search(
+                r"<Name><!\[CDATA\[(.*?)\]\]></Name>",
+                match.group(0),
+            ).group(1)
+            == RESPONSE_SURFACE_EXPERIMENT_NAME
+        )
+    ]
+    if len(matches) > 1:
+        raise RuntimeError(
+            f"Expected at most one {RESPONSE_SURFACE_EXPERIMENT_NAME}; "
+            f"found {len(matches)}"
+        )
+    if matches:
+        match = matches[0]
+        old = match.group(0)
+        experiment_match = re.search(r"<Id>(\d+)</Id>", old)
+        timer_match = re.search(
+            r"<Variable Class=\"PlainVariable\">\s*"
+            r"<Id>(\d+)</Id>\s*"
+            r"<Name><!\[CDATA\[response_surface_auto_start_timer\]\]></Name>",
+            old,
+        )
+        if not experiment_match:
+            raise RuntimeError("response-surface experiment ID is missing")
+        experiment_id = experiment_match.group(1)
+        timer_id = (
+            timer_match.group(1)
+            if timer_match
+            else str(int(experiment_id) + 1)
+        )
+        replacement = _response_surface_experiment_xml(
+            model_id,
+            experiment_id,
+            timer_id,
+            rows,
+            seed_rows,
+        )
+        return text[: match.start()] + replacement + text[match.end() :]
+
+    for item_id in (
+        RESPONSE_SURFACE_EXPERIMENT_ID,
+        RESPONSE_SURFACE_TIMER_ID,
+    ):
+        if re.search(rf"<Id>{item_id}</Id>", text):
+            raise RuntimeError(
+                f"response-surface insertion ID {item_id} is in use"
+            )
+    marker = "</Experiments>"
+    if text.count(marker) != 1:
+        raise RuntimeError("split experiment root is not canonical")
+    block = _response_surface_experiment_xml(
+        model_id,
+        RESPONSE_SURFACE_EXPERIMENT_ID,
+        RESPONSE_SURFACE_TIMER_ID,
+        rows,
+        seed_rows,
+    )
+    return text.replace(marker, block + "\n" + marker, 1)
+
+
 def _xml_root_without_declaration(path: Path) -> str:
     return re.sub(
         r"\A<\?xml[^>]*\?>\s*",
@@ -2234,6 +2934,7 @@ def _inline_operational_model() -> str:
     model = _xml_root_without_declaration(
         OP_MODEL / "AOC.OperationalCheckpointModel.xml"
     )
+    additional_class_code = _read(OP_MODEL_ADDITIONAL_CLASS_CODE)
     variables = _xml_root_without_declaration(OP_MODEL / "Variables.xml")
     connectors = _xml_root_without_declaration(OP_MODEL / "Connectors.xml")
     events = _xml_root_without_declaration(OP_MODEL / "Code" / "Events.xml")
@@ -2247,6 +2948,11 @@ def _inline_operational_model() -> str:
     if count != 1:
         raise RuntimeError("Operational cutoff action placeholder is missing")
     replacements = {
+        "<AdditionalClassCode/>": (
+            "<AdditionalClassCode><![CDATA["
+            + additional_class_code
+            + "]]></AdditionalClassCode>"
+        ),
         '<Variables xmlns:al="http://anylogic.com"/>': (
             variables + "\n" + connectors
         ),
@@ -2260,6 +2966,40 @@ def _inline_operational_model() -> str:
     return model
 
 
+def _inline_operational_traveller() -> str:
+    traveller = _xml_root_without_declaration(
+        OP_TRAVELLER / "AOC.OperationalTraveller.xml"
+    )
+    variables = _xml_root_without_declaration(
+        OP_TRAVELLER / "Variables.xml"
+    )
+    marker = '<Variables xmlns:al="http://anylogic.com"/>'
+    if traveller.count(marker) != 1:
+        raise RuntimeError(
+            f"Expected one OperationalTraveller split marker {marker}"
+        )
+    return traveller.replace(marker, variables, 1)
+
+
+def _replace_single_file_class(
+    text: str,
+    *,
+    class_name: str,
+    inline_class: str,
+) -> str:
+    class_start, class_end = _named_top_level_span(
+        text,
+        tag="ActiveObjectClass",
+        name=class_name,
+    )
+    line_start = text.rfind("\n", 0, class_start) + 1
+    prefix = text[line_start:class_start]
+    if not prefix or prefix.strip():
+        raise RuntimeError(f"{class_name} must begin on its own XML line")
+    replacement = _indent_xml(inline_class, prefix)
+    return text[:line_start] + replacement + text[class_end:]
+
+
 def _sync_single_file(
     *,
     model_id: str,
@@ -2267,19 +3007,16 @@ def _sync_single_file(
     if not SINGLE_ALP.is_file():
         raise RuntimeError(f"Single-file launcher is missing: {SINGLE_ALP}")
     text = _read(SINGLE_ALP)
-    class_start, class_end = _named_top_level_span(
+    text = _replace_single_file_class(
         text,
-        tag="ActiveObjectClass",
-        name="OperationalCheckpointModel",
+        class_name="OperationalTraveller",
+        inline_class=_inline_operational_traveller(),
     )
-    line_start = text.rfind("\n", 0, class_start) + 1
-    if text[line_start:class_start].strip():
-        raise RuntimeError(
-            "OperationalCheckpointModel must begin on its own XML line"
-        )
-    class_start = line_start
-    inline_model = _indent_xml(_inline_operational_model(), "\t\t")
-    text = text[:class_start] + inline_model + text[class_end:]
+    text = _replace_single_file_class(
+        text,
+        class_name="OperationalCheckpointModel",
+        inline_class=_inline_operational_model(),
+    )
 
     experiment_match = re.search(r"<Experiments>", text)
     if not experiment_match:
@@ -2310,6 +3047,14 @@ def generate() -> None:
     confirmatory_rows, confirmatory_seed_rows, confirmatory_validation = (
         _load_confirmatory_inputs()
     )
+    availability_rows, availability_seed_rows, availability_validation = (
+        _load_availability_inputs()
+    )
+    (
+        response_surface_rows,
+        response_surface_seed_rows,
+        response_surface_validation,
+    ) = _load_response_surface_inputs()
     traveller_aoc = OP_TRAVELLER / "AOC.OperationalTraveller.xml"
     model_aoc = OP_MODEL / "AOC.OperationalCheckpointModel.xml"
     if not traveller_aoc.is_file() or not model_aoc.is_file():
@@ -2330,6 +3075,7 @@ def generate() -> None:
         events=True,
         embedded_objects=True,
     )
+    _write(traveller_aoc, _decorate_traveller_aoc(_read(traveller_aoc)))
     _write(model_aoc, _decorate_model_aoc(_read(model_aoc)))
 
     _write(
@@ -2363,6 +3109,16 @@ def generate() -> None:
         "178509109": "178516314",
     }.items():
         event_xml = event_xml.replace(old, new)
+    event_xml, count = re.subn(
+        r"(<Name><!\[CDATA\[arrivalCutoff\]\]></Name>.*?"
+        r"<PresentationFlag>)true(</PresentationFlag>)",
+        r"\1false\2",
+        event_xml,
+        count=1,
+        flags=re.DOTALL,
+    )
+    if count != 1:
+        raise RuntimeError("arrivalCutoff presentation flag is missing")
     _write(OP_MODEL / "Code" / "Events.xml", event_xml)
     event_java = f"""\
 void arrivalCutoff()
@@ -2370,7 +3126,15 @@ void arrivalCutoff()
 {CUTOFF_ACTION}
 /*ALCODEEND*/}}
 """
-    _write(OP_MODEL / "Code" / "Events.java", event_java)
+    _write_split_event_code(OP_MODEL / "Code" / "Events.java", event_java)
+    for additional_class_path in (
+        OP_MODEL_ADDITIONAL_CLASS_CODE,
+        OP_MODEL_ADDITIONAL_CLASS,
+    ):
+        _write(
+            additional_class_path,
+            PRESENTATION_ANIMATION_CLASS_CODE + "\n",
+        )
 
     experiment_text = _replace_operational_experiment(_read(EXPERIMENTS), op_model_id)
     experiment_text = _replace_operational_pilot_experiment(
@@ -2383,6 +3147,18 @@ void arrivalCutoff()
         op_model_id,
         confirmatory_rows,
         confirmatory_seed_rows,
+    )
+    experiment_text = _upsert_availability_experiment(
+        experiment_text,
+        op_model_id,
+        availability_rows,
+        availability_seed_rows,
+    )
+    experiment_text = _upsert_response_surface_experiment(
+        experiment_text,
+        op_model_id,
+        response_surface_rows,
+        response_surface_seed_rows,
     )
     _write(EXPERIMENTS, experiment_text)
     _sync_single_file(model_id=op_model_id)
@@ -2397,6 +3173,19 @@ void arrivalCutoff()
         "CapacityRobustnessConfirmatory: "
         f"{len(confirmatory_rows)} cells x 50 replications "
         f"({confirmatory_validation['total_run_cap']} capped runs, serial)"
+    )
+    print(
+        "CapacityAvailabilityStress: "
+        f"{len(availability_rows)} execution cells x 50 replications "
+        f"({availability_validation['new_execution_run_count']} new runs, serial; "
+        f"{availability_validation['analysis_run_count']} analytical runs "
+        "after immutable Reference reuse)"
+    )
+    print(
+        "CapacityResponseSurfaceExploratory: "
+        f"{len(response_surface_rows)} Base-demand cells x 50 replications "
+        f"({response_surface_validation['new_execution_run_count']} new runs, "
+        "serial; self-contained exploratory surface)"
     )
     print("Generated operational AnyLogic split fragments and single-file launcher")
 

@@ -1,2 +1,6 @@
 * text=auto eol=lf
 *.ps1 text eol=crlf
+# AnyLogic 8.9 matches split ALCODE markers with the parent ALPX's physical
+# newline. Keep both the parent and every event-code sidecar on CRLF.
+simulation/anylogic/HTXCheckpointSimulation/HTXCheckpointSimulation.alpx text eol=crlf
+simulation/anylogic/HTXCheckpointSimulation/_alp/Agents/*/Code/Events.java text eol=crlf

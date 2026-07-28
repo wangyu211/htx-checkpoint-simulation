@@ -1,9 +1,10 @@
 # Task 3 Analysis Plan and Execution Record
 
-**Status:** exploratory pilot and frozen confirmatory capacity study executed;
-confirmatory validation and CRN gates `PASS`
+**Status:** exploratory pilot and Part 1 capacity-expansion study executed;
+Part 1 validation and CRN gates `PASS`; Part 2 capacity-availability study
+frozen pre-run
 
-**Version:** 0.4, 2026-07-28
+**Version:** 0.5, 2026-07-28
 
 The original result-blind draft established the primary estimand, claim
 boundary, and rule that paired common-random-number (CRN) analysis could be
@@ -23,6 +24,13 @@ design froze a narrow base-rate joint-capacity contrast, a 12-cell
 low/base/high rate grid, 50 replications per cell, a `1.0 s` precision target,
 and a fail-closed CRN rule before its outcomes were inspected. That 600-run
 study has now been executed and is the confirmatory evidence in this record.
+
+The independent
+[`TASK3_CAPACITY_AVAILABILITY_STRESS_V1`](task3_capacity_availability_design.md)
+design is Part 2. It asks what happens to queue length when fewer service
+positions are concurrently available. It freezes four reduction arms across
+the same low/base/high arrival levels, 50 replications per cell, and a
+simultaneous peak-total-queue primary metric before inspecting outcomes.
 
 ## Decision question
 
@@ -46,6 +54,14 @@ reference difference in the mean replication-level total queue-wait P95?
 Low/high exact count-interval rates and the two single-stage arms are
 supporting mechanism analyses.
 
+The Part 2 question is complementary: at the same point-estimate arrival
+rate, what is the joint `Security 32 / Immigration 18` minus Reference
+`36 / 21` difference in the mean replication-level simultaneous peak total
+waiting queue? Single-stage reductions identify where the queue forms; the
+`30 / 17` arm and low/high rates describe the near-saturation and overload
+boundaries. Until the new runs pass all gates, this is a frozen question, not
+a result.
+
 ## Hypotheses and implementation boundary
 
 - **H1 — Bottleneck migration.** Capacity at one stage may have limited value
@@ -62,6 +78,10 @@ supporting mechanism analyses.
 - **H4 — Stress sensitivity.** Conclusions may change under demand,
   service-time, or additional-work stresses. The pilot includes explicit
   low/high demand, named service contexts, and external risk-bound rows.
+- **H5 — Capacity availability.** A reduction may have modest consequences
+  at light load but nonlinear queue consequences near saturation. Part 2
+  tests stage-specific, joint, and critical-boundary capacity reductions;
+  it does not represent an observed roster or propose staffing levels.
 
 These remain modelling expectations and scope statements rather than claims
 about an HTX site.
@@ -177,6 +197,12 @@ not estimates of ICA referral frequency, handling, or staffing.
   is therefore permitted for within-rate contrasts.
 - The primary confirmatory half-width is `0.382159515 s`, satisfying the
   registered `<= 1.0 s` target without adding runs post hoc.
+- Part 2 fixes 12 new cells × 50 replications = 600 new runs and reuses only
+  the 150 immutable Reference runs after exact hash, key, seed, and
+  traveller-level alignment checks. Its analytical grid is 750 runs.
+- Part 2 uses paired intervals only after a fresh CRN gate returns explicit
+  `PASS`; otherwise it falls back to independent Welch intervals. Adaptive
+  post-outcome extension is prohibited.
 - Monte Carlo confidence intervals are conditional on the registered input
   assumptions. They do not quantify input uncertainty or model-form error.
 

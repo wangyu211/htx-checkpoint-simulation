@@ -1,0 +1,180 @@
+{
+  "schema_version": "1.0",
+  "study_id": "TASK3_CAPACITY_RESPONSE_SURFACE_EXPLORATORY_V1",
+  "design_status": "FROZEN_PRE_RUN",
+  "frozen_on": "2026-07-29",
+  "purpose": "Post-outcome exploratory response-surface study at fixed Base demand: map how Security and Immigration capacity jointly change traveller delay, waiting queues, backlog, and clearance time.",
+  "analysis_role": "EXPLORATORY_SENSITIVITY_NOT_CONFIRMATORY",
+  "claim_ceiling": "CONDITIONAL_RESPONSE_SURFACE_EVIDENCE_ONLY",
+  "post_outcome_disclosure": "The grid was designed after inspection of the registered Part 2 results. It may generate operational insight and hypotheses, but it does not replace or modify the frozen confirmatory analysis.",
+  "fixed_inputs": {
+    "arrival_level_id": "MLE_BASE",
+    "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "arrival_rate_per_second": 1.3642132969720073,
+    "arrival_cutoff_seconds": 300,
+    "drain_rule": "FULL_DRAIN",
+    "queue_policy": "pooled",
+    "security_service_distribution": "FIXED",
+    "security_service_p1_seconds": 21.818181818,
+    "immigration_service_distribution": "FIXED",
+    "immigration_service_p1_seconds": 13,
+    "automation_mapping_mode": "DISABLED",
+    "additional_check_semantics": "NONE",
+    "start_state": "EMPTY_AND_IDLE"
+  },
+  "capacity_grid": {
+    "security_capacities": [
+      36,
+      35,
+      34,
+      33,
+      32,
+      31,
+      30,
+      29,
+      28
+    ],
+    "immigration_capacities": [
+      21,
+      20,
+      19,
+      18,
+      17,
+      16
+    ],
+    "reference_capacity": {
+      "security": 36,
+      "immigration": 21
+    },
+    "capacity_unit": "concurrently_open_service_positions",
+    "headcount_equivalence_claim": false,
+    "selection_rationale": {
+      "security_offered_workload_positions": 29.764653751868483,
+      "immigration_offered_workload_positions": 17.734772860636095,
+      "rule": "Use every integer capacity across a bounded reduction range that crosses each stage's approximate rho=1 workload threshold, while retaining the 36/21 reference.",
+      "boundary": "These are experimental open-position settings, not an observed HTX roster, installed estate, or staffing recommendation."
+    }
+  },
+  "cross_batch_validation_cells": [
+    {
+      "security_capacity": 36,
+      "immigration_capacity": 21,
+      "source_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+      "source_collection": "confirmatory_capacity"
+    },
+    {
+      "security_capacity": 32,
+      "immigration_capacity": 21,
+      "source_scenario_id": "CAPACITY_AVAIL_SECURITY_MINUS_4",
+      "source_collection": "capacity_availability"
+    },
+    {
+      "security_capacity": 36,
+      "immigration_capacity": 18,
+      "source_scenario_id": "CAPACITY_AVAIL_IMMIGRATION_MINUS_3",
+      "source_collection": "capacity_availability"
+    },
+    {
+      "security_capacity": 32,
+      "immigration_capacity": 18,
+      "source_scenario_id": "CAPACITY_AVAIL_JOINT_MINUS_4_MINUS_3",
+      "source_collection": "capacity_availability"
+    },
+    {
+      "security_capacity": 30,
+      "immigration_capacity": 17,
+      "source_scenario_id": "CAPACITY_AVAIL_SEVERE_JOINT_30_17",
+      "source_collection": "capacity_availability"
+    }
+  ],
+  "execution": {
+    "experiment_name": "CapacityResponseSurfaceExploratory",
+    "output_collection_id": "capacity_response_surface",
+    "replications_per_cell": 50,
+    "parallel_evaluations": false,
+    "full_grid_cell_count": 54,
+    "cross_batch_validation_cell_count": 5,
+    "new_execution_cell_count": 54,
+    "new_execution_run_count": 2700,
+    "analysis_run_count": 2700,
+    "adaptive_extension_allowed": false
+  },
+  "seed_policy": {
+    "source_manifest": "config/confirmatory_seed_manifest.csv",
+    "source_arrival_level_id": "MLE_BASE",
+    "reuse_rule": "For replication r, every capacity cell uses the exact Base-demand master, arrival, service, routing, and tie seed tuple from the registered confirmatory manifest.",
+    "alignment_intent": "COMMON_EXOGENOUS_STREAMS_ACROSS_ALL_GRID_CELLS",
+    "paired_interpretation_gate": "Exact seed-tuple, arrival-trace, and traveller-level exogenous-draw alignment must pass before paired contrasts are reported.",
+    "cross_batch_reproducibility_gate": "The five previously available Base-demand cells are not mixed into the surface. They are used only to verify that the new self-contained experiment reproduces the prior batch under the same configuration and seed tuples."
+  },
+  "analysis": {
+    "primary_descriptive_metric": "total_queue_wait_p95_seconds",
+    "supporting_metrics": [
+      "total_queue_wait_mean_seconds",
+      "peak_total_waiting_queue",
+      "time_weighted_mean_total_waiting_queue",
+      "cutoff_backlog",
+      "cohort_clear_time_after_cutoff_seconds",
+      "security_wait_p95_seconds",
+      "immigration_wait_p95_seconds"
+    ],
+    "required_views": [
+      "security_only_slice_at_immigration_21",
+      "immigration_only_slice_at_security_36",
+      "balanced_joint_reduction_path",
+      "full_security_by_immigration_heatmap",
+      "stage_bottleneck_map",
+      "interaction_surface",
+      "queueing_theory_overlay"
+    ],
+    "balanced_joint_path": [
+      [36, 21],
+      [35, 20],
+      [34, 20],
+      [33, 19],
+      [32, 19],
+      [31, 18],
+      [30, 18],
+      [29, 17],
+      [28, 17]
+    ],
+    "nonlinearity_diagnostics": [
+      "adjacent_capacity_marginal_delay",
+      "second_finite_difference",
+      "threshold_crossings",
+      "difference_in_differences_interaction"
+    ],
+    "queueing_theory_diagnostics": {
+      "offered_workload": "a_stage = arrival_rate_per_second * mean_service_seconds",
+      "utilization_proxy": "rho_stage = a_stage / capacity_stage",
+      "safety_capacity": "capacity_stage - a_stage",
+      "square_root_staffing_index": "beta_stage = (capacity_stage - a_stage) / sqrt(a_stage)",
+      "role": "INTERPRETIVE_OVERLAY_AND_SANITY_CHECK_ONLY",
+      "restriction": "Do not hard-code the square-root staffing approximation into the DES and do not present beta as a calibrated service-level target."
+    },
+    "ideal_case_comparator": {
+      "name": "DETERMINISTIC_IDEAL_CONTROL_V1",
+      "arrival_process": "Perfectly regular arrivals spaced at 1 / arrival_rate_per_second",
+      "service_process": "Fixed Security and Immigration service times with pooled FCFS parallel servers",
+      "same_capacity_grid": true,
+      "outputs": [
+        "linear_stage_throughput_capacity",
+        "throughput_headroom_relative_to_mean_demand",
+        "deterministic_total_queue_wait_p95_seconds",
+        "deterministic_peak_total_waiting_queue"
+      ],
+      "comparison": "Report the stochastic HPP AnyLogic estimate beside the deterministic ideal control and describe their difference as a variability/congestion penalty.",
+      "implementation_role": "ANALYTICAL_DETERMINISTIC_ORACLE_NOT_A_SUBSTITUTE_FOR_ANYLOGIC",
+      "restriction": "Only throughput capacity c / mean_service_seconds is a straight line in c. Do not force the delay response to be linear; the ideal queue may be flat below saturation and increase after the threshold."
+    },
+    "uncertainty": "Report replication-level means with 95% intervals and paired differences where CRN alignment passes.",
+    "plot_policy": "Simulation estimates at integer capacities are the evidence. A shape-preserving curve may be shown only as a labelled visual guide; it must not imply that fractional service positions were simulated.",
+    "multiplicity_rule": "No confirmatory p-value or decision claim. Treat all rankings, thresholds, curvature measures, and interactions as descriptive exploratory findings."
+  },
+  "calibration_boundary": {
+    "calibration_status": "NOT_CALIBRATED",
+    "site_forecast_claim": false,
+    "observed_roster_claim": false,
+    "staffing_recommendation_claim": false
+  }
+}

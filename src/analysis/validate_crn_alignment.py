@@ -104,6 +104,7 @@ def validate_crn_alignment(
     *,
     design_path: Path = DEFAULT_DESIGN,
     numeric_tolerance: float = 1e-9,
+    validation_id: str = "CONFIRMATORY_CAPACITY_CRN_ALIGNMENT_V1",
 ) -> dict[str, object]:
     """Return an explicit alignment report consumable by the analysis gate."""
 
@@ -124,7 +125,7 @@ def validate_crn_alignment(
     except (FileNotFoundError, json.JSONDecodeError, KeyError, ValueError) as exc:
         return {
             "status": "FAIL",
-            "validation": "CONFIRMATORY_CAPACITY_CRN_ALIGNMENT_V1",
+            "validation": validation_id,
             "study_id": None,
             "coverage_pass": False,
             "seed_alignment_pass": False,
@@ -281,7 +282,7 @@ def validate_crn_alignment(
     )
     return {
         "status": status,
-        "validation": "CONFIRMATORY_CAPACITY_CRN_ALIGNMENT_V1",
+        "validation": validation_id,
         "study_id": study_id,
         "coverage_pass": coverage_pass,
         "seed_alignment_pass": seed_alignment_pass,
@@ -317,6 +318,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--design", type=Path, default=DEFAULT_DESIGN)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--numeric-tolerance", type=float, default=1e-9)
+    parser.add_argument(
+        "--validation-id",
+        default="CONFIRMATORY_CAPACITY_CRN_ALIGNMENT_V1",
+    )
     return parser
 
 
@@ -327,6 +332,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.seed_manifest,
         design_path=args.design,
         numeric_tolerance=args.numeric_tolerance,
+        validation_id=args.validation_id,
     )
     args.report.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.report.with_suffix(args.report.suffix + ".tmp")

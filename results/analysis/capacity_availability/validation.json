@@ -1,0 +1,29 @@
+{
+  "actual_run_count": 750,
+  "arrival_cutoff_seconds": 300.0,
+  "artifact_hashes": {
+    "consolidation_manifest_sha256": "709d526e93f1ad98b11ecdc3e2a9435184c925a15c31752a8a9e248c132f6483",
+    "entity_log_sha256": "008971fab73ceaaffb679db4fbcafcb8fe0b9ab6eb2cf8e1e55ae8c49e195dbd",
+    "replication_kpis_sha256": "e1c4308e435aebbc4c518082a58f9b0ff7e3200e40f9ace690527e87d122d15b",
+    "run_manifest_sha256": "e601beb64730781460428892e07e9baf5c5293f385cab1593441905993f3d87c"
+  },
+  "conservation_status": "PASS",
+  "consolidation_manifest_status": "PASS",
+  "coverage_pass": true,
+  "entity_row_count": 317195,
+  "errors": [],
+  "expected_run_count": 750,
+  "input_sample_count": 3,
+  "lineage_status": "PASS",
+  "replications_per_cell": 50,
+  "row_counts": {
+    "consolidation_manifest.json": 1,
+    "entity_log.csv": 317195,
+    "replication_kpis.csv": 750,
+    "run_manifest.csv": 750
+  },
+  "scenario_count": 5,
+  "schema_version": "1.0",
+  "status": "PASS",
+  "validation": "TASK3_CAPACITY_AVAILABILITY_INPUT_VALIDATION_V1"
+}

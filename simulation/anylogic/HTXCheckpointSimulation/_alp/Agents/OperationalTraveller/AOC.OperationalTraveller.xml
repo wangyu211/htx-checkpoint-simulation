@@ -125,7 +125,7 @@
 		</AgentLink>
 	</AgentLinks>
 	<Presentation>
-		<Level>
+	<Level>
 			<Id>1785162453956</Id>
 			<Name><![CDATA[level]]></Name>
 			<X>0</X>
@@ -141,5 +141,29 @@
 			<Z>0</Z>
 			<LevelVisibility>DIM_NON_CURRENT</LevelVisibility>
 		</Level>
+		<Rectangle>
+			<Id>1785218200001</Id>
+			<Name><![CDATA[traveller_marker]]></Name>
+			<ExcludeFromBuild>false</ExcludeFromBuild>
+			<X>-5</X><Y>-5</Y>
+			<Label><X>10</X><Y>10</Y></Label>
+			<PublicFlag>true</PublicFlag>
+			<PresentationFlag>true</PresentationFlag>
+			<ShowLabel>false</ShowLabel>
+			<DrawMode>SHAPE_DRAW_2D3D</DrawMode>
+			<AsObject>true</AsObject>
+			<EmbeddedIcon>false</EmbeddedIcon>
+			<Z>0</Z>
+			<ZHeight>0</ZHeight>
+			<LineWidth>1</LineWidth>
+			<LineColor>-1</LineColor>
+			<LineMaterial>null</LineMaterial>
+			<LineStyle>SOLID</LineStyle>
+			<Width>10</Width>
+			<Height>10</Height>
+			<Rotation>0.0</Rotation>
+			<FillColor>-14334997</FillColor>
+			<FillMaterial>null</FillMaterial>
+		</Rectangle>
 	</Presentation>
 </ActiveObjectClass>

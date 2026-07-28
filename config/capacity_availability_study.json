@@ -1,0 +1,161 @@
+{
+  "schema_version": "1.0",
+  "study_id": "TASK3_CAPACITY_AVAILABILITY_STRESS_V1",
+  "design_status": "FROZEN_PRE_RUN",
+  "frozen_on": "2026-07-28",
+  "purpose": "Part 2 capacity-availability analysis: quantify how fewer concurrently open service positions change waiting queues under the same demand and service assumptions.",
+  "claim_ceiling": "CONDITIONAL_CAPACITY_AVAILABILITY_EVIDENCE_ONLY",
+  "capacity_semantics": {
+    "unit": "concurrently_open_service_positions",
+    "staffing_interpretation": "A reduced capacity represents fewer staffed and open service positions during the modelled window.",
+    "headcount_equivalence_claim": false,
+    "reference_security_capacity": 36,
+    "reference_immigration_capacity": 21,
+    "reference_selection_rule": "ceil(arrival_rate_per_second * mean_service_seconds / 0.85)",
+    "reference_provenance_id": "ASSUMP_REFERENCE_CAPACITY_RULE",
+    "reference_claim_boundary": "36/21 are executable target-utilisation-derived model capacities, not an observed HTX roster, installed estate, or recommended staffing level."
+  },
+  "arrival_rate_uncertainty": {
+    "source_study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+    "observation_model": "N ~ Poisson(lambda * exposure_seconds)",
+    "accepted_count": 34,
+    "exposure_seconds": 24.922788889,
+    "confidence_level": 0.95,
+    "uncertainty_scope": "HPP_COUNTING_PROCESS_ONLY",
+    "levels": [
+      {
+        "level_id": "EXACT95_LOW",
+        "input_sample_id": "LOCAL_WINDOW_HPP_EXACT95_LOW",
+        "arrival_rate_per_second": 0.9447573660171154,
+        "role": "EXACT_COUNT_INTERVAL_LOWER_ENDPOINT"
+      },
+      {
+        "level_id": "MLE_BASE",
+        "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+        "arrival_rate_per_second": 1.3642132969720073,
+        "role": "COUNT_OVER_EXPOSURE_POINT_ESTIMATE"
+      },
+      {
+        "level_id": "EXACT95_HIGH",
+        "input_sample_id": "LOCAL_WINDOW_HPP_EXACT95_HIGH",
+        "arrival_rate_per_second": 1.90635134401724,
+        "role": "EXACT_COUNT_INTERVAL_UPPER_ENDPOINT"
+      }
+    ]
+  },
+  "execution_arms": [
+    {
+      "scenario_id": "CAPACITY_AVAIL_SECURITY_MINUS_4",
+      "security_capacity": 32,
+      "immigration_capacity": 21,
+      "security_delta_from_reference": -4,
+      "immigration_delta_from_reference": 0,
+      "analysis_role": "STAGE_ATTRIBUTION"
+    },
+    {
+      "scenario_id": "CAPACITY_AVAIL_IMMIGRATION_MINUS_3",
+      "security_capacity": 36,
+      "immigration_capacity": 18,
+      "security_delta_from_reference": 0,
+      "immigration_delta_from_reference": -3,
+      "analysis_role": "STAGE_ATTRIBUTION"
+    },
+    {
+      "scenario_id": "CAPACITY_AVAIL_JOINT_MINUS_4_MINUS_3",
+      "security_capacity": 32,
+      "immigration_capacity": 18,
+      "security_delta_from_reference": -4,
+      "immigration_delta_from_reference": -3,
+      "analysis_role": "PRIMARY_ALTERNATIVE"
+    },
+    {
+      "scenario_id": "CAPACITY_AVAIL_SEVERE_JOINT_30_17",
+      "security_capacity": 30,
+      "immigration_capacity": 17,
+      "security_delta_from_reference": -6,
+      "immigration_delta_from_reference": -4,
+      "analysis_role": "STRESS_BOUNDARY"
+    }
+  ],
+  "reference_reuse": {
+    "scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+    "source_study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+    "source_scenario_file": "config/operational_scenarios.csv",
+    "source_seed_manifest": "config/confirmatory_seed_manifest.csv",
+    "source_replications_per_arrival_level": 50,
+    "source_run_count": 150,
+    "required_join_key": [
+      "input_sample_id",
+      "replication_id"
+    ],
+    "required_seed_fields": [
+      "arrival_seed",
+      "service_seed",
+      "routing_seed",
+      "tie_seed"
+    ],
+    "reuse_gate": "Reference results may be added to the analysis only after exact key, configuration-lineage, and seed-tuple checks pass."
+  },
+  "primary_analysis": {
+    "input_level_id": "MLE_BASE",
+    "scenario_id": "CAPACITY_AVAIL_JOINT_MINUS_4_MINUS_3",
+    "reference_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+    "metric": "peak_total_waiting_queue",
+    "metric_definition": "max_t(security_waiting_queue(t) + immigration_waiting_queue(t)) over the full-drain run within one replication",
+    "estimand": "scenario-minus-reference difference in the mean of replication-level peak_total_waiting_queue",
+    "difference_direction": "CAPACITY_AVAIL_JOINT_MINUS_4_MINUS_3_MINUS_REFERENCE",
+    "confidence_level": 0.95,
+    "default_method": "INDEPENDENT_WELCH_T",
+    "verified_crn_method": "PAIRED_STUDENT_T_ONLY_AFTER_ALIGNMENT_PASS",
+    "decision_rule": "Report the estimated queue increase and interval; do not convert the result into an HTX staffing recommendation."
+  },
+  "secondary_analysis": {
+    "metrics": [
+      "time_weighted_mean_total_waiting_queue",
+      "total_queue_wait_p95_seconds",
+      "cutoff_backlog",
+      "cohort_clear_time_after_cutoff_seconds"
+    ],
+    "stage_attribution_arms": [
+      "CAPACITY_AVAIL_SECURITY_MINUS_4",
+      "CAPACITY_AVAIL_IMMIGRATION_MINUS_3"
+    ],
+    "stress_boundary_arm": "CAPACITY_AVAIL_SEVERE_JOINT_30_17",
+    "arrival_boundary_robustness": [
+      "EXACT95_LOW",
+      "EXACT95_HIGH"
+    ],
+    "status": "SUPPORTING_AND_DESCRIPTIVE",
+    "multiplicity_rule": "No confirmatory claim from secondary metrics, stage-attribution contrasts, or arrival-boundary rankings; report effect sizes and 95% intervals."
+  },
+  "seed_policy": {
+    "reuse_source_study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+    "reuse_source_manifest": "config/confirmatory_seed_manifest.csv",
+    "reuse_rule": "For each arrival level and replication, copy the exact master, arrival, service, routing, and tie seed tuple.",
+    "alignment_intent": "COMMON_EXOGENOUS_STREAMS_ACROSS_REFERENCE_AND_ALL_REDUCED_CAPACITY_ARMS",
+    "alignment_claim_status": "PENDING_TRAVELLER_LEVEL_VALIDATION",
+    "paired_analysis_gate": "An explicit CRN alignment validation must return PASS."
+  },
+  "run_cap": {
+    "execution_arm_count": 4,
+    "arrival_level_count": 3,
+    "execution_cell_count": 12,
+    "replications_per_cell": 50,
+    "new_execution_runs": 600,
+    "reused_reference_cell_count": 3,
+    "analysis_cell_count": 15,
+    "reused_reference_runs": 150,
+    "analysis_run_count": 750,
+    "adaptive_extension_allowed": false
+  },
+  "calibration_boundary": {
+    "service_times": "UNCHANGED_REGISTERED_ASSUMPTIONS",
+    "queue_policy": "POOLED_FCFS_ONLY",
+    "start_state": "EMPTY_AND_IDLE",
+    "arrival_cutoff_seconds": 300,
+    "drain_rule": "FULL_DRAIN",
+    "site_forecast_claim": false,
+    "observed_roster_claim": false,
+    "staffing_recommendation_claim": false
+  }
+}

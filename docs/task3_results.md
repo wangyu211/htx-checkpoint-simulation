@@ -3,7 +3,9 @@
 **Status:** frozen confirmatory capacity study executed — 600/600 AnyLogic
 runs, 253,756 entity rows, strict result validation `PASS`, CRN alignment
 `PASS`, and primary precision target met. The earlier 150-run pilot remains
-valid exploratory and engineering evidence.
+valid exploratory and engineering evidence. The separate post-outcome
+capacity response surface also completed `2,700/2,700` validated runs; it
+remains exploratory and does not alter the confirmatory claim.
 
 **Claim boundary:** a non-calibrated, fixed-service-time pooled-FCFS
 assumption sandbox. Results are comparative Monte Carlo evidence conditional
@@ -138,6 +140,79 @@ Tracked evidence:
 - [post-hoc regime estimates](../results/analysis/confirmatory_capacity/regime_estimates.csv)
 - [post-hoc reference-versus-joint contrasts](../results/analysis/confirmatory_capacity/regime_reference_joint_contrasts.csv)
 
+## Exploratory capacity response surface
+
+After the Part 2 outcome was known, a separate exploratory experiment mapped
+every integer capacity combination from Security `36` to `28` and Immigration
+`21` to `16` at the fixed Base demand input. The design is deliberately
+labelled post-outcome and does not enlarge the confirmatory claim above.
+
+| Evidence gate | Recorded outcome |
+|---|---:|
+| Full factorial grid | `9 × 6 = 54` cells |
+| Replications | `50` per cell |
+| New self-contained AnyLogic runs | `2,700 / 2,700` |
+| Traveller rows | `1,113,588` |
+| Frozen hash, lineage, coverage, seed, conservation and full drain | `PASS` |
+| Traveller-level CRN alignment | `PASS` |
+| Prior/new reproducibility check | `250 / 250`, maximum difference `0.0` |
+
+The primary single-stage slices show accelerating delay:
+
+| Capacity change | Mean total queue-wait P95 | Penalty for the next closed position |
+|---|---:|---:|
+| Security `36 → 35`, Immigration `21` | `3.929 → 4.220 s` | `+0.291 s` |
+| Security `29 → 28`, Immigration `21` | `17.459 → 24.434 s` | `+6.975 s` |
+| Immigration `21 → 20`, Security `36` | `3.929 → 5.241 s` | `+1.313 s` |
+| Immigration `17 → 16`, Security `36` | `20.927 → 35.609 s` | `+14.682 s` |
+
+All adjacent second differences for the primary P95 on these two slices are
+positive with paired 95% intervals above zero. The practical insight is not
+that one closed position has a fixed cost. Marginal delay accelerates as
+capacity approaches and crosses the offered-workload boundaries near
+Security `29.765` and Immigration `17.735`.
+
+The full surface shows why the two stage effects must not be added. When
+Immigration is fixed at `16`, Security `36` through `31` all produce about
+`35.61 s` P95 because Immigration dominates. When Security is fixed at `28`,
+Immigration `21` through `17` produce only `24.43` to `25.38 s` because
+Security dominates. The active bottleneck migrates across the grid, while
+upstream Security capacity meters demand into Immigration. Consistent with
+that mechanism, the local paired interaction for `30/18 → 29/17` is
+`-4.021 s` (95% CI `[-4.721, -3.320]`). This negative difference-in-
+differences means sub-additivity under serial flow; it is not evidence that
+joint capacity loss is beneficial.
+
+A deterministic ideal control uses perfectly regular arrivals, the same
+fixed service times, pooled FCFS, and the same integer capacities. Its stage
+throughput is the straight-line benchmark, but its queue delay is calculated,
+not forced to be linear. Ideal total-wait P95 stays at zero through `30 / 21`
+and `36 / 18`, then rises after saturation; the stochastic AnyLogic surface
+has positive waiting earlier because bursty HPP arrivals create transient
+queues. The reported AnyLogic-minus-ideal gap is a
+“variability/congestion penalty,” not a causal decomposition.
+
+Permitted conclusion:
+
+> Within this fixed Base-demand, non-calibrated sandbox, capacity loss has an
+> accelerating rather than constant delay penalty, and the dominant
+> constraint migrates between the two serial stages. Use the surface to
+> identify field-calibration regions and candidate stress tests, not to infer
+> roster numbers or recommend staffing.
+
+Tracked response-surface evidence:
+
+- [design and execution record](task3_capacity_response_surface_design.md)
+- [compact analysis package](../results/analysis/capacity_response_surface/README.md)
+- [strict validation](../results/analysis/capacity_response_surface/validation.json)
+- [CRN alignment](../results/analysis/capacity_response_surface/crn_alignment.json)
+- [single-stage slices](../results/analysis/capacity_response_surface/security_only_slice.csv)
+  and
+  [Immigration slice](../results/analysis/capacity_response_surface/immigration_only_slice.csv)
+- [full heatmap data](../results/analysis/capacity_response_surface/heatmap.csv)
+- [bottleneck map](../results/analysis/capacity_response_surface/stage_bottleneck_map.csv)
+- [deterministic ideal comparator](../results/analysis/capacity_response_surface/ideal_case_comparator.csv)
+
 ## Pilot evidence retained
 
 The earlier `15 × 10 = 150` run pilot remains useful for pipeline verification,
@@ -256,6 +331,13 @@ ICA operations.
 - The confirmatory claim is limited to the pre-specified base-rate
   joint-minus-reference contrast; the low/high contrasts and rankings are
   supporting.
+- The 54-cell response surface was designed after viewing Part 2 outcomes,
+  holds demand at the Base input, and is exploratory. Its paired intervals
+  describe Monte Carlo uncertainty under the tested grid; they are not
+  multiplicity-adjusted confirmatory tests.
+- The deterministic ideal comparator removes arrival variability by design.
+  It is an interpretive lower-variability control, not a site baseline or a
+  causal counterfactual.
 - Joint is lowest at base/high and tied-lowest with Immigration +3 at the low
   endpoint; unresolved pairwise intervals preclude a general dominance claim.
 - Ten replications are a pilot count; pilot contrasts remain exploratory and

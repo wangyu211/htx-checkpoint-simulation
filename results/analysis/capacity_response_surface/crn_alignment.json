@@ -1,0 +1,30 @@
+{
+  "branch_invariant_draws_pass": true,
+  "cell_count": 54,
+  "claim_rule": "Paired finite differences and interactions are emitted only when this exact traveller/draw alignment gate passes.",
+  "compared_draw_values": 6557796,
+  "compared_traveller_pairs": 1092966,
+  "comparison_strategy": "Per-run order-independent SHA-256 over traveller_id and canonical numeric branch-invariant draws; only one run ledger is resident at a time.",
+  "coverage_pass": true,
+  "draw_fields": [
+    "arrival_seconds",
+    "security_service_demand_seconds",
+    "immigration_conventional_service_demand_seconds",
+    "automation_u",
+    "additional_check_u",
+    "lane_tie_u"
+  ],
+  "errors": [],
+  "expected_compared_traveller_pairs": 1092966,
+  "reference_cell": {
+    "immigration_capacity": 21,
+    "security_capacity": 36
+  },
+  "replication_count": 50,
+  "schema_version": "1.0",
+  "seed_alignment_pass": true,
+  "status": "PASS",
+  "study_id": "TASK3_CAPACITY_RESPONSE_SURFACE_EXPLORATORY_V1",
+  "traveller_level_alignment_pass": true,
+  "validation": "CAPACITY_RESPONSE_SURFACE_CRN_ALIGNMENT_V1"
+}

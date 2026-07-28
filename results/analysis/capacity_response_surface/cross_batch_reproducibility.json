@@ -1,0 +1,75 @@
+{
+  "analysis_inclusion_rule": "Prior batches are validation-only and contribute zero rows to the response-surface estimates.",
+  "available_cell_count": 5,
+  "cells": [
+    {
+      "compared_runs": 50,
+      "errors": [],
+      "immigration_capacity": 21,
+      "max_absolute_metric_difference": 0.0,
+      "security_capacity": 36,
+      "source_collection": "confirmatory_capacity",
+      "source_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+      "status": "PASS"
+    },
+    {
+      "compared_runs": 50,
+      "errors": [],
+      "immigration_capacity": 21,
+      "max_absolute_metric_difference": 0.0,
+      "security_capacity": 32,
+      "source_collection": "capacity_availability",
+      "source_scenario_id": "CAPACITY_AVAIL_SECURITY_MINUS_4",
+      "status": "PASS"
+    },
+    {
+      "compared_runs": 50,
+      "errors": [],
+      "immigration_capacity": 18,
+      "max_absolute_metric_difference": 0.0,
+      "security_capacity": 36,
+      "source_collection": "capacity_availability",
+      "source_scenario_id": "CAPACITY_AVAIL_IMMIGRATION_MINUS_3",
+      "status": "PASS"
+    },
+    {
+      "compared_runs": 50,
+      "errors": [],
+      "immigration_capacity": 18,
+      "max_absolute_metric_difference": 0.0,
+      "security_capacity": 32,
+      "source_collection": "capacity_availability",
+      "source_scenario_id": "CAPACITY_AVAIL_JOINT_MINUS_4_MINUS_3",
+      "status": "PASS"
+    },
+    {
+      "compared_runs": 50,
+      "errors": [],
+      "immigration_capacity": 17,
+      "max_absolute_metric_difference": 0.0,
+      "security_capacity": 30,
+      "source_collection": "capacity_availability",
+      "source_scenario_id": "CAPACITY_AVAIL_SEVERE_JOINT_30_17",
+      "status": "PASS"
+    }
+  ],
+  "compared_run_count": 250,
+  "errors": [],
+  "expected_cell_count": 5,
+  "expected_run_count_if_available": 250,
+  "metrics": [
+    "total_queue_wait_p95_seconds",
+    "total_queue_wait_mean_seconds",
+    "peak_total_waiting_queue",
+    "time_weighted_mean_total_waiting_queue",
+    "cutoff_backlog",
+    "cohort_clear_time_after_cutoff_seconds",
+    "security_wait_p95_seconds",
+    "immigration_wait_p95_seconds"
+  ],
+  "numeric_tolerance": 1e-09,
+  "schema_version": "1.0",
+  "status": "PASS",
+  "study_id": "TASK3_CAPACITY_RESPONSE_SURFACE_EXPLORATORY_V1",
+  "validation": "CAPACITY_RESPONSE_SURFACE_CROSS_BATCH_V1"
+}

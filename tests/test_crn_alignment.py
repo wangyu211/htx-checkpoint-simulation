@@ -123,7 +123,27 @@ class CrnAlignmentTests(unittest.TestCase):
         self.assertTrue(report["branch_invariant_draws_pass"])
         self.assertEqual(report["compared_traveller_pairs"], 2)
         self.assertEqual(report["compared_draw_values"], 12)
+        self.assertEqual(
+            report["validation"],
+            "CONFIRMATORY_CAPACITY_CRN_ALIGNMENT_V1",
+        )
         self.assertTrue(alignment_report_passes(report))
+
+    def test_validation_identifier_can_label_an_independent_study(self) -> None:
+        self.write_results()
+
+        report = validate_crn_alignment(
+            self.results,
+            self.seed_manifest,
+            design_path=self.design,
+            validation_id="CAPACITY_AVAILABILITY_CRN_ALIGNMENT_V1",
+        )
+
+        self.assertEqual(report["status"], "PASS", report["errors"])
+        self.assertEqual(
+            report["validation"],
+            "CAPACITY_AVAILABILITY_CRN_ALIGNMENT_V1",
+        )
 
     def test_shared_seed_claim_fails_when_a_stream_seed_differs(self) -> None:
         self.run_rows[1]["service_seed"] = "9999"

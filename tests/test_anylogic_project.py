@@ -364,6 +364,204 @@ class AnyLogicProjectTests(unittest.TestCase):
             semantic_signature(single),
         )
 
+    def test_split_and_single_file_contain_availability_stress_contract(
+        self,
+    ) -> None:
+        split_root = ET.parse(EXPERIMENTS).getroot()
+        single_root = ET.parse(ALP).getroot()
+
+        def find_availability(root: ET.Element) -> ET.Element:
+            matches = [
+                experiment
+                for experiment in root.findall(".//ParamVariationExperiment")
+                if experiment.findtext("Name")
+                == "CapacityAvailabilityStress"
+            ]
+            self.assertEqual(len(matches), 1)
+            return matches[0]
+
+        split = find_availability(split_root)
+        single = find_availability(single_root)
+        for experiment in (split, single):
+            self.assertEqual(
+                experiment.attrib["ActiveObjectClassId"],
+                "1785162520364",
+            )
+            self.assertEqual(experiment.findtext("Id"), "1785162950001")
+            self.assertEqual(
+                experiment.findtext("AllowParallelEvaluations"),
+                "false",
+            )
+            self.assertEqual(experiment.findtext("NumberOfRuns"), "12")
+            for field in (
+                "ReplicationPerIteration",
+                "MinimumReplication",
+                "MaximumReplication",
+            ):
+                self.assertEqual(
+                    experiment.findtext(
+                        f"ReplicationsProperties/{field}"
+                    ),
+                    "50",
+                )
+            before = experiment.findtext("BeforeSimulationRunCode", "")
+            self.assertIn('"capacity_availability"', before)
+            self.assertIn("PENDING_VALIDATION", before)
+            timers = [
+                variable
+                for variable in experiment.findall("Variables/Variable")
+                if variable.findtext("Name")
+                == "availability_auto_start_timer"
+            ]
+            self.assertEqual(len(timers), 1)
+            timer_code = timers[0].findtext(
+                "Properties/InitialValue/Code",
+                "",
+            )
+            self.assertEqual(
+                timer_code.count(
+                    "CapacityAvailabilityStress.this.run();"
+                ),
+                1,
+            )
+
+        def semantic_signature(
+            element: ET.Element,
+        ) -> tuple[
+            str,
+            tuple[tuple[str, str], ...],
+            str,
+            tuple[object, ...],
+        ]:
+            text = " ".join((element.text or "").split())
+            return (
+                element.tag,
+                tuple(sorted(element.attrib.items())),
+                text,
+                tuple(semantic_signature(child) for child in element),
+            )
+
+        self.assertEqual(
+            semantic_signature(split),
+            semantic_signature(single),
+        )
+
+    def test_split_and_single_file_contain_response_surface_contract(
+        self,
+    ) -> None:
+        split_root = ET.parse(EXPERIMENTS).getroot()
+        single_root = ET.parse(ALP).getroot()
+
+        def find_response_surface(root: ET.Element) -> ET.Element:
+            matches = [
+                experiment
+                for experiment in root.findall(".//ParamVariationExperiment")
+                if experiment.findtext("Name")
+                == "CapacityResponseSurfaceExploratory"
+            ]
+            self.assertEqual(len(matches), 1)
+            return matches[0]
+
+        split = find_response_surface(split_root)
+        single = find_response_surface(single_root)
+        for root, experiment in (
+            (split_root, split),
+            (single_root, single),
+        ):
+            self.assertEqual(
+                experiment.attrib["ActiveObjectClassId"],
+                "1785162520364",
+            )
+            self.assertEqual(experiment.findtext("Id"), "1785162960001")
+            self.assertEqual(
+                experiment.findtext("AllowParallelEvaluations"),
+                "false",
+            )
+            self.assertEqual(experiment.findtext("UseFreeformParameters"), "true")
+            self.assertEqual(experiment.findtext("NumberOfRuns"), "54")
+            for field in (
+                "ReplicationPerIteration",
+                "MinimumReplication",
+                "MaximumReplication",
+            ):
+                self.assertEqual(
+                    experiment.findtext(
+                        f"ReplicationsProperties/{field}"
+                    ),
+                    "50",
+                )
+            before = experiment.findtext("BeforeSimulationRunCode", "")
+            self.assertIn('"capacity_response_surface"', before)
+            self.assertIn("PENDING_VALIDATION", before)
+            self.assertEqual(
+                before.count('expectedConfigId = "OP_RESPONSE_'),
+                54,
+            )
+            self.assertEqual(before.count("seedGroupMatched = true;"), 50)
+
+            timers = [
+                variable
+                for variable in experiment.findall("Variables/Variable")
+                if variable.findtext("Name")
+                == "response_surface_auto_start_timer"
+            ]
+            self.assertEqual(len(timers), 1)
+            self.assertEqual(timers[0].findtext("Id"), "1785162960002")
+            timer_code = timers[0].findtext(
+                "Properties/InitialValue/Code",
+                "",
+            )
+            self.assertEqual(
+                timer_code.count(
+                    "CapacityResponseSurfaceExploratory.this.run();"
+                ),
+                1,
+            )
+            self.assertEqual(timer_code.count("setRepeats(false);"), 1)
+
+            top_level_ids = [
+                item.findtext("Id", "").strip()
+                for tag in (
+                    "SimulationExperiment",
+                    "ParamVariationExperiment",
+                )
+                for item in root.findall(f".//{tag}")
+            ]
+            timer_ids = [
+                item.findtext("Id", "").strip()
+                for experiment_item in root.findall(
+                    ".//ParamVariationExperiment"
+                )
+                for item in experiment_item.findall("Variables/Variable")
+            ]
+            object_ids = [item for item in top_level_ids + timer_ids if item]
+            self.assertEqual(
+                len(object_ids),
+                len(set(object_ids)),
+                "Top-level experiment and private timer IDs must be unique",
+            )
+
+        def semantic_signature(
+            element: ET.Element,
+        ) -> tuple[
+            str,
+            tuple[tuple[str, str], ...],
+            str,
+            tuple[object, ...],
+        ]:
+            text = " ".join((element.text or "").split())
+            return (
+                element.tag,
+                tuple(sorted(element.attrib.items())),
+                text,
+                tuple(semantic_signature(child) for child in element),
+            )
+
+        self.assertEqual(
+            semantic_signature(split),
+            semantic_signature(single),
+        )
+
     def test_two_stage_cutoff_uses_the_explicit_parameter_and_conserves_flow(
         self,
     ) -> None:

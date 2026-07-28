@@ -1,9 +1,10 @@
 # Task 2 — System Design
 
 **Status:** pooled-FCFS operational v1 executed in AnyLogic; the 15 × 10 pilot
-and the 12 × 50 confirmatory capacity study passed their declared output gates
+and Part 1 12 × 50 capacity-expansion study passed their declared output
+gates; the independent Part 2 capacity-availability study is frozen pre-run
 
-**Version:** 0.5, 2026-07-28
+**Version:** 0.6, 2026-07-28
 
 **Claim ceiling:** executable, traceable assumption sandbox; not a calibrated
 HTX baseline, site forecast, digital twin, staffing recommendation, or
@@ -46,6 +47,7 @@ The design follows one auditable chain:
 | Operational question | Controlled lever | Primary evidence |
 |---|---|---|
 | Where does the constraint move after adding capacity? | Security `+4`, Immigration `+3`, both | stage P95, utilization, total P95 |
+| What happens when fewer service positions are available? | Security `-4`, Immigration `-3`, both, critical joint boundary | simultaneous peak and time-weighted queue length, cutoff backlog, recovery |
 | How robust is the system to demand? | `0.8× / 1.2×` | total P95, cutoff WIP, clear time |
 | How sensitive is it to Immigration service context? | fixed `10 / 13 / 24 / 45 s` | Immigration P95, total P95, clear time |
 | What could effective automation change? | uptake × service multiplier | technology count, utilization, total P95 |
@@ -100,6 +102,7 @@ as `separate`.
 | `OperationalInteractive` | Exploratory/ad-hoc Simulation experiment with a four-zone 2D Arrival → Security → Immigration → Exit view, live state metrics, and five genuine pre-run inputs |
 | `OperationalPilot` | Registry-driven Parameter Variation batch |
 | `CapacityRobustnessConfirmatory` | Frozen 12-cell capacity/rate Parameter Variation study with 50 replications per cell, serial evaluation, and one-shot GUI auto-start |
+| `CapacityAvailabilityStress` | Independent Part 2 reduction study: 12 new execution cells × 50 replications, with the immutable 150-run Reference reused only after lineage and CRN gates |
 | Validation/analysis pipeline | Consolidates output, validates contracts, estimates uncertainty, and builds the offline dashboard |
 
 Technology is an effective mixture:
@@ -210,6 +213,22 @@ CRN alignment, or separate lanes are implemented. The pilot's CRN status
 therefore remains `NOT_TESTED`. The confirmatory study uses a separate frozen
 seed manifest and permits paired inference only because its traveller-level
 alignment gate returned `PASS`.
+
+Part 2 keeps that 600-run expansion study immutable and tests the complementary
+availability question. It executes Security `32/21`, Immigration `36/18`,
+joint `32/18`, and critical-boundary `30/17` configurations across the same
+three arrival-rate levels, with 50 replications per cell: 600 new runs.
+Analysis adds the 150 read-only `36/21` Reference runs for 750 runs in total.
+The primary metric is the base-rate `32/18 minus 36/21` difference in
+replication-level simultaneous peak total waiting queue. The design and claim
+boundary are frozen in
+[`task3_capacity_availability_design.md`](task3_capacity_availability_design.md).
+Execution is complete: all 600 new runs and the 750-run merged analysis passed
+coverage, lineage, conservation, full-drain, and traveller-level CRN gates.
+The registered primary contrast is `+10.10` travellers (paired 95% CI
+`[8.23, 11.97]`). Supporting results identify Immigration availability as the
+stronger base-rate near-saturation constraint under the registered assumptions
+and show sharply nonlinear queue growth at the high arrival boundary.
 
 ## D. Simulation Outputs
 

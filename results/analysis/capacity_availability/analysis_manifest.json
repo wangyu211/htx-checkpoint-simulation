@@ -1,0 +1,112 @@
+{
+  "alignment_verified_for_pairing": true,
+  "analysis": "TASK3_CAPACITY_AVAILABILITY_ANALYSIS_V1",
+  "claim_boundary": "CONDITIONAL_CAPACITY_AVAILABILITY_EVIDENCE_ONLY",
+  "comparison_method": "PAIRED_STUDENT_T",
+  "consolidation_manifest_status": "PASS",
+  "coverage": {
+    "input_sample_count": 3,
+    "replications_per_cell": 50,
+    "run_count": 750,
+    "scenario_count": 5
+  },
+  "crn_alignment_status": "PASS",
+  "input_artifact_hashes": {
+    "consolidation_manifest_sha256": "709d526e93f1ad98b11ecdc3e2a9435184c925a15c31752a8a9e248c132f6483",
+    "entity_log_sha256": "008971fab73ceaaffb679db4fbcafcb8fe0b9ab6eb2cf8e1e55ae8c49e195dbd",
+    "replication_kpis_sha256": "e1c4308e435aebbc4c518082a58f9b0ff7e3200e40f9ace690527e87d122d15b",
+    "run_manifest_sha256": "e601beb64730781460428892e07e9baf5c5293f385cab1593441905993f3d87c"
+  },
+  "outputs": {
+    "README.md": {
+      "path": "results/analysis/capacity_availability/README.md",
+      "row_count": 1,
+      "sha256": "a92acb33a56cdf460a80d0c3a45903eaadd20d97adbb2b80bf733a6ba6a8c83d"
+    },
+    "availability_by_replication.csv": {
+      "path": "results/analysis/capacity_availability/availability_by_replication.csv",
+      "row_count": 750,
+      "sha256": "0dee17c15da8661003b64f6a583a933aee06155773890e64b49ee9bd868d74cb"
+    },
+    "availability_contrasts.csv": {
+      "path": "results/analysis/capacity_availability/availability_contrasts.csv",
+      "row_count": 132,
+      "sha256": "c5e3e1af6c014071dd29ec00488cec30dec081636c1e42f0929169edd5954e58"
+    },
+    "availability_estimates.csv": {
+      "path": "results/analysis/capacity_availability/availability_estimates.csv",
+      "row_count": 165,
+      "sha256": "d92fb26f3777eb5b31d622095b12783b685e3976f281fa51c217c08efc32525a"
+    },
+    "crn_alignment.json": {
+      "path": "results/analysis/capacity_availability/crn_alignment.json",
+      "row_count": 1,
+      "sha256": "3aef89993c4e919ca3c9103b5f1aaa747f537e7a55b2e685b5c327be6090194a"
+    },
+    "primary_result.json": {
+      "path": "results/analysis/capacity_availability/primary_result.json",
+      "row_count": 1,
+      "sha256": "9f219888edf2efa5dc9f9f24b457e2970785d8a73099e0e70673a72e837dead4"
+    },
+    "replication_kpis.csv": {
+      "path": "results/analysis/capacity_availability/replication_kpis.csv",
+      "row_count": 750,
+      "sha256": "e1c4308e435aebbc4c518082a58f9b0ff7e3200e40f9ace690527e87d122d15b"
+    },
+    "run_manifest.csv": {
+      "path": "results/analysis/capacity_availability/run_manifest.csv",
+      "row_count": 750,
+      "sha256": "e601beb64730781460428892e07e9baf5c5293f385cab1593441905993f3d87c"
+    },
+    "validation.json": {
+      "path": "results/analysis/capacity_availability/validation.json",
+      "row_count": 1,
+      "sha256": "37f001e647d071c2e4871086d04e1a2ef7953c0d0e44a944d5cfc7c6ffddf93f"
+    }
+  },
+  "primary": {
+    "alignment_status": "PASS",
+    "analysis": "TASK3_CAPACITY_AVAILABILITY_ANALYSIS_V1",
+    "analysis_status": "COMPLETE",
+    "ci_high": 11.968682259104758,
+    "ci_high_travellers": 11.968682259104758,
+    "ci_level": 0.95,
+    "ci_low": 8.231317740895241,
+    "ci_low_travellers": 8.231317740895241,
+    "claim_boundary": "CONDITIONAL_CAPACITY_AVAILABILITY_EVIDENCE_ONLY",
+    "comparison_method": "PAIRED_STUDENT_T",
+    "degrees_of_freedom": 49.0,
+    "difference_direction": "SCENARIO_MINUS_REFERENCE",
+    "difference_mean": 10.1,
+    "difference_mean_travellers": 10.1,
+    "estimand": "scenario-minus-reference difference in the mean of replication-level peak_total_waiting_queue",
+    "input_level_id": "MLE_BASE",
+    "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "metric": "peak_total_waiting_queue",
+    "metric_unit": "travellers",
+    "n_reference": 50,
+    "n_scenario": 50,
+    "reference_scenario_id": "REFERENCE_ASSUMPTION_SANDBOX_V1",
+    "scenario_id": "CAPACITY_AVAIL_JOINT_MINUS_4_MINUS_3",
+    "schema_version": "1.0",
+    "standard_error": 0.9298891748757054,
+    "study_id": "TASK3_CAPACITY_AVAILABILITY_STRESS_V1"
+  },
+  "queue_reconstruction": {
+    "interval_semantics": "[queue_join,service_start), end events before starts on ties",
+    "peak_window": "FULL_DRAIN",
+    "replication_rows": 750,
+    "time_weighted_mean_window": "[0,300)"
+  },
+  "schema_version": "1.0",
+  "source_entity_log": {
+    "copied_to_analysis_package": false,
+    "path": "results/raw/capacity_availability_consolidated/entity_log.csv",
+    "row_count": 317195,
+    "sha256": "008971fab73ceaaffb679db4fbcafcb8fe0b9ab6eb2cf8e1e55ae8c49e195dbd"
+  },
+  "status": "PASS",
+  "study_id": "TASK3_CAPACITY_AVAILABILITY_STRESS_V1",
+  "validation_status": "PASS",
+  "welch_fallback_reason": null
+}

@@ -74,6 +74,49 @@ evidence, not a calibrated staffing result. See the
 [`confirmatory design`](docs/task3_confirmatory_design.md) and
 [`compact audit package`](results/analysis/confirmatory_capacity/README.md).
 
+Part 2 is a separately registered capacity-availability stress study. Its
+600/600 new runs and the 150 immutable Reference runs produced a validated
+750-run analytical dataset. Hash, lineage, coverage, conservation, full-drain,
+seed, traveller-level, and branch-invariant CRN gates all passed. At the base
+arrival rate, joint `32 / 18 minus 36 / 21` increased the mean
+replication-level simultaneous peak total waiting queue by `10.10` travellers
+(paired 95% CI `[8.23, 11.97]`, `n=50`). Immigration availability was the
+stronger near-saturation constraint under the registered assumptions, and the
+effect grew sharply at the high arrival boundary. These are conditional
+capacity-resilience results, not an observed roster or staffing
+recommendation. See the
+[`Part 2 design and results`](docs/task3_capacity_availability_design.md) and
+[`compact audit package`](results/analysis/capacity_availability/README.md).
+
+The completed post-outcome capacity response surface then resolves the
+base-demand mechanism at every integer combination of Security `36` to `28`
+and Immigration `21` to `16`: `54 cells × 50 replications = 2,700` new
+AnyLogic runs and `1,113,588` traveller rows. Exact coverage, frozen hashes,
+lineage, conservation, full drain, seeds, traveller-level CRN alignment, and
+five-cell cross-batch reproducibility all returned `PASS`. On the
+single-stage slices, the mean replication-level total queue-wait P95 rises
+from `3.929 s` at `36 / 21` to `24.434 s` at `28 / 21`, and to `35.609 s` at
+`36 / 16`. The penalty per next closed position accelerates from
+`0.291 s` to `6.975 s` for Security and from `1.313 s` to `14.682 s` for
+Immigration. This curvature appears around the offered-workload boundaries
+`29.765` Security positions and `17.735` Immigration positions.
+
+The full surface adds a serial-system insight that endpoint comparisons
+cannot show: the active bottleneck migrates, and the upstream Security stage
+meters flow into Immigration. Consequently joint deterioration is generally
+not additive. For example, the local interaction for reducing `30 / 18` to
+`29 / 17` is `-4.021 s` (paired 95% CI `[-4.721, -3.320]`); the negative sign
+is evidence of sub-additivity under this flow structure, not a beneficial
+staffing synergy. A deterministic ideal comparator with perfectly regular
+arrivals and the same fixed service times separates the straight-line
+throughput benchmark from queueing delay: ideal P95 stays zero through
+`30 / 21` and `36 / 18`, then rises after saturation. AnyLogic minus ideal is
+reported only as a variability/congestion penalty. This response surface is
+exploratory, fixed at the Base demand input, and is not a calibrated forecast,
+observed roster, causal staffing effect, or staffing recommendation. See the
+[`exploratory design and execution record`](docs/task3_capacity_response_surface_design.md)
+and [`compact analysis package`](results/analysis/capacity_response_surface/README.md).
+
 The frozen grid already spans light through stressed conditions. Reference
 nominal maximum offered load is `0.585 / 0.845 / 1.180` at low/base/high;
 reference versus joint +4/+3 total-wait P95 is
@@ -344,6 +387,25 @@ large consolidated entity ledger is not tracked; its SHA-256 and row count are
 recorded in the
 [`audit manifest`](results/analysis/confirmatory_capacity/audit_manifest.json).
 
+Run the exploratory Base-demand capacity response surface:
+
+1. In AnyLogic PLE 8.9.9, run
+   `CapacityResponseSurfaceExploratory: OperationalCheckpointModel` and wait
+   for `Finished`. The frozen contract is 54 cells × 50 serial replications.
+2. Validate and package the complete result tree:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.analysis.analyse_capacity_response_surface
+```
+
+The command fails closed unless all 2,700 runs, frozen hashes, seeds,
+traveller-level branch-invariant draws, conservation, and full-drain checks
+pass. It also validates five prior/new cells without mixing prior rows into
+the estimates. The checked-in
+[`compact package`](results/analysis/capacity_response_surface/README.md)
+records the response slices, paired finite differences, interaction surface,
+bottleneck map, and deterministic ideal comparator.
+
 Run the release gate:
 
 ```powershell
@@ -368,6 +430,9 @@ launching, not a standalone application.
 - Treat `config/confirmatory_capacity_study.json` and
   `config/confirmatory_seed_manifest.csv` as a frozen confirmatory contract;
   changing either creates a new study version and requires a full rerun.
+- Treat `config/capacity_response_surface_study.json`, its scenario grid, and
+  seed manifest as one frozen exploratory contract. Changing any of them
+  creates a new response-surface study version and requires a full rerun.
 - Treat `config/anylogic_gate_manifest.csv` only as a synthetic test oracle;
   it is not an approved operational parameter set.
 - Do not hard-code decision parameters in Python or the simulation model.
