@@ -46,6 +46,22 @@ from src.analysis.capacity_response_surface_design import (  # noqa: E402
     load_response_surface_seed_rows,
     validate_response_surface_design,
 )
+from src.analysis.service_variability_design import (  # noqa: E402
+    DEFAULT_DESIGN as SERVICE_VARIABILITY_DESIGN,
+    DEFAULT_SEED_MANIFEST as SERVICE_VARIABILITY_SEED_MANIFEST,
+    MODEL_VERSION as SERVICE_VARIABILITY_MODEL_VERSION,
+    load_service_variability_scenario_rows,
+    load_service_variability_seed_rows,
+    service_scenario_config_sha256,
+    validate_service_variability_design,
+)
+from src.analysis.peak_duration_sensitivity_design import (  # noqa: E402
+    DEFAULT_DESIGN as PEAK_DURATION_DESIGN,
+    DEFAULT_SEED_MANIFEST as PEAK_DURATION_SEED_MANIFEST,
+    load_peak_duration_scenario_rows,
+    load_peak_duration_seed_rows,
+    validate_peak_duration_design,
+)
 
 ALP = REPO / "simulation" / "anylogic" / "HTXCheckpointSimulation" / "_alp"
 SPLIT_ALPX = ALP.parent / "HTXCheckpointSimulation.alpx"
@@ -82,6 +98,14 @@ RESPONSE_SURFACE_EXPERIMENT_NAME = "CapacityResponseSurfaceExploratory"
 RESPONSE_SURFACE_OUTPUT_COLLECTION = "capacity_response_surface"
 RESPONSE_SURFACE_EXPERIMENT_ID = "1785162960001"
 RESPONSE_SURFACE_TIMER_ID = "1785162960002"
+SERVICE_VARIABILITY_EXPERIMENT_NAME = "ServiceVariabilitySensitivity"
+SERVICE_VARIABILITY_OUTPUT_COLLECTION = "service_variability"
+SERVICE_VARIABILITY_EXPERIMENT_ID = "1785162970001"
+SERVICE_VARIABILITY_TIMER_ID = "1785162970002"
+PEAK_DURATION_EXPERIMENT_NAME = "PeakDurationSensitivity"
+PEAK_DURATION_OUTPUT_COLLECTION = "peak_duration_sensitivity"
+PEAK_DURATION_EXPERIMENT_ID = "1785162980001"
+PEAK_DURATION_TIMER_ID = "1785162980002"
 INTERACTIVE_PARAMETER_NAMES = (
     "demand_multiplier",
     "security_capacity",
@@ -271,6 +295,54 @@ def _load_response_surface_inputs() -> tuple[
         raise RuntimeError(
             "CapacityResponseSurfaceExploratory requires 54 execution cells "
             "and 50 Base-demand seed groups"
+        )
+    return rows, seed_rows, validation
+
+
+def _load_service_variability_inputs() -> tuple[
+    list[dict[str, str]], list[dict[str, str]], dict[str, object]
+]:
+    validation = validate_service_variability_design(
+        design_path=SERVICE_VARIABILITY_DESIGN,
+        seed_manifest_path=SERVICE_VARIABILITY_SEED_MANIFEST,
+    )
+    if validation["status"] != "PASS":
+        raise RuntimeError(
+            "Service-variability design failed: "
+            + "; ".join(str(error) for error in validation["errors"])
+        )
+    rows = load_service_variability_scenario_rows()
+    seed_rows = load_service_variability_seed_rows(
+        SERVICE_VARIABILITY_SEED_MANIFEST
+    )
+    if len(rows) != 9 or len(seed_rows) != 50:
+        raise RuntimeError(
+            "ServiceVariabilitySensitivity requires 9 execution cells "
+            "and 50 Base-demand seed groups"
+        )
+    return rows, seed_rows, validation
+
+
+def _load_peak_duration_inputs() -> tuple[
+    list[dict[str, str]], list[dict[str, str]], dict[str, object]
+]:
+    validation = validate_peak_duration_design(
+        design_path=PEAK_DURATION_DESIGN,
+        seed_manifest_path=PEAK_DURATION_SEED_MANIFEST,
+    )
+    if validation["status"] != "PASS":
+        raise RuntimeError(
+            "Peak-duration design failed: "
+            + "; ".join(str(error) for error in validation["errors"])
+        )
+    rows = load_peak_duration_scenario_rows()
+    seed_rows = load_peak_duration_seed_rows(
+        PEAK_DURATION_SEED_MANIFEST
+    )
+    if len(rows) != 20 or len(seed_rows) != 50:
+        raise RuntimeError(
+            "PeakDurationSensitivity requires 20 execution cells "
+            "and 50 stationary-extension seed groups"
         )
     return rows, seed_rows, validation
 
@@ -533,6 +605,18 @@ MODEL_VARIABLES = [
         "null",
         False,
     ),
+    (
+        "security_service_rng",
+        "java.util.Random",
+        "null",
+        False,
+    ),
+    (
+        "immigration_service_rng",
+        "java.util.Random",
+        "null",
+        False,
+    ),
 ]
 
 
@@ -587,7 +671,75 @@ MODEL_PARAMETERS = [
     ("service_seed", "long", "2026072802L"),
     ("routing_seed", "long", "2026072803L"),
     ("tie_seed", "long", "2026072804L"),
+    ("security_service_cv", "double", "0.0"),
+    ("immigration_service_cv", "double", "0.0"),
 ]
+
+
+SERVICE_VARIABILITY_CLASS_CODE = """\
+/* SERVICE_VARIABILITY_BEGIN
+ * Independent service streams preserve the HPP arrival stream.  Positive-CV
+ * arms use a mean-preserving lognormal sensitivity assumption; they are not
+ * presented as a fitted site distribution.
+ */
+private void initializePrimaryServiceRandomStreams() {
+\tsecurity_service_rng = new java.util.Random(
+\t\tservice_seed ^ 0x13579BDF2468ACE1L
+\t);
+\timmigration_service_rng = new java.util.Random(
+\t\tservice_seed ^ 0x2468ACE113579BDFL
+\t);
+}
+
+private double nextExplicitStandardNormal( java.util.Random rng ) {
+\tif ( rng == null )
+\t\tthrow new IllegalStateException( "service RNG is not initialized" );
+\tdouble u1 = rng.nextDouble();
+\twhile ( !( u1 > 0.0 ) ) u1 = rng.nextDouble();
+\tdouble u2 = rng.nextDouble();
+\treturn Math.sqrt( -2.0 * Math.log( u1 ) )
+\t\t* Math.cos( 2.0 * Math.PI * u2 );
+}
+
+private double primaryServiceDemand(
+\tString distribution,
+\tdouble meanSeconds,
+\tdouble coefficientOfVariation,
+\tjava.util.Random rng
+) {
+\tif ( !( meanSeconds > 0.0 ) || !Double.isFinite( meanSeconds ) )
+\t\tthrow new IllegalArgumentException(
+\t\t\t"primary service mean must be positive and finite"
+\t\t);
+\tif ( "FIXED".equals( distribution ) ) {
+\t\tif ( coefficientOfVariation != 0.0 )
+\t\t\tthrow new IllegalArgumentException(
+\t\t\t\t"FIXED primary service requires CV=0"
+\t\t\t);
+\t\treturn meanSeconds;
+\t}
+\tif ( !"LOGNORMAL_MEAN_CV".equals( distribution )
+\t\t|| !( coefficientOfVariation > 0.0 )
+\t\t|| coefficientOfVariation > 2.0
+\t\t|| !Double.isFinite( coefficientOfVariation ) )
+\t\tthrow new IllegalArgumentException(
+\t\t\t"LOGNORMAL_MEAN_CV requires finite 0<CV<=2"
+\t\t);
+\tdouble sigmaSquared = Math.log(
+\t\t1.0 + coefficientOfVariation * coefficientOfVariation
+\t);
+\tdouble sigma = Math.sqrt( sigmaSquared );
+\tdouble latentZ = nextExplicitStandardNormal( rng );
+\tdouble demand = meanSeconds * Math.exp(
+\t\t-0.5 * sigmaSquared + sigma * latentZ
+\t);
+\tif ( !( demand > 0.0 ) || !Double.isFinite( demand ) )
+\t\tthrow new IllegalStateException(
+\t\t\t"sampled primary service demand is not positive and finite"
+\t\t);
+\treturn demand;
+}
+/* SERVICE_VARIABILITY_END */"""
 
 
 PRESENTATION_ANIMATION_CLASS_CODE = """\
@@ -666,8 +818,20 @@ traveller.traveller_id = String.format(
 traveller.input_sample_id = input_sample_id;
 traveller.replication_id = replication_id;
 traveller.arrival = arrivalTime;
-traveller.security_service_demand = security_service_p1_seconds;
-traveller.immigration_conventional_service_demand = immigration_service_p1_seconds;
+if ( security_service_rng == null || immigration_service_rng == null )
+\tinitializePrimaryServiceRandomStreams();
+traveller.security_service_demand = primaryServiceDemand(
+\tsecurity_service_distribution,
+\tsecurity_service_p1_seconds,
+\tsecurity_service_cv,
+\tsecurity_service_rng
+);
+traveller.immigration_conventional_service_demand = primaryServiceDemand(
+\timmigration_service_distribution,
+\timmigration_service_p1_seconds,
+\timmigration_service_cv,
+\timmigration_service_rng
+);
 if ( routing_rng == null ) routing_rng = new java.util.Random( routing_seed );
 if ( tie_rng == null ) tie_rng = new java.util.Random( tie_seed );
 traveller.automation_u = routing_rng.nextDouble();
@@ -1652,12 +1816,35 @@ if ( root.security_capacity <= 0 || root.immigration_capacity <= 0 )
 \tthrow new IllegalArgumentException( "resource capacities must be positive" );
 if ( root.security_queue_capacity <= 0 || root.immigration_queue_capacity <= 0 )
 \tthrow new IllegalArgumentException( "queue capacities must be positive" );
-if ( !"FIXED".equals( root.security_service_distribution )
-\t|| !"FIXED".equals( root.immigration_service_distribution ) )
-\tthrow new IllegalArgumentException( "v1 supports FIXED primary service only" );
 if ( !( root.security_service_p1_seconds > 0.0 )
 \t|| !( root.immigration_service_p1_seconds > 0.0 ) )
 \tthrow new IllegalArgumentException( "primary service demands must be positive" );
+boolean securityServiceContractValid =
+\t( "FIXED".equals( root.security_service_distribution )
+\t\t&& root.security_service_cv == 0.0 )
+\t|| ( "LOGNORMAL_MEAN_CV".equals( root.security_service_distribution )
+\t\t&& root.security_service_cv > 0.0
+\t\t&& root.security_service_cv <= 2.0
+\t\t&& Double.isFinite( root.security_service_cv ) );
+boolean immigrationServiceContractValid =
+\t( "FIXED".equals( root.immigration_service_distribution )
+\t\t&& root.immigration_service_cv == 0.0 )
+\t|| ( "LOGNORMAL_MEAN_CV".equals( root.immigration_service_distribution )
+\t\t&& root.immigration_service_cv > 0.0
+\t\t&& root.immigration_service_cv <= 2.0
+\t\t&& Double.isFinite( root.immigration_service_cv ) );
+if ( !securityServiceContractValid || !immigrationServiceContractValid )
+\tthrow new IllegalArgumentException(
+\t\t"primary service distribution/CV contract is invalid"
+\t);
+if ( "TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+\t&& ( !"FIXED".equals( root.security_service_distribution )
+\t\t|| !"FIXED".equals( root.immigration_service_distribution )
+\t\t|| root.security_service_cv != 0.0
+\t\t|| root.immigration_service_cv != 0.0 ) )
+\tthrow new IllegalArgumentException(
+\t\t"TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED service and CV=0"
+\t);
 if ( !"pooled".equals( root.queue_policy ) )
 \tthrow new IllegalArgumentException( "v1 implements pooled FCFS only" );
 if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
@@ -1921,6 +2108,90 @@ if ( !seedGroupMatched )
 \tthrow new IllegalArgumentException(
 \t\t"CapacityRobustnessConfirmatory seed group is not frozen"
 \t);
+getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );"""
+
+
+def _service_variability_before_run(
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    cell_guards: list[str] = []
+    for index, row in enumerate(rows):
+        keyword = "if" if index == 0 else "else if"
+        scenario_id = json.dumps(row["scenario_id"])
+        input_sample_id = json.dumps(row["input_sample_id"])
+        config_id = json.dumps(row["config_id"])
+        config_hash = json.dumps(service_scenario_config_sha256(row))
+        cell_guards.append(
+            f"""{keyword} ( {scenario_id}.equals( root.scenario_id )
+\t&& {input_sample_id}.equals( root.input_sample_id ) ) {{
+\texpectedConfigId = {config_id};
+\texpectedConfigHash = {config_hash};
+}}"""
+        )
+
+    seed_guards: list[str] = []
+    for index, seed in enumerate(seed_rows):
+        keyword = "if" if index == 0 else "else if"
+        input_sample_id = json.dumps(seed["input_sample_id"])
+        replication_id = int(seed["replication_id"])
+        seed_guards.append(
+            f"""{keyword} ( {input_sample_id}.equals( root.input_sample_id )
+\t&& replication == {replication_id} ) {{
+\troot.arrival_seed = {int(seed["arrival_seed"])}L;
+\troot.service_seed = {int(seed["service_seed"])}L;
+\troot.routing_seed = {int(seed["routing_seed"])}L;
+\troot.tie_seed = {int(seed["tie_seed"])}L;
+\tseedGroupMatched = true;
+}}"""
+        )
+
+    masters = {int(row["master_seed"]) for row in seed_rows}
+    if len(masters) != 1:
+        raise RuntimeError(
+            "service-variability seed manifest has multiple master seeds"
+        )
+    master_seed = next(iter(masters))
+    return COMMON_BEFORE_RUN + f"""\
+if ( !"{SERVICE_VARIABILITY_MODEL_VERSION}".equals( root.model_version ) )
+\tthrow new IllegalArgumentException(
+\t\t"ServiceVariabilitySensitivity model_version mismatch"
+\t);
+if ( !"{SERVICE_VARIABILITY_OUTPUT_COLLECTION}".equals( root.output_collection_id ) )
+\tthrow new IllegalArgumentException(
+\t\t"ServiceVariabilitySensitivity output collection mismatch"
+\t);
+if ( root.master_seed != {master_seed}L )
+\tthrow new IllegalArgumentException(
+\t\t"ServiceVariabilitySensitivity master seed mismatch"
+\t);
+String expectedConfigId = null;
+String expectedConfigHash = null;
+{chr(10).join(cell_guards)}
+if ( expectedConfigId == null || expectedConfigHash == null )
+\tthrow new IllegalArgumentException(
+\t\t"ServiceVariabilitySensitivity received an unknown scenario/input cell"
+\t);
+if ( !expectedConfigId.equals( root.config_id )
+\t|| !expectedConfigHash.equals( root.config_sha256 ) )
+\tthrow new IllegalArgumentException(
+\t\t"ServiceVariabilitySensitivity lineage mismatch for "
+\t\t+ root.scenario_id + "/" + root.input_sample_id
+\t);
+int replication = getCurrentReplication();
+if ( replication < 1 || replication > 50 )
+\tthrow new IllegalArgumentException(
+\t\t"ServiceVariabilitySensitivity replication must be 1..50"
+\t);
+root.replication_id = replication;
+boolean seedGroupMatched = false;
+{chr(10).join(seed_guards)}
+if ( !seedGroupMatched )
+\tthrow new IllegalArgumentException(
+\t\t"ServiceVariabilitySensitivity seed group is not frozen"
+\t);
+root.security_service_rng = null;
+root.immigration_service_rng = null;
 getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );"""
 
 
@@ -2260,7 +2531,12 @@ def _pilot_parameter_expressions(
                 )
             elif name == "replication_id":
                 value = "0"
-            elif name in {"model_version", "start_state"}:
+            elif name in {
+                "model_version",
+                "start_state",
+                "security_service_cv",
+                "immigration_service_cv",
+            }:
                 value = defaults[name]
             elif name in row:
                 value = _java_literal(value_type, row[name])
@@ -2314,13 +2590,79 @@ def _confirmatory_parameter_expressions(
                 value = _java_literal(value_type, seed[name])
             elif name == "replication_id":
                 value = "0"
-            elif name in {"model_version", "start_state"}:
+            elif name in {
+                "model_version",
+                "start_state",
+                "security_service_cv",
+                "immigration_service_cv",
+            }:
                 value = defaults[name]
             elif name in row:
                 value = _java_literal(value_type, row[name])
             else:
                 raise RuntimeError(
                     "No CapacityRobustnessConfirmatory mapping for "
+                    f"parameter {name}"
+                )
+            values.append(value)
+        expressions[name] = _indexed_expression(values)
+    return expressions
+
+
+def _service_variability_parameter_expressions(
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> dict[str, str]:
+    defaults = {
+        name: default
+        for name, _, default in MODEL_PARAMETERS
+    }
+    first_seed_by_input = {
+        row["input_sample_id"]: row
+        for row in seed_rows
+        if row["replication_id"] == "1"
+    }
+    expressions: dict[str, str] = {}
+    for name, value_type, _ in MODEL_PARAMETERS:
+        values: list[str] = []
+        for row in rows:
+            if name == "output_collection_id":
+                value = _java_literal(
+                    value_type,
+                    SERVICE_VARIABILITY_OUTPUT_COLLECTION,
+                )
+            elif name == "config_sha256":
+                value = _java_literal(
+                    value_type,
+                    service_scenario_config_sha256(row),
+                )
+            elif name in {
+                "arrival_seed",
+                "service_seed",
+                "routing_seed",
+                "tie_seed",
+            }:
+                seed = first_seed_by_input.get(row["input_sample_id"])
+                if seed is None:
+                    raise RuntimeError(
+                        "service-variability input sample has no "
+                        "replication-1 seed"
+                    )
+                value = _java_literal(value_type, seed[name])
+            elif name == "replication_id":
+                value = "0"
+            elif name == "model_version":
+                value = _java_literal(
+                    value_type,
+                    SERVICE_VARIABILITY_MODEL_VERSION,
+                )
+            elif name == "start_state":
+                value = defaults[name]
+            elif name in row:
+                value = _java_literal(value_type, row[name])
+            else:
+                raise RuntimeError(
+                    "No ServiceVariabilitySensitivity mapping for "
                     f"parameter {name}"
                 )
             values.append(value)
@@ -2429,13 +2771,26 @@ def _confirmatory_experiment_xml(
     timer_id: str,
     rows: list[dict[str, str]],
     seed_rows: list[dict[str, str]],
+    *,
+    experiment_name: str = CONFIRMATORY_EXPERIMENT_NAME,
+    timer_variable_name: str = "confirmatory_auto_start_timer",
+    before_run_code: str | None = None,
+    parameter_expressions: dict[str, str] | None = None,
 ) -> str:
     before = html.escape(
-        _confirmatory_before_run(rows, seed_rows),
+        (
+            _confirmatory_before_run(rows, seed_rows)
+            if before_run_code is None
+            else before_run_code
+        ),
         quote=False,
     )
     after = html.escape(AFTER_RUN, quote=False)
-    expressions = _confirmatory_parameter_expressions(rows, seed_rows)
+    expressions = (
+        _confirmatory_parameter_expressions(rows, seed_rows)
+        if parameter_expressions is None
+        else parameter_expressions
+    )
     freeform_values: list[str] = []
     range_values: list[str] = []
     for index, (name, _, _) in enumerate(MODEL_PARAMETERS):
@@ -2460,7 +2815,7 @@ def _confirmatory_experiment_xml(
     return f"""\
 \t<ParamVariationExperiment ActiveObjectClassId="{model_id}">
 \t\t<Id>{experiment_id}</Id>
-\t\t<Name><![CDATA[{CONFIRMATORY_EXPERIMENT_NAME}]]></Name>
+\t\t<Name><![CDATA[{experiment_name}]]></Name>
 \t\t<CommandLineArguments/>
 \t\t<MaximumMemory>512</MaximumMemory>
 \t\t<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
@@ -2474,7 +2829,7 @@ def _confirmatory_experiment_xml(
 \t\t<Variables>
 \t\t\t<Variable Class="PlainVariable">
 \t\t\t\t<Id>{timer_id}</Id>
-\t\t\t\t<Name><![CDATA[confirmatory_auto_start_timer]]></Name>
+\t\t\t\t<Name><![CDATA[{timer_variable_name}]]></Name>
 \t\t\t\t<X>40</X><Y>120</Y>
 \t\t\t\t<Label><X>10</X><Y>0</Y></Label>
 \t\t\t\t<PublicFlag>false</PublicFlag>
@@ -2486,7 +2841,7 @@ def _confirmatory_experiment_xml(
                 StaticVariable="false">
 \t\t\t\t\t<Type><![CDATA[javax.swing.Timer]]></Type>
 \t\t\t\t\t<InitialValue Class="CodeValue">
-\t\t\t\t\t\t<Code><![CDATA[new javax.swing.Timer(300, event -> {{ ((javax.swing.Timer) event.getSource()).stop(); CapacityRobustnessConfirmatory.this.run(); }}) {{{{ setRepeats(false); start(); }}}}]]></Code>
+\t\t\t\t\t\t<Code><![CDATA[new javax.swing.Timer(300, event -> {{ ((javax.swing.Timer) event.getSource()).stop(); {experiment_name}.this.run(); }}) {{{{ setRepeats(false); start(); }}}}]]></Code>
 \t\t\t\t\t</InitialValue>
 \t\t\t\t</Properties>
 \t\t\t</Variable>
@@ -2505,7 +2860,7 @@ def _confirmatory_experiment_xml(
 \t\t</ModelTimeProperties>
 \t\t<PresentationProperties>
 \t\t\t<EnableZoomAndPanning>true</EnableZoomAndPanning>
-\t\t\t<Title>HTXCheckpointSimulation : CapacityRobustnessConfirmatory</Title>
+\t\t\t<Title>HTXCheckpointSimulation : {experiment_name}</Title>
 \t\t\t<EnableDeveloperPanel>true</EnableDeveloperPanel>
 \t\t\t<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
 \t\t</PresentationProperties>
@@ -2582,6 +2937,63 @@ def _response_surface_experiment_xml(
         .replace(
             f'"{CONFIRMATORY_OUTPUT_COLLECTION}"',
             f'"{RESPONSE_SURFACE_OUTPUT_COLLECTION}"',
+        )
+    )
+
+
+def _service_variability_experiment_xml(
+    model_id: str,
+    experiment_id: str,
+    timer_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    """Create the frozen mean-preserving service-CV sensitivity batch."""
+
+    return _confirmatory_experiment_xml(
+        model_id,
+        experiment_id,
+        timer_id,
+        rows,
+        seed_rows,
+        experiment_name=SERVICE_VARIABILITY_EXPERIMENT_NAME,
+        timer_variable_name="service_variability_auto_start_timer",
+        before_run_code=_service_variability_before_run(rows, seed_rows),
+        parameter_expressions=_service_variability_parameter_expressions(
+            rows,
+            seed_rows,
+        ),
+    )
+
+
+def _peak_duration_experiment_xml(
+    model_id: str,
+    experiment_id: str,
+    timer_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    """Create the selected-cell stationary-HPP duration-sensitivity batch."""
+
+    block = _confirmatory_experiment_xml(
+        model_id,
+        experiment_id,
+        timer_id,
+        rows,
+        seed_rows,
+    )
+    return (
+        block.replace(
+            CONFIRMATORY_EXPERIMENT_NAME,
+            PEAK_DURATION_EXPERIMENT_NAME,
+        )
+        .replace(
+            "confirmatory_auto_start_timer",
+            "peak_duration_auto_start_timer",
+        )
+        .replace(
+            f'"{CONFIRMATORY_OUTPUT_COLLECTION}"',
+            f'"{PEAK_DURATION_OUTPUT_COLLECTION}"',
         )
     )
 
@@ -2877,6 +3289,122 @@ def _upsert_response_surface_experiment(
     return text.replace(marker, block + "\n" + marker, 1)
 
 
+def _upsert_registered_batch_experiment(
+    text: str,
+    model_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+    *,
+    experiment_name: str,
+    timer_variable_name: str,
+    insertion_experiment_id: str,
+    insertion_timer_id: str,
+    builder,
+) -> str:
+    pattern = re.compile(
+        rf"\t<ParamVariationExperiment ActiveObjectClassId=\"{model_id}\">.*?"
+        r"\t</ParamVariationExperiment>",
+        re.DOTALL,
+    )
+    matches = [
+        match
+        for match in pattern.finditer(text)
+        if (
+            re.search(r"<Name><!\[CDATA\[(.*?)\]\]></Name>", match.group(0))
+            and re.search(
+                r"<Name><!\[CDATA\[(.*?)\]\]></Name>",
+                match.group(0),
+            ).group(1)
+            == experiment_name
+        )
+    ]
+    if len(matches) > 1:
+        raise RuntimeError(
+            f"Expected at most one {experiment_name}; found {len(matches)}"
+        )
+    if matches:
+        match = matches[0]
+        old = match.group(0)
+        experiment_match = re.search(r"<Id>(\d+)</Id>", old)
+        timer_match = re.search(
+            r"<Variable Class=\"PlainVariable\">\s*"
+            r"<Id>(\d+)</Id>\s*"
+            rf"<Name><!\[CDATA\[{re.escape(timer_variable_name)}\]\]></Name>",
+            old,
+        )
+        if not experiment_match:
+            raise RuntimeError(f"{experiment_name} experiment ID is missing")
+        experiment_id = experiment_match.group(1)
+        timer_id = (
+            timer_match.group(1)
+            if timer_match
+            else str(int(experiment_id) + 1)
+        )
+        replacement = builder(
+            model_id,
+            experiment_id,
+            timer_id,
+            rows,
+            seed_rows,
+        )
+        return text[: match.start()] + replacement + text[match.end() :]
+
+    for item_id in (insertion_experiment_id, insertion_timer_id):
+        if re.search(rf"<Id>{item_id}</Id>", text):
+            raise RuntimeError(
+                f"{experiment_name} insertion ID {item_id} is in use"
+            )
+    marker = "</Experiments>"
+    if text.count(marker) != 1:
+        raise RuntimeError("split experiment root is not canonical")
+    block = builder(
+        model_id,
+        insertion_experiment_id,
+        insertion_timer_id,
+        rows,
+        seed_rows,
+    )
+    return text.replace(marker, block + "\n" + marker, 1)
+
+
+def _upsert_service_variability_experiment(
+    text: str,
+    model_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    return _upsert_registered_batch_experiment(
+        text,
+        model_id,
+        rows,
+        seed_rows,
+        experiment_name=SERVICE_VARIABILITY_EXPERIMENT_NAME,
+        timer_variable_name="service_variability_auto_start_timer",
+        insertion_experiment_id=SERVICE_VARIABILITY_EXPERIMENT_ID,
+        insertion_timer_id=SERVICE_VARIABILITY_TIMER_ID,
+        builder=_service_variability_experiment_xml,
+    )
+
+
+def _upsert_peak_duration_experiment(
+    text: str,
+    model_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    return _upsert_registered_batch_experiment(
+        text,
+        model_id,
+        rows,
+        seed_rows,
+        experiment_name=PEAK_DURATION_EXPERIMENT_NAME,
+        timer_variable_name="peak_duration_auto_start_timer",
+        insertion_experiment_id=PEAK_DURATION_EXPERIMENT_ID,
+        insertion_timer_id=PEAK_DURATION_TIMER_ID,
+        builder=_peak_duration_experiment_xml,
+    )
+
+
 def _xml_root_without_declaration(path: Path) -> str:
     return re.sub(
         r"\A<\?xml[^>]*\?>\s*",
@@ -3055,6 +3583,16 @@ def generate() -> None:
         response_surface_seed_rows,
         response_surface_validation,
     ) = _load_response_surface_inputs()
+    (
+        service_variability_rows,
+        service_variability_seed_rows,
+        service_variability_validation,
+    ) = _load_service_variability_inputs()
+    (
+        peak_duration_rows,
+        peak_duration_seed_rows,
+        peak_duration_validation,
+    ) = _load_peak_duration_inputs()
     traveller_aoc = OP_TRAVELLER / "AOC.OperationalTraveller.xml"
     model_aoc = OP_MODEL / "AOC.OperationalCheckpointModel.xml"
     if not traveller_aoc.is_file() or not model_aoc.is_file():
@@ -3133,7 +3671,10 @@ void arrivalCutoff()
     ):
         _write(
             additional_class_path,
-            PRESENTATION_ANIMATION_CLASS_CODE + "\n",
+            SERVICE_VARIABILITY_CLASS_CODE
+            + "\n\n"
+            + PRESENTATION_ANIMATION_CLASS_CODE
+            + "\n",
         )
 
     experiment_text = _replace_operational_experiment(_read(EXPERIMENTS), op_model_id)
@@ -3159,6 +3700,18 @@ void arrivalCutoff()
         op_model_id,
         response_surface_rows,
         response_surface_seed_rows,
+    )
+    experiment_text = _upsert_service_variability_experiment(
+        experiment_text,
+        op_model_id,
+        service_variability_rows,
+        service_variability_seed_rows,
+    )
+    experiment_text = _upsert_peak_duration_experiment(
+        experiment_text,
+        op_model_id,
+        peak_duration_rows,
+        peak_duration_seed_rows,
     )
     _write(EXPERIMENTS, experiment_text)
     _sync_single_file(model_id=op_model_id)
@@ -3186,6 +3739,16 @@ void arrivalCutoff()
         f"{len(response_surface_rows)} Base-demand cells x 50 replications "
         f"({response_surface_validation['new_execution_run_count']} new runs, "
         "serial; self-contained exploratory surface)"
+    )
+    print(
+        "ServiceVariabilitySensitivity: "
+        f"{len(service_variability_rows)} service-CV cells x 50 replications "
+        f"({service_variability_validation['run_count']} planned runs, serial)"
+    )
+    print(
+        "PeakDurationSensitivity: "
+        f"{len(peak_duration_rows)} capacity-duration cells x 50 replications "
+        f"({peak_duration_validation['planned_run_count']} planned runs, serial)"
     )
     print("Generated operational AnyLogic split fragments and single-file launcher")
 

@@ -5,6 +5,7 @@ import json
 import re
 import unittest
 import xml.etree.ElementTree as ET
+from collections.abc import Callable
 from decimal import Decimal
 from pathlib import Path
 
@@ -19,6 +20,16 @@ from src.analysis.capacity_availability_design import (
 from src.analysis.capacity_response_surface_design import (
     load_response_surface_scenario_rows,
     load_response_surface_seed_rows,
+)
+from src.analysis.peak_duration_sensitivity_design import (
+    load_peak_duration_scenario_rows,
+    load_peak_duration_seed_rows,
+)
+from src.analysis.service_variability_design import (
+    MODEL_VERSION as SERVICE_VARIABILITY_MODEL_VERSION,
+    load_service_variability_scenario_rows,
+    load_service_variability_seed_rows,
+    service_scenario_config_sha256,
 )
 from src.analysis.validate_operational_contract import (
     scenario_config_sha256,
@@ -164,6 +175,205 @@ def _response_surface_experiment() -> ET.Element:
             f"got {len(matches)}"
         )
     return matches[0]
+
+
+def _named_parameter_variation_experiment(name: str) -> ET.Element:
+    experiments = ET.parse(EXPERIMENTS).getroot()
+    matches = [
+        item
+        for item in experiments.findall("ParamVariationExperiment")
+        if item.findtext("Name") == name
+    ]
+    if len(matches) != 1:
+        raise AssertionError(
+            f"Expected one {name} experiment, got {len(matches)}"
+        )
+    return matches[0]
+
+
+def _operational_parameter_metadata(
+) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+    root = ET.parse(OP_MODEL_VARIABLES).getroot()
+    parameters = [
+        item
+        for item in root.findall("Variable")
+        if item.attrib.get("Class") == "Parameter"
+    ]
+    return (
+        {
+            item.findtext("Name", "").strip(): item.findtext(
+                "Id", ""
+            ).strip()
+            for item in parameters
+        },
+        {
+            item.findtext("Name", "").strip(): item.findtext(
+                "Properties/Type", ""
+            ).strip()
+            for item in parameters
+        },
+        {
+            item.findtext("Name", "").strip(): item.findtext(
+                "Properties/DefaultValue/Code", ""
+            ).strip()
+            for item in parameters
+        },
+    )
+
+
+def _experiment_parameter_values(
+    experiment: ET.Element,
+) -> tuple[dict[str, str], set[str]]:
+    freeform = {
+        item.findtext("Id", "").strip(): item.findtext(
+            "Expression/Code", ""
+        ).strip()
+        for item in experiment.findall("FreeformParamValue")
+    }
+    fixed = {
+        item.findtext("Id", "").strip()
+        for item in experiment.findall("RangeVariationParamValue")
+        if item.findtext("Type") == "FIXED"
+    }
+    return freeform, fixed
+
+
+def _assert_full_parameter_mapping(
+    test: unittest.TestCase,
+    *,
+    experiment: ET.Element,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+    output_collection_id: str,
+    config_hash: Callable[[dict[str, str]], str],
+    model_version: str | None = None,
+) -> None:
+    parameter_ids, parameter_types, parameter_defaults = (
+        _operational_parameter_metadata()
+    )
+    freeform, fixed = _experiment_parameter_values(experiment)
+    test.assertEqual(len(parameter_ids), 44)
+    test.assertEqual(set(freeform), set(parameter_ids.values()))
+    test.assertEqual(fixed, set(parameter_ids.values()))
+    test.assertTrue(all(freeform.values()))
+
+    first_seed_by_input = {
+        row["input_sample_id"]: row
+        for row in seed_rows
+        if row["replication_id"] == "1"
+    }
+    for name in parameter_ids:
+        actual = _indexed_values(
+            freeform[parameter_ids[name]],
+            len(rows),
+        )
+        expected: list[str] = []
+        for row in rows:
+            if name == "output_collection_id":
+                value = json.dumps(output_collection_id)
+            elif name == "config_sha256":
+                value = json.dumps(config_hash(row))
+            elif name in {
+                "arrival_seed",
+                "service_seed",
+                "routing_seed",
+                "tie_seed",
+            }:
+                seed = first_seed_by_input[row["input_sample_id"]]
+                value = f"{seed[name]}L"
+            elif name == "replication_id":
+                value = "0"
+            elif name == "model_version":
+                value = (
+                    json.dumps(model_version)
+                    if model_version is not None
+                    else parameter_defaults[name]
+                )
+            elif name == "start_state" or name not in row:
+                value = parameter_defaults[name]
+            else:
+                value = _java_test_literal(
+                    parameter_types[name],
+                    row[name],
+                )
+            expected.append(value)
+        with test.subTest(
+            experiment=experiment.findtext("Name"),
+            parameter=name,
+        ):
+            test.assertEqual(actual, expected)
+
+
+def _assert_exact_serial_batch(
+    test: unittest.TestCase,
+    *,
+    experiment: ET.Element,
+    experiment_id: str,
+    number_of_cells: int,
+    replications_per_cell: int,
+    timer_name: str,
+    timer_id: str,
+) -> None:
+    test.assertEqual(
+        experiment.attrib["ActiveObjectClassId"],
+        ET.parse(OP_MODEL_AOC).getroot().findtext("Id"),
+    )
+    test.assertEqual(experiment.findtext("Id"), experiment_id)
+    test.assertEqual(
+        experiment.findtext("AllowParallelEvaluations"),
+        "false",
+    )
+    test.assertEqual(experiment.findtext("UseFreeformParameters"), "true")
+    test.assertEqual(
+        experiment.findtext("NumberOfRuns"),
+        str(number_of_cells),
+    )
+    test.assertEqual(
+        experiment.findtext("ModelTimeProperties/StopOption"),
+        "Never",
+    )
+    replications = experiment.find("ReplicationsProperties")
+    test.assertIsNotNone(replications)
+    assert replications is not None
+    test.assertEqual(replications.findtext("UseReplication"), "true")
+    test.assertEqual(
+        replications.findtext("FixedReplicationsNumber"),
+        "true",
+    )
+    for field in (
+        "ReplicationPerIteration",
+        "MinimumReplication",
+        "MaximumReplication",
+    ):
+        test.assertEqual(
+            replications.findtext(field),
+            str(replications_per_cell),
+        )
+    test.assertEqual(replications.findtext("ConfidenceLevel"), "LEVEL_95")
+
+    timers = [
+        item
+        for item in experiment.findall("Variables/Variable")
+        if item.findtext("Name") == timer_name
+    ]
+    test.assertEqual(len(timers), 1)
+    timer = timers[0]
+    test.assertEqual(timer.findtext("Id"), timer_id)
+    test.assertEqual(timer.findtext("PresentationFlag"), "false")
+    test.assertEqual(timer.findtext("ShowLabel"), "false")
+    properties = timer.find("Properties")
+    test.assertIsNotNone(properties)
+    assert properties is not None
+    test.assertEqual(properties.attrib.get("AccessType"), "private")
+    test.assertEqual(properties.attrib.get("SaveInSnapshot"), "false")
+    test.assertEqual(properties.findtext("Type"), "javax.swing.Timer")
+    timer_code = properties.findtext("InitialValue/Code", "")
+    experiment_name = experiment.findtext("Name", "")
+    test.assertEqual(
+        timer_code.count(f"{experiment_name}.this.run();"),
+        1,
+    )
+    test.assertEqual(timer_code.count("setRepeats(false);"), 1)
 
 
 def _physical_line_break(path: Path) -> bytes:
@@ -359,6 +569,8 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
         self.assertEqual(defaults["service_seed"], "2026072802L")
         self.assertEqual(defaults["routing_seed"], "2026072803L")
         self.assertEqual(defaults["tie_seed"], "2026072804L")
+        self.assertEqual(defaults["security_service_cv"], "0.0")
+        self.assertEqual(defaults["immigration_service_cv"], "0.0")
 
     def test_random_streams_are_reseeded_without_forward_field_references(
         self,
@@ -366,6 +578,8 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
         variables = _variables(OP_MODEL_VARIABLES, "PlainVariable")
         self.assertEqual(variables["routing_rng"], "null")
         self.assertEqual(variables["tie_rng"], "null")
+        self.assertEqual(variables["security_service_rng"], "null")
+        self.assertEqual(variables["immigration_service_rng"], "null")
         before = _operational_experiment().findtext(
             "BeforeSimulationRunCode", ""
         )
@@ -382,6 +596,58 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
         )
         self.assertIn(
             "tie_rng = new java.util.Random( tie_seed )",
+            source,
+        )
+
+        service_code = OP_MODEL_ADDITIONAL_CLASS_CODE.read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "service_seed ^ 0x13579BDF2468ACE1L",
+            service_code,
+        )
+        self.assertIn(
+            "service_seed ^ 0x2468ACE113579BDFL",
+            service_code,
+        )
+        self.assertEqual(
+            service_code.count("new java.util.Random("),
+            2,
+            "Security and Immigration need exactly two independently "
+            "derived stage-local service streams",
+        )
+        self.assertIn("nextExplicitStandardNormal", service_code)
+        self.assertIn("Math.sqrt( -2.0 * Math.log( u1 ) )", service_code)
+        self.assertIn(
+            "Math.log(\n\t\t1.0 + coefficientOfVariation "
+            "* coefficientOfVariation",
+            service_code,
+        )
+        self.assertIn(
+            "-0.5 * sigmaSquared + sigma * latentZ",
+            service_code,
+        )
+        fixed_return = service_code.index("return meanSeconds;")
+        latent_draw = service_code.index(
+            "double latentZ = nextExplicitStandardNormal( rng );"
+        )
+        self.assertLess(
+            fixed_return,
+            latent_draw,
+            "The fixed-service arm must not consume a latent service draw",
+        )
+        self.assertIn(
+            "security_service_distribution,\n"
+            "\tsecurity_service_p1_seconds,\n"
+            "\tsecurity_service_cv,\n"
+            "\tsecurity_service_rng",
+            source,
+        )
+        self.assertIn(
+            "immigration_service_distribution,\n"
+            "\timmigration_service_p1_seconds,\n"
+            "\timmigration_service_cv,\n"
+            "\timmigration_service_rng",
             source,
         )
 
@@ -790,6 +1056,8 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
             "CapacityRobustnessConfirmatory",
             "CapacityAvailabilityStress",
             "CapacityResponseSurfaceExploratory",
+            "ServiceVariabilitySensitivity",
+            "PeakDurationSensitivity",
         ):
             experiment = next(
                 item
@@ -967,7 +1235,7 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
             for item in pilot.findall("RangeVariationParamValue")
             if item.findtext("Type") == "FIXED"
         }
-        self.assertEqual(len(parameter_ids), 42)
+        self.assertEqual(len(parameter_ids), 44)
         self.assertEqual(set(freeform), set(parameter_ids.values()))
         self.assertEqual(fixed, set(parameter_ids.values()))
         self.assertTrue(all(freeform.values()))
@@ -1019,7 +1287,12 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
                     )
                 elif name == "replication_id":
                     expected = "0"
-                elif name in {"model_version", "start_state"}:
+                elif name in {
+                    "model_version",
+                    "start_state",
+                    "security_service_cv",
+                    "immigration_service_cv",
+                }:
                     expected = parameter_defaults[name]
                 else:
                     expected = _java_test_literal(
@@ -1502,6 +1775,237 @@ class AnyLogicOperationalModelTests(unittest.TestCase):
             1,
         )
         self.assertEqual(timer_code.count("setRepeats(false);"), 1)
+
+    def test_registered_v1_batches_remain_fixed_service_with_zero_cv(
+        self,
+    ) -> None:
+        parameter_ids, _, _ = _operational_parameter_metadata()
+        self.assertEqual(len(parameter_ids), 44)
+        for experiment_name in (
+            "OperationalPilot",
+            "CapacityRobustnessConfirmatory",
+            "CapacityAvailabilityStress",
+            "CapacityResponseSurfaceExploratory",
+            "PeakDurationSensitivity",
+        ):
+            experiment = _named_parameter_variation_experiment(
+                experiment_name
+            )
+            freeform, fixed = _experiment_parameter_values(experiment)
+            self.assertEqual(set(freeform), set(parameter_ids.values()))
+            self.assertEqual(fixed, set(parameter_ids.values()))
+            for parameter_name, expected in (
+                ("model_version", '"TASK3_OPERATIONAL_POOLED_V1"'),
+                ("security_service_distribution", '"FIXED"'),
+                ("immigration_service_distribution", '"FIXED"'),
+                ("security_service_cv", "0.0"),
+                ("immigration_service_cv", "0.0"),
+            ):
+                values = _indexed_values(
+                    freeform[parameter_ids[parameter_name]],
+                    int(experiment.findtext("NumberOfRuns", "0")),
+                )
+                with self.subTest(
+                    experiment=experiment_name,
+                    parameter=parameter_name,
+                ):
+                    self.assertEqual(values, [expected] * len(values))
+
+            before = experiment.findtext("BeforeSimulationRunCode", "")
+            self.assertIn(
+                '"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )',
+                before,
+            )
+            self.assertIn(
+                "TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED "
+                "service and CV=0",
+                before,
+            )
+
+    def test_service_variability_is_exact_serial_9_by_50_batch(
+        self,
+    ) -> None:
+        experiment = _named_parameter_variation_experiment(
+            "ServiceVariabilitySensitivity"
+        )
+        rows = load_service_variability_scenario_rows()
+        seed_rows = load_service_variability_seed_rows()
+        self.assertEqual(len(rows), 9)
+        self.assertEqual(len(seed_rows), 50)
+        self.assertEqual(
+            {
+                (row["security_service_cv"], row["immigration_service_cv"])
+                for row in rows
+            },
+            {
+                (security_cv, immigration_cv)
+                for security_cv in ("0", "0.5", "1")
+                for immigration_cv in ("0", "0.5", "1")
+            },
+        )
+        _assert_exact_serial_batch(
+            self,
+            experiment=experiment,
+            experiment_id="1785162970001",
+            number_of_cells=9,
+            replications_per_cell=50,
+            timer_name="service_variability_auto_start_timer",
+            timer_id="1785162970002",
+        )
+        _assert_full_parameter_mapping(
+            self,
+            experiment=experiment,
+            rows=rows,
+            seed_rows=seed_rows,
+            output_collection_id="service_variability",
+            config_hash=service_scenario_config_sha256,
+            model_version=SERVICE_VARIABILITY_MODEL_VERSION,
+        )
+
+        before = experiment.findtext("BeforeSimulationRunCode", "")
+        for fragment in (
+            f'"{SERVICE_VARIABILITY_MODEL_VERSION}".equals'
+            "( root.model_version )",
+            '"service_variability".equals( root.output_collection_id )',
+            "ServiceVariabilitySensitivity received an unknown "
+            "scenario/input cell",
+            "ServiceVariabilitySensitivity replication must be 1..50",
+            "root.security_service_rng = null;",
+            "root.immigration_service_rng = null;",
+            "getEngine().getDefaultRandomGenerator().setSeed"
+            "( root.arrival_seed );",
+        ):
+            with self.subTest(before_fragment=fragment):
+                self.assertIn(fragment, before)
+        self.assertEqual(
+            before.count('expectedConfigId = "OP_SERVICE_VARIABILITY_'),
+            9,
+        )
+        self.assertEqual(before.count("seedGroupMatched = true;"), 50)
+        for row in rows:
+            with self.subTest(service_cell=row["scenario_id"]):
+                self.assertIn(f'"{row["scenario_id"]}"', before)
+                self.assertIn(
+                    f'"{service_scenario_config_sha256(row)}"',
+                    before,
+                )
+        for seed_row in seed_rows:
+            with self.subTest(service_seed=seed_row["replication_id"]):
+                for seed_name in (
+                    "arrival_seed",
+                    "service_seed",
+                    "routing_seed",
+                    "tie_seed",
+                ):
+                    self.assertIn(
+                        f"root.{seed_name} = "
+                        f"{seed_row[seed_name]}L;",
+                        before,
+                    )
+
+    def test_peak_duration_is_exact_serial_20_by_50_batch(self) -> None:
+        experiment = _named_parameter_variation_experiment(
+            "PeakDurationSensitivity"
+        )
+        rows = load_peak_duration_scenario_rows()
+        seed_rows = load_peak_duration_seed_rows()
+        self.assertEqual(len(rows), 20)
+        self.assertEqual(len(seed_rows), 50)
+        self.assertEqual(
+            {
+                (
+                    int(row["security_capacity"]),
+                    int(row["immigration_capacity"]),
+                )
+                for row in rows
+            },
+            {(36, 21), (30, 18), (29, 17), (28, 16)},
+        )
+        self.assertEqual(
+            {int(row["arrival_cutoff_seconds"]) for row in rows},
+            {300, 900, 1800, 3600, 7200},
+        )
+        self.assertEqual(
+            {
+                int(row["arrival_cutoff_seconds"]): int(
+                    row["arrival_guard"]
+                )
+                for row in rows
+            },
+            {
+                300: 5000,
+                900: 5000,
+                1800: 5000,
+                3600: 5712,
+                7200: 10914,
+            },
+        )
+        _assert_exact_serial_batch(
+            self,
+            experiment=experiment,
+            experiment_id="1785162980001",
+            number_of_cells=20,
+            replications_per_cell=50,
+            timer_name="peak_duration_auto_start_timer",
+            timer_id="1785162980002",
+        )
+        _assert_full_parameter_mapping(
+            self,
+            experiment=experiment,
+            rows=rows,
+            seed_rows=seed_rows,
+            output_collection_id="peak_duration_sensitivity",
+            config_hash=scenario_config_sha256,
+        )
+
+        parameter_ids, _, _ = _operational_parameter_metadata()
+        freeform, _ = _experiment_parameter_values(experiment)
+        self.assertEqual(
+            _indexed_values(
+                freeform[parameter_ids["input_sample_id"]],
+                len(rows),
+            ),
+            ['"LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION"']
+            * len(rows),
+        )
+        before = experiment.findtext("BeforeSimulationRunCode", "")
+        for fragment in (
+            '"peak_duration_sensitivity".equals'
+            "( root.output_collection_id )",
+            "PeakDurationSensitivity received an unknown "
+            "scenario/input cell",
+            "PeakDurationSensitivity replication must be 1..50",
+            "getEngine().getDefaultRandomGenerator().setSeed"
+            "( root.arrival_seed );",
+        ):
+            with self.subTest(before_fragment=fragment):
+                self.assertIn(fragment, before)
+        self.assertEqual(
+            before.count('expectedConfigId = "OP_PEAK_DURATION_BASE_'),
+            20,
+        )
+        self.assertEqual(before.count("seedGroupMatched = true;"), 50)
+        self.assertNotIn("CapacityRobustnessConfirmatory", before)
+        for row in rows:
+            with self.subTest(duration_cell=row["scenario_id"]):
+                self.assertIn(f'"{row["scenario_id"]}"', before)
+                self.assertIn(
+                    f'"{scenario_config_sha256(row)}"',
+                    before,
+                )
+        for seed_row in seed_rows:
+            with self.subTest(duration_seed=seed_row["replication_id"]):
+                for seed_name in (
+                    "arrival_seed",
+                    "service_seed",
+                    "routing_seed",
+                    "tie_seed",
+                ):
+                    self.assertIn(
+                        f"root.{seed_name} = "
+                        f"{seed_row[seed_name]}L;",
+                        before,
+                    )
 
     def test_export_headers_match_the_registered_contract_exactly(self) -> None:
         after = _operational_experiment().findtext(

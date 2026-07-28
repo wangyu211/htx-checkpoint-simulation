@@ -116,8 +116,20 @@ traveller.traveller_id = String.format(
 traveller.input_sample_id = input_sample_id;
 traveller.replication_id = replication_id;
 traveller.arrival = arrivalTime;
-traveller.security_service_demand = security_service_p1_seconds;
-traveller.immigration_conventional_service_demand = immigration_service_p1_seconds;
+if ( security_service_rng == null || immigration_service_rng == null )
+	initializePrimaryServiceRandomStreams();
+traveller.security_service_demand = primaryServiceDemand(
+	security_service_distribution,
+	security_service_p1_seconds,
+	security_service_cv,
+	security_service_rng
+);
+traveller.immigration_conventional_service_demand = primaryServiceDemand(
+	immigration_service_distribution,
+	immigration_service_p1_seconds,
+	immigration_service_cv,
+	immigration_service_rng
+);
 if ( routing_rng == null ) routing_rng = new java.util.Random( routing_seed );
 if ( tie_rng == null ) tie_rng = new java.util.Random( tie_seed );
 traveller.automation_u = routing_rng.nextDouble();

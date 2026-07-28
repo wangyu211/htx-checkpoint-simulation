@@ -35,6 +35,10 @@ HPP_EMBEDDED_OBJECTS = HPP_MODEL / "EmbeddedObjects.xml"
 HPP_EVENTS = HPP_MODEL / "Code" / "Events.xml"
 HPP_EVENT_CODE = HPP_MODEL / "Code" / "Events.java"
 HPP_VARIABLES = HPP_MODEL / "Variables.xml"
+OPERATIONAL_MODEL = (
+    ALPX_ROOT / "_alp" / "Agents" / "OperationalCheckpointModel"
+)
+OPERATIONAL_VARIABLES = OPERATIONAL_MODEL / "Variables.xml"
 MODEL_RUN_CONFIGS = PROJECT_ROOT / "config" / "model_run_configs.csv"
 
 
@@ -147,6 +151,66 @@ def split_event_action_code(path: Path, event_id: str) -> str:
     return raw.split(start_marker, 1)[1].split(end_marker, 1)[0].decode(
         "utf-8"
     )
+
+
+def semantic_signature(
+    element: ET.Element,
+) -> tuple[
+    str,
+    tuple[tuple[str, str], ...],
+    str,
+    tuple[object, ...],
+]:
+    text = " ".join((element.text or "").split())
+    return (
+        element.tag,
+        tuple(sorted(element.attrib.items())),
+        text,
+        tuple(semantic_signature(child) for child in element),
+    )
+
+
+def named_parameter_variation(
+    root: ET.Element,
+    name: str,
+) -> ET.Element:
+    matches = [
+        experiment
+        for experiment in root.findall(".//ParamVariationExperiment")
+        if experiment.findtext("Name") == name
+    ]
+    if len(matches) != 1:
+        raise AssertionError(
+            f"Expected one {name} experiment, got {len(matches)}"
+        )
+    return matches[0]
+
+
+def operational_parameter_defaults(path: Path) -> dict[str, str]:
+    root = ET.parse(path).getroot()
+    return {
+        variable.findtext("Name", "").strip(): variable.findtext(
+            "Properties/DefaultValue/Code", ""
+        ).strip()
+        for variable in root.findall("Variable")
+        if variable.attrib.get("Class") == "Parameter"
+    }
+
+
+def single_file_operational_parameter_defaults() -> dict[str, str]:
+    root = ET.parse(ALP).getroot()
+    model = next(
+        item
+        for item in root.findall(".//ActiveObjectClass")
+        if item.findtext("Name") == "OperationalCheckpointModel"
+    )
+    return {
+        variable.findtext("Name", "").strip(): variable.findtext(
+            "Properties/DefaultValue/Code", ""
+        ).strip()
+        for variable in model.findall("Variables/Variable")
+        if variable.attrib.get("Class") == "Parameter"
+    }
 
 
 class AnyLogicProjectTests(unittest.TestCase):
@@ -561,6 +625,147 @@ class AnyLogicProjectTests(unittest.TestCase):
             semantic_signature(split),
             semantic_signature(single),
         )
+
+    def test_split_and_single_file_contain_new_sensitivity_batches(
+        self,
+    ) -> None:
+        split_root = ET.parse(EXPERIMENTS).getroot()
+        single_root = ET.parse(ALP).getroot()
+        contracts = (
+            (
+                "ServiceVariabilitySensitivity",
+                "1785162970001",
+                "1785162970002",
+                "service_variability_auto_start_timer",
+                "service_variability",
+                "9",
+            ),
+            (
+                "PeakDurationSensitivity",
+                "1785162980001",
+                "1785162980002",
+                "peak_duration_auto_start_timer",
+                "peak_duration_sensitivity",
+                "20",
+            ),
+        )
+        for (
+            name,
+            experiment_id,
+            timer_id,
+            timer_name,
+            output_collection,
+            number_of_runs,
+        ) in contracts:
+            split = named_parameter_variation(split_root, name)
+            single = named_parameter_variation(single_root, name)
+            for source, experiment in (
+                ("split", split),
+                ("single", single),
+            ):
+                with self.subTest(experiment=name, source=source):
+                    self.assertEqual(
+                        experiment.attrib["ActiveObjectClassId"],
+                        "1785162520364",
+                    )
+                    self.assertEqual(
+                        experiment.findtext("Id"),
+                        experiment_id,
+                    )
+                    self.assertEqual(
+                        experiment.findtext("AllowParallelEvaluations"),
+                        "false",
+                    )
+                    self.assertEqual(
+                        experiment.findtext("UseFreeformParameters"),
+                        "true",
+                    )
+                    self.assertEqual(
+                        experiment.findtext("NumberOfRuns"),
+                        number_of_runs,
+                    )
+                    self.assertEqual(
+                        experiment.findtext(
+                            "ModelTimeProperties/StopOption"
+                        ),
+                        "Never",
+                    )
+                    self.assertEqual(
+                        experiment.findtext(
+                            "ReplicationsProperties/UseReplication"
+                        ),
+                        "true",
+                    )
+                    self.assertEqual(
+                        experiment.findtext(
+                            "ReplicationsProperties/"
+                            "FixedReplicationsNumber"
+                        ),
+                        "true",
+                    )
+                    for field in (
+                        "ReplicationPerIteration",
+                        "MinimumReplication",
+                        "MaximumReplication",
+                    ):
+                        self.assertEqual(
+                            experiment.findtext(
+                                f"ReplicationsProperties/{field}"
+                            ),
+                            "50",
+                        )
+
+                    before = experiment.findtext(
+                        "BeforeSimulationRunCode",
+                        "",
+                    )
+                    self.assertIn(
+                        f'"{output_collection}".equals'
+                        "( root.output_collection_id )",
+                        before,
+                    )
+                    self.assertIn(
+                        f"{name} replication must be 1..50",
+                        before,
+                    )
+                    timers = [
+                        variable
+                        for variable in experiment.findall(
+                            "Variables/Variable"
+                        )
+                        if variable.findtext("Name") == timer_name
+                    ]
+                    self.assertEqual(len(timers), 1)
+                    self.assertEqual(timers[0].findtext("Id"), timer_id)
+                    timer_code = timers[0].findtext(
+                        "Properties/InitialValue/Code",
+                        "",
+                    )
+                    self.assertEqual(
+                        timer_code.count(f"{name}.this.run();"),
+                        1,
+                    )
+                    self.assertEqual(
+                        timer_code.count("setRepeats(false);"),
+                        1,
+                    )
+
+            self.assertEqual(
+                semantic_signature(split),
+                semantic_signature(single),
+            )
+
+    def test_operational_parameter_contract_is_identical_in_both_formats(
+        self,
+    ) -> None:
+        split_defaults = operational_parameter_defaults(
+            OPERATIONAL_VARIABLES
+        )
+        single_defaults = single_file_operational_parameter_defaults()
+        self.assertEqual(len(split_defaults), 44)
+        self.assertEqual(single_defaults, split_defaults)
+        self.assertEqual(split_defaults["security_service_cv"], "0.0")
+        self.assertEqual(split_defaults["immigration_service_cv"], "0.0")
 
     def test_two_stage_cutoff_uses_the_explicit_parameter_and_conserves_flow(
         self,

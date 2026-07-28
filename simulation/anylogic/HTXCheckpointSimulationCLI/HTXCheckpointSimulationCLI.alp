@@ -4568,7 +4568,71 @@ entity_rows.add(
 		<ActiveObjectClass>
 			<Id>1785162520364</Id>
 			<Name><![CDATA[OperationalCheckpointModel]]></Name>
-			<AdditionalClassCode><![CDATA[/* PRESENTATION_ONLY_BEGIN
+			<AdditionalClassCode><![CDATA[/* SERVICE_VARIABILITY_BEGIN
+		 * Independent service streams preserve the HPP arrival stream.  Positive-CV
+		 * arms use a mean-preserving lognormal sensitivity assumption; they are not
+		 * presented as a fitted site distribution.
+		 */
+		private void initializePrimaryServiceRandomStreams() {
+			security_service_rng = new java.util.Random(
+				service_seed ^ 0x13579BDF2468ACE1L
+			);
+			immigration_service_rng = new java.util.Random(
+				service_seed ^ 0x2468ACE113579BDFL
+			);
+		}
+
+		private double nextExplicitStandardNormal( java.util.Random rng ) {
+			if ( rng == null )
+				throw new IllegalStateException( "service RNG is not initialized" );
+			double u1 = rng.nextDouble();
+			while ( !( u1 > 0.0 ) ) u1 = rng.nextDouble();
+			double u2 = rng.nextDouble();
+			return Math.sqrt( -2.0 * Math.log( u1 ) )
+				* Math.cos( 2.0 * Math.PI * u2 );
+		}
+
+		private double primaryServiceDemand(
+			String distribution,
+			double meanSeconds,
+			double coefficientOfVariation,
+			java.util.Random rng
+		) {
+			if ( !( meanSeconds > 0.0 ) || !Double.isFinite( meanSeconds ) )
+				throw new IllegalArgumentException(
+					"primary service mean must be positive and finite"
+				);
+			if ( "FIXED".equals( distribution ) ) {
+				if ( coefficientOfVariation != 0.0 )
+					throw new IllegalArgumentException(
+						"FIXED primary service requires CV=0"
+					);
+				return meanSeconds;
+			}
+			if ( !"LOGNORMAL_MEAN_CV".equals( distribution )
+				|| !( coefficientOfVariation > 0.0 )
+				|| coefficientOfVariation > 2.0
+				|| !Double.isFinite( coefficientOfVariation ) )
+				throw new IllegalArgumentException(
+					"LOGNORMAL_MEAN_CV requires finite 0<CV<=2"
+				);
+			double sigmaSquared = Math.log(
+				1.0 + coefficientOfVariation * coefficientOfVariation
+			);
+			double sigma = Math.sqrt( sigmaSquared );
+			double latentZ = nextExplicitStandardNormal( rng );
+			double demand = meanSeconds * Math.exp(
+				-0.5 * sigmaSquared + sigma * latentZ
+			);
+			if ( !( demand > 0.0 ) || !Double.isFinite( demand ) )
+				throw new IllegalStateException(
+					"sampled primary service demand is not positive and finite"
+				);
+			return demand;
+		}
+		/* SERVICE_VARIABILITY_END */
+
+		/* PRESENTATION_ONLY_BEGIN
 		 * Deterministic DES-state animation.  These methods only relocate the
 		 * presentation of agents already held by the Process Modeling Library.
 		 * They do not add model time, events, random draws, or process blocks.
@@ -5364,6 +5428,44 @@ entity_rows.add(
 				<Name><![CDATA[tie_rng]]></Name>
 				<X>560</X>
 				<Y>460</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>false</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<Properties SaveInSnapshot="true"
+		              Constant="false"
+		              AccessType="public"
+		              StaticVariable="false">
+					<Type><![CDATA[java.util.Random]]></Type>
+					<InitialValue Class="CodeValue">
+						<Code><![CDATA[null]]></Code>
+					</InitialValue>
+				</Properties>
+			</Variable>
+			<Variable Class="PlainVariable">
+				<Id>1785163100351</Id>
+				<Name><![CDATA[security_service_rng]]></Name>
+				<X>560</X>
+				<Y>490</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>false</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<Properties SaveInSnapshot="true"
+		              Constant="false"
+		              AccessType="public"
+		              StaticVariable="false">
+					<Type><![CDATA[java.util.Random]]></Type>
+					<InitialValue Class="CodeValue">
+						<Code><![CDATA[null]]></Code>
+					</InitialValue>
+				</Properties>
+			</Variable>
+			<Variable Class="PlainVariable">
+				<Id>1785163100361</Id>
+				<Name><![CDATA[immigration_service_rng]]></Name>
+				<X>820</X>
+				<Y>160</Y>
 				<Label><X>10</X><Y>0</Y></Label>
 				<PublicFlag>false</PublicFlag>
 				<PresentationFlag>false</PresentationFlag>
@@ -6428,6 +6530,56 @@ entity_rows.add(
 					</ParameterEditor>
 				</Properties>
 			</Variable>
+			<Variable Class="Parameter">
+				<Id>1785163110421</Id>
+				<Name><![CDATA[security_service_cv]]></Name>
+				<X>820</X>
+				<Y>720</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>false</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<Properties SaveInSnapshot="true" ModificatorType="STATIC">
+					<Type><![CDATA[double]]></Type>
+					<UnitType>NONE</UnitType>
+					<SdArray>false</SdArray>
+					<DefaultValue Class="CodeValue">
+						<Code><![CDATA[0.0]]></Code>
+					</DefaultValue>
+					<ParameterEditor>
+						<Id>1785163110422</Id>
+						<EditorContolType>TEXT_BOX</EditorContolType>
+						<MinSliderValue>0</MinSliderValue>
+						<MaxSliderValue>5000</MaxSliderValue>
+						<DelimeterType>NO_DELIMETER</DelimeterType>
+					</ParameterEditor>
+				</Properties>
+			</Variable>
+			<Variable Class="Parameter">
+				<Id>1785163110431</Id>
+				<Name><![CDATA[immigration_service_cv]]></Name>
+				<X>820</X>
+				<Y>750</Y>
+				<Label><X>10</X><Y>0</Y></Label>
+				<PublicFlag>false</PublicFlag>
+				<PresentationFlag>false</PresentationFlag>
+				<ShowLabel>false</ShowLabel>
+				<Properties SaveInSnapshot="true" ModificatorType="STATIC">
+					<Type><![CDATA[double]]></Type>
+					<UnitType>NONE</UnitType>
+					<SdArray>false</SdArray>
+					<DefaultValue Class="CodeValue">
+						<Code><![CDATA[0.0]]></Code>
+					</DefaultValue>
+					<ParameterEditor>
+						<Id>1785163110432</Id>
+						<EditorContolType>TEXT_BOX</EditorContolType>
+						<MinSliderValue>0</MinSliderValue>
+						<MaxSliderValue>5000</MaxSliderValue>
+						<DelimeterType>NO_DELIMETER</DelimeterType>
+					</ParameterEditor>
+				</Properties>
+			</Variable>
 		</Variables>
 		<Connectors>
 			<Connector>
@@ -6738,8 +6890,20 @@ entity_rows.add(
 		traveller.input_sample_id = input_sample_id;
 		traveller.replication_id = replication_id;
 		traveller.arrival = arrivalTime;
-		traveller.security_service_demand = security_service_p1_seconds;
-		traveller.immigration_conventional_service_demand = immigration_service_p1_seconds;
+		if ( security_service_rng == null || immigration_service_rng == null )
+			initializePrimaryServiceRandomStreams();
+		traveller.security_service_demand = primaryServiceDemand(
+			security_service_distribution,
+			security_service_p1_seconds,
+			security_service_cv,
+			security_service_rng
+		);
+		traveller.immigration_conventional_service_demand = primaryServiceDemand(
+			immigration_service_distribution,
+			immigration_service_p1_seconds,
+			immigration_service_cv,
+			immigration_service_rng
+		);
 		if ( routing_rng == null ) routing_rng = new java.util.Random( routing_seed );
 		if ( tie_rng == null ) tie_rng = new java.util.Random( tie_seed );
 		traveller.automation_u = routing_rng.nextDouble();
@@ -12540,12 +12704,35 @@ entity_rows.add(
 		throw new IllegalArgumentException( "resource capacities must be positive" );
 	if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
 		throw new IllegalArgumentException( "queue capacities must be positive" );
-	if ( !"FIXED".equals( root.security_service_distribution )
-		|| !"FIXED".equals( root.immigration_service_distribution ) )
-		throw new IllegalArgumentException( "v1 supports FIXED primary service only" );
 	if ( !( root.security_service_p1_seconds &gt; 0.0 )
 		|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
 		throw new IllegalArgumentException( "primary service demands must be positive" );
+	boolean securityServiceContractValid =
+		( "FIXED".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv &gt; 0.0
+			&amp;&amp; root.security_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.security_service_cv ) );
+	boolean immigrationServiceContractValid =
+		( "FIXED".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv &gt; 0.0
+			&amp;&amp; root.immigration_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.immigration_service_cv ) );
+	if ( !securityServiceContractValid || !immigrationServiceContractValid )
+		throw new IllegalArgumentException(
+			"primary service distribution/CV contract is invalid"
+		);
+	if ( "TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+		&amp;&amp; ( !"FIXED".equals( root.security_service_distribution )
+			|| !"FIXED".equals( root.immigration_service_distribution )
+			|| root.security_service_cv != 0.0
+			|| root.immigration_service_cv != 0.0 ) )
+		throw new IllegalArgumentException(
+			"TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED service and CV=0"
+		);
 	if ( !"pooled".equals( root.queue_policy ) )
 		throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
 	if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
@@ -12890,12 +13077,35 @@ entity_rows.add(
 		throw new IllegalArgumentException( "resource capacities must be positive" );
 	if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
 		throw new IllegalArgumentException( "queue capacities must be positive" );
-	if ( !"FIXED".equals( root.security_service_distribution )
-		|| !"FIXED".equals( root.immigration_service_distribution ) )
-		throw new IllegalArgumentException( "v1 supports FIXED primary service only" );
 	if ( !( root.security_service_p1_seconds &gt; 0.0 )
 		|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
 		throw new IllegalArgumentException( "primary service demands must be positive" );
+	boolean securityServiceContractValid =
+		( "FIXED".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv &gt; 0.0
+			&amp;&amp; root.security_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.security_service_cv ) );
+	boolean immigrationServiceContractValid =
+		( "FIXED".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv &gt; 0.0
+			&amp;&amp; root.immigration_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.immigration_service_cv ) );
+	if ( !securityServiceContractValid || !immigrationServiceContractValid )
+		throw new IllegalArgumentException(
+			"primary service distribution/CV contract is invalid"
+		);
+	if ( "TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+		&amp;&amp; ( !"FIXED".equals( root.security_service_distribution )
+			|| !"FIXED".equals( root.immigration_service_distribution )
+			|| root.security_service_cv != 0.0
+			|| root.immigration_service_cv != 0.0 ) )
+		throw new IllegalArgumentException(
+			"TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED service and CV=0"
+		);
 	if ( !"pooled".equals( root.queue_policy ) )
 		throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
 	if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
@@ -13717,6 +13927,18 @@ entity_rows.add(
 					<Code><![CDATA[2026072804L]]></Code>
 				</Expression>
 			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110421</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110431</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
 			<RangeVariationParamValue>
 				<Id>1785163110001</Id>
 				<Type><![CDATA[FIXED]]></Type>
@@ -13883,6 +14105,14 @@ entity_rows.add(
 			</RangeVariationParamValue>
 			<RangeVariationParamValue>
 				<Id>1785163110411</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110421</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110431</Id>
 				<Type><![CDATA[FIXED]]></Type>
 			</RangeVariationParamValue>
 			<ModelTimeProperties>
@@ -14403,12 +14633,35 @@ entity_rows.add(
 		throw new IllegalArgumentException( "resource capacities must be positive" );
 	if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
 		throw new IllegalArgumentException( "queue capacities must be positive" );
-	if ( !"FIXED".equals( root.security_service_distribution )
-		|| !"FIXED".equals( root.immigration_service_distribution ) )
-		throw new IllegalArgumentException( "v1 supports FIXED primary service only" );
 	if ( !( root.security_service_p1_seconds &gt; 0.0 )
 		|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
 		throw new IllegalArgumentException( "primary service demands must be positive" );
+	boolean securityServiceContractValid =
+		( "FIXED".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv &gt; 0.0
+			&amp;&amp; root.security_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.security_service_cv ) );
+	boolean immigrationServiceContractValid =
+		( "FIXED".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv &gt; 0.0
+			&amp;&amp; root.immigration_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.immigration_service_cv ) );
+	if ( !securityServiceContractValid || !immigrationServiceContractValid )
+		throw new IllegalArgumentException(
+			"primary service distribution/CV contract is invalid"
+		);
+	if ( "TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+		&amp;&amp; ( !"FIXED".equals( root.security_service_distribution )
+			|| !"FIXED".equals( root.immigration_service_distribution )
+			|| root.security_service_cv != 0.0
+			|| root.immigration_service_cv != 0.0 ) )
+		throw new IllegalArgumentException(
+			"TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED service and CV=0"
+		);
 	if ( !"pooled".equals( root.queue_policy ) )
 		throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
 	if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
@@ -16317,6 +16570,18 @@ entity_rows.add(
 		: 202610290014L]]></Code>
 				</Expression>
 			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110421</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110431</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
 			<RangeVariationParamValue>
 				<Id>1785163110001</Id>
 				<Type><![CDATA[FIXED]]></Type>
@@ -16485,6 +16750,14 @@ entity_rows.add(
 				<Id>1785163110411</Id>
 				<Type><![CDATA[FIXED]]></Type>
 			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110421</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110431</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
 			<ModelTimeProperties>
 				<StopOption>Never</StopOption>
 				<InitialDate>1785024000000</InitialDate>
@@ -16537,12 +16810,35 @@ entity_rows.add(
 		throw new IllegalArgumentException( "resource capacities must be positive" );
 	if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
 		throw new IllegalArgumentException( "queue capacities must be positive" );
-	if ( !"FIXED".equals( root.security_service_distribution )
-		|| !"FIXED".equals( root.immigration_service_distribution ) )
-		throw new IllegalArgumentException( "v1 supports FIXED primary service only" );
 	if ( !( root.security_service_p1_seconds &gt; 0.0 )
 		|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
 		throw new IllegalArgumentException( "primary service demands must be positive" );
+	boolean securityServiceContractValid =
+		( "FIXED".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv &gt; 0.0
+			&amp;&amp; root.security_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.security_service_cv ) );
+	boolean immigrationServiceContractValid =
+		( "FIXED".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv &gt; 0.0
+			&amp;&amp; root.immigration_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.immigration_service_cv ) );
+	if ( !securityServiceContractValid || !immigrationServiceContractValid )
+		throw new IllegalArgumentException(
+			"primary service distribution/CV contract is invalid"
+		);
+	if ( "TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+		&amp;&amp; ( !"FIXED".equals( root.security_service_distribution )
+			|| !"FIXED".equals( root.immigration_service_distribution )
+			|| root.security_service_cv != 0.0
+			|| root.immigration_service_cv != 0.0 ) )
+		throw new IllegalArgumentException(
+			"TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED service and CV=0"
+		);
 	if ( !"pooled".equals( root.queue_policy ) )
 		throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
 	if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
@@ -18440,6 +18736,18 @@ entity_rows.add(
 		: 202610290014L]]></Code>
 				</Expression>
 			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110421</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110431</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
 			<RangeVariationParamValue>
 				<Id>1785163110001</Id>
 				<Type><![CDATA[FIXED]]></Type>
@@ -18608,6 +18916,14 @@ entity_rows.add(
 				<Id>1785163110411</Id>
 				<Type><![CDATA[FIXED]]></Type>
 			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110421</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110431</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
 			<ModelTimeProperties>
 				<StopOption>Never</StopOption>
 				<InitialDate>1785024000000</InitialDate>
@@ -18660,12 +18976,35 @@ entity_rows.add(
 		throw new IllegalArgumentException( "resource capacities must be positive" );
 	if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
 		throw new IllegalArgumentException( "queue capacities must be positive" );
-	if ( !"FIXED".equals( root.security_service_distribution )
-		|| !"FIXED".equals( root.immigration_service_distribution ) )
-		throw new IllegalArgumentException( "v1 supports FIXED primary service only" );
 	if ( !( root.security_service_p1_seconds &gt; 0.0 )
 		|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
 		throw new IllegalArgumentException( "primary service demands must be positive" );
+	boolean securityServiceContractValid =
+		( "FIXED".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv &gt; 0.0
+			&amp;&amp; root.security_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.security_service_cv ) );
+	boolean immigrationServiceContractValid =
+		( "FIXED".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv &gt; 0.0
+			&amp;&amp; root.immigration_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.immigration_service_cv ) );
+	if ( !securityServiceContractValid || !immigrationServiceContractValid )
+		throw new IllegalArgumentException(
+			"primary service distribution/CV contract is invalid"
+		);
+	if ( "TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+		&amp;&amp; ( !"FIXED".equals( root.security_service_distribution )
+			|| !"FIXED".equals( root.immigration_service_distribution )
+			|| root.security_service_cv != 0.0
+			|| root.immigration_service_cv != 0.0 ) )
+		throw new IllegalArgumentException(
+			"TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED service and CV=0"
+		);
 	if ( !"pooled".equals( root.queue_policy ) )
 		throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
 	if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
@@ -20117,6 +20456,18 @@ entity_rows.add(
 					<Code><![CDATA[202609290014L]]></Code>
 				</Expression>
 			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110421</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110431</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
 			<RangeVariationParamValue>
 				<Id>1785163110001</Id>
 				<Type><![CDATA[FIXED]]></Type>
@@ -20285,6 +20636,14 @@ entity_rows.add(
 				<Id>1785163110411</Id>
 				<Type><![CDATA[FIXED]]></Type>
 			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110421</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110431</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
 			<ModelTimeProperties>
 				<StopOption>Never</StopOption>
 				<InitialDate>1785024000000</InitialDate>
@@ -20295,6 +20654,2750 @@ entity_rows.add(
 			<PresentationProperties>
 				<EnableZoomAndPanning>true</EnableZoomAndPanning>
 				<Title>HTXCheckpointSimulation : CapacityResponseSurfaceExploratory</Title>
+				<EnableDeveloperPanel>true</EnableDeveloperPanel>
+				<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+			</PresentationProperties>
+			<ReplicationsProperties>
+				<UseReplication>true</UseReplication>
+				<FixedReplicationsNumber>true</FixedReplicationsNumber>
+				<ReplicationPerIteration>50</ReplicationPerIteration>
+				<MinimumReplication>50</MinimumReplication>
+				<MaximumReplication>50</MaximumReplication>
+				<ConfidenceLevel>LEVEL_95</ConfidenceLevel>
+				<ErrorPercent>0.05</ErrorPercent>
+				<ExpressionForConfidenceComputation>0</ExpressionForConfidenceComputation>
+			</ReplicationsProperties>
+		</ParamVariationExperiment>
+		<ParamVariationExperiment ActiveObjectClassId="1785162520364">
+			<Id>1785162970001</Id>
+			<Name><![CDATA[ServiceVariabilitySensitivity]]></Name>
+			<CommandLineArguments/>
+			<MaximumMemory>512</MaximumMemory>
+			<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+			<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+			<BeforeSimulationRunCode>root.presentation_animation_enabled = false;
+	if ( !"1.0".equals( root.schema_version ) )
+		throw new IllegalArgumentException( "schema_version must be 1.0" );
+	if ( !root.config_sha256.matches( "[0-9a-f]{64}" ) )
+		throw new IllegalArgumentException( "config_sha256 must be 64 lowercase hex characters" );
+	if ( !root.output_collection_id.matches( "[a-z0-9_]+" ) )
+		throw new IllegalArgumentException( "output_collection_id is unsafe" );
+	if ( !"HPP".equals( root.arrival_mode ) )
+		throw new IllegalArgumentException( "arrival_mode must be HPP" );
+	if ( !( root.arrival_rate_per_second &gt; 0.0 ) || !( root.demand_multiplier &gt; 0.0 ) )
+		throw new IllegalArgumentException( "arrival rate and demand multiplier must be positive" );
+	if ( !( root.arrival_cutoff_seconds &gt; 0.0 ) || root.arrival_guard &lt;= 1 )
+		throw new IllegalArgumentException( "arrival cutoff and guard are invalid" );
+	if ( root.arrival_rate_per_second * root.demand_multiplier * root.arrival_cutoff_seconds &gt;= root.arrival_guard )
+		throw new IllegalArgumentException( "arrival_guard must exceed expected arrivals" );
+	if ( !"FULL_DRAIN".equals( root.drain_rule ) )
+		throw new IllegalArgumentException( "drain_rule must be FULL_DRAIN" );
+	if ( root.security_capacity &lt;= 0 || root.immigration_capacity &lt;= 0 )
+		throw new IllegalArgumentException( "resource capacities must be positive" );
+	if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
+		throw new IllegalArgumentException( "queue capacities must be positive" );
+	if ( !( root.security_service_p1_seconds &gt; 0.0 )
+		|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
+		throw new IllegalArgumentException( "primary service demands must be positive" );
+	boolean securityServiceContractValid =
+		( "FIXED".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv &gt; 0.0
+			&amp;&amp; root.security_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.security_service_cv ) );
+	boolean immigrationServiceContractValid =
+		( "FIXED".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv &gt; 0.0
+			&amp;&amp; root.immigration_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.immigration_service_cv ) );
+	if ( !securityServiceContractValid || !immigrationServiceContractValid )
+		throw new IllegalArgumentException(
+			"primary service distribution/CV contract is invalid"
+		);
+	if ( "TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+		&amp;&amp; ( !"FIXED".equals( root.security_service_distribution )
+			|| !"FIXED".equals( root.immigration_service_distribution )
+			|| root.security_service_cv != 0.0
+			|| root.immigration_service_cv != 0.0 ) )
+		throw new IllegalArgumentException(
+			"TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED service and CV=0"
+		);
+	if ( !"pooled".equals( root.queue_policy ) )
+		throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
+	if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
+		if ( root.automation_uptake != 0.0 || root.automation_multiplier != 1.0 )
+			throw new IllegalArgumentException( "DISABLED automation requires uptake=0 and multiplier=1" );
+	} else if ( "MULTIPLIER".equals( root.automation_mapping_mode ) ) {
+		if ( !( root.automation_uptake &gt; 0.0 &amp;&amp; root.automation_uptake &lt;= 1.0 )
+			|| !( root.automation_multiplier &gt; 0.0 &amp;&amp; root.automation_multiplier &lt; 1.0 ) )
+			throw new IllegalArgumentException( "automation inputs are outside their domains" );
+	} else {
+		throw new IllegalArgumentException( "unknown automation_mapping_mode" );
+	}
+	if ( "NONE".equals( root.additional_check_semantics ) ) {
+		if ( root.additional_check_probability_conventional != 0.0
+			|| root.additional_check_probability_technology != 0.0
+			|| !"UNSET".equals( root.additional_check_service_distribution )
+			|| root.additional_check_service_p1_seconds != 0.0 )
+			throw new IllegalArgumentException( "NONE additional-check contract violated" );
+	} else if ( "COUNTER_HELD_RISK_REFERRAL_PROXY".equals( root.additional_check_semantics ) ) {
+		if ( !"FIXED".equals( root.additional_check_service_distribution )
+			|| root.additional_check_probability_conventional &lt; 0.0
+			|| root.additional_check_probability_conventional &gt; 1.0
+			|| root.additional_check_probability_technology &lt; 0.0
+			|| root.additional_check_probability_technology &gt; 1.0
+			|| !( root.additional_check_service_p1_seconds &gt; 0.0 ) )
+			throw new IllegalArgumentException( "risk-proxy inputs are invalid" );
+	} else {
+		throw new IllegalArgumentException( "unknown additional_check_semantics" );
+	}
+	if ( !"EMPTY_AND_IDLE".equals( root.start_state )
+		|| !"NOT_CALIBRATED".equals( root.calibration_status )
+		|| !"COMPARATIVE_WHAT_IF_ONLY".equals( root.claim_ceiling )
+		|| !( "NOT_TESTED".equals( root.crn_alignment_status )
+			|| "PENDING_VALIDATION".equals( root.crn_alignment_status ) ) )
+		throw new IllegalArgumentException( "claim-boundary fields were weakened" );
+	if ( !"TASK3_OPERATIONAL_POOLED_SERVICE_VARIABILITY_V1".equals( root.model_version ) )
+		throw new IllegalArgumentException(
+			"ServiceVariabilitySensitivity model_version mismatch"
+		);
+	if ( !"service_variability".equals( root.output_collection_id ) )
+		throw new IllegalArgumentException(
+			"ServiceVariabilitySensitivity output collection mismatch"
+		);
+	if ( root.master_seed != 202607290000L )
+		throw new IllegalArgumentException(
+			"ServiceVariabilitySensitivity master seed mismatch"
+		);
+	String expectedConfigId = null;
+	String expectedConfigHash = null;
+	if ( "SERVICE_VARIABILITY_SCV000_ICV000".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV000_ICV000";
+		expectedConfigHash = "be74beb301453572eb4b8b9417ed945f20d0b200bff7755ce6dd3e66a4a4e13a";
+	}
+	else if ( "SERVICE_VARIABILITY_SCV000_ICV050".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV000_ICV050";
+		expectedConfigHash = "fd37b40406df63f0ce0fc55e5c2df2a3f16016661be5ccc013c8ed063694ce07";
+	}
+	else if ( "SERVICE_VARIABILITY_SCV000_ICV100".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV000_ICV100";
+		expectedConfigHash = "de9a50bbb1efcb3c02afa0f609209384c42f3c64965224fe8bc223d9458f3052";
+	}
+	else if ( "SERVICE_VARIABILITY_SCV050_ICV000".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV050_ICV000";
+		expectedConfigHash = "e41dd9758e9e79b90aaa6a8e98aba74cac846c196739fe2b5e6b0c7fe13ebfd1";
+	}
+	else if ( "SERVICE_VARIABILITY_SCV050_ICV050".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV050_ICV050";
+		expectedConfigHash = "64e95390280cccba351d713b2071316ad8ce43762a0dafa60ff74d6c1268475b";
+	}
+	else if ( "SERVICE_VARIABILITY_SCV050_ICV100".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV050_ICV100";
+		expectedConfigHash = "16cd99b7ae2d4306df327b0182519efcc972ad5612d8f4b79c7ca7e21528adbf";
+	}
+	else if ( "SERVICE_VARIABILITY_SCV100_ICV000".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV100_ICV000";
+		expectedConfigHash = "f423da5c1b63bf87c5ab9c0398fcb51990eefe46ea9ad6c3cf095d7844191f57";
+	}
+	else if ( "SERVICE_VARIABILITY_SCV100_ICV050".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV100_ICV050";
+		expectedConfigHash = "61be8a09a4ad7a085ccead92803b979a0ec624d68513ef39a295a6c8c5ec19c8";
+	}
+	else if ( "SERVICE_VARIABILITY_SCV100_ICV100".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_SERVICE_VARIABILITY_SCV100_ICV100";
+		expectedConfigHash = "bf628790c4562d0fd696c01ee667edcbb8fd69627a96f7ce2652164835981320";
+	}
+	if ( expectedConfigId == null || expectedConfigHash == null )
+		throw new IllegalArgumentException(
+			"ServiceVariabilitySensitivity received an unknown scenario/input cell"
+		);
+	if ( !expectedConfigId.equals( root.config_id )
+		|| !expectedConfigHash.equals( root.config_sha256 ) )
+		throw new IllegalArgumentException(
+			"ServiceVariabilitySensitivity lineage mismatch for "
+			+ root.scenario_id + "/" + root.input_sample_id
+		);
+	int replication = getCurrentReplication();
+	if ( replication &lt; 1 || replication &gt; 50 )
+		throw new IllegalArgumentException(
+			"ServiceVariabilitySensitivity replication must be 1..50"
+		);
+	root.replication_id = replication;
+	boolean seedGroupMatched = false;
+	if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 1 ) {
+		root.arrival_seed = 202609290011L;
+		root.service_seed = 202609290012L;
+		root.routing_seed = 202609290013L;
+		root.tie_seed = 202609290014L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 2 ) {
+		root.arrival_seed = 202609290021L;
+		root.service_seed = 202609290022L;
+		root.routing_seed = 202609290023L;
+		root.tie_seed = 202609290024L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 3 ) {
+		root.arrival_seed = 202609290031L;
+		root.service_seed = 202609290032L;
+		root.routing_seed = 202609290033L;
+		root.tie_seed = 202609290034L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 4 ) {
+		root.arrival_seed = 202609290041L;
+		root.service_seed = 202609290042L;
+		root.routing_seed = 202609290043L;
+		root.tie_seed = 202609290044L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 5 ) {
+		root.arrival_seed = 202609290051L;
+		root.service_seed = 202609290052L;
+		root.routing_seed = 202609290053L;
+		root.tie_seed = 202609290054L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 6 ) {
+		root.arrival_seed = 202609290061L;
+		root.service_seed = 202609290062L;
+		root.routing_seed = 202609290063L;
+		root.tie_seed = 202609290064L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 7 ) {
+		root.arrival_seed = 202609290071L;
+		root.service_seed = 202609290072L;
+		root.routing_seed = 202609290073L;
+		root.tie_seed = 202609290074L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 8 ) {
+		root.arrival_seed = 202609290081L;
+		root.service_seed = 202609290082L;
+		root.routing_seed = 202609290083L;
+		root.tie_seed = 202609290084L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 9 ) {
+		root.arrival_seed = 202609290091L;
+		root.service_seed = 202609290092L;
+		root.routing_seed = 202609290093L;
+		root.tie_seed = 202609290094L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 10 ) {
+		root.arrival_seed = 202609290101L;
+		root.service_seed = 202609290102L;
+		root.routing_seed = 202609290103L;
+		root.tie_seed = 202609290104L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 11 ) {
+		root.arrival_seed = 202609290111L;
+		root.service_seed = 202609290112L;
+		root.routing_seed = 202609290113L;
+		root.tie_seed = 202609290114L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 12 ) {
+		root.arrival_seed = 202609290121L;
+		root.service_seed = 202609290122L;
+		root.routing_seed = 202609290123L;
+		root.tie_seed = 202609290124L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 13 ) {
+		root.arrival_seed = 202609290131L;
+		root.service_seed = 202609290132L;
+		root.routing_seed = 202609290133L;
+		root.tie_seed = 202609290134L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 14 ) {
+		root.arrival_seed = 202609290141L;
+		root.service_seed = 202609290142L;
+		root.routing_seed = 202609290143L;
+		root.tie_seed = 202609290144L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 15 ) {
+		root.arrival_seed = 202609290151L;
+		root.service_seed = 202609290152L;
+		root.routing_seed = 202609290153L;
+		root.tie_seed = 202609290154L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 16 ) {
+		root.arrival_seed = 202609290161L;
+		root.service_seed = 202609290162L;
+		root.routing_seed = 202609290163L;
+		root.tie_seed = 202609290164L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 17 ) {
+		root.arrival_seed = 202609290171L;
+		root.service_seed = 202609290172L;
+		root.routing_seed = 202609290173L;
+		root.tie_seed = 202609290174L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 18 ) {
+		root.arrival_seed = 202609290181L;
+		root.service_seed = 202609290182L;
+		root.routing_seed = 202609290183L;
+		root.tie_seed = 202609290184L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 19 ) {
+		root.arrival_seed = 202609290191L;
+		root.service_seed = 202609290192L;
+		root.routing_seed = 202609290193L;
+		root.tie_seed = 202609290194L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 20 ) {
+		root.arrival_seed = 202609290201L;
+		root.service_seed = 202609290202L;
+		root.routing_seed = 202609290203L;
+		root.tie_seed = 202609290204L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 21 ) {
+		root.arrival_seed = 202609290211L;
+		root.service_seed = 202609290212L;
+		root.routing_seed = 202609290213L;
+		root.tie_seed = 202609290214L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 22 ) {
+		root.arrival_seed = 202609290221L;
+		root.service_seed = 202609290222L;
+		root.routing_seed = 202609290223L;
+		root.tie_seed = 202609290224L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 23 ) {
+		root.arrival_seed = 202609290231L;
+		root.service_seed = 202609290232L;
+		root.routing_seed = 202609290233L;
+		root.tie_seed = 202609290234L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 24 ) {
+		root.arrival_seed = 202609290241L;
+		root.service_seed = 202609290242L;
+		root.routing_seed = 202609290243L;
+		root.tie_seed = 202609290244L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 25 ) {
+		root.arrival_seed = 202609290251L;
+		root.service_seed = 202609290252L;
+		root.routing_seed = 202609290253L;
+		root.tie_seed = 202609290254L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 26 ) {
+		root.arrival_seed = 202609290261L;
+		root.service_seed = 202609290262L;
+		root.routing_seed = 202609290263L;
+		root.tie_seed = 202609290264L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 27 ) {
+		root.arrival_seed = 202609290271L;
+		root.service_seed = 202609290272L;
+		root.routing_seed = 202609290273L;
+		root.tie_seed = 202609290274L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 28 ) {
+		root.arrival_seed = 202609290281L;
+		root.service_seed = 202609290282L;
+		root.routing_seed = 202609290283L;
+		root.tie_seed = 202609290284L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 29 ) {
+		root.arrival_seed = 202609290291L;
+		root.service_seed = 202609290292L;
+		root.routing_seed = 202609290293L;
+		root.tie_seed = 202609290294L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 30 ) {
+		root.arrival_seed = 202609290301L;
+		root.service_seed = 202609290302L;
+		root.routing_seed = 202609290303L;
+		root.tie_seed = 202609290304L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 31 ) {
+		root.arrival_seed = 202609290311L;
+		root.service_seed = 202609290312L;
+		root.routing_seed = 202609290313L;
+		root.tie_seed = 202609290314L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 32 ) {
+		root.arrival_seed = 202609290321L;
+		root.service_seed = 202609290322L;
+		root.routing_seed = 202609290323L;
+		root.tie_seed = 202609290324L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 33 ) {
+		root.arrival_seed = 202609290331L;
+		root.service_seed = 202609290332L;
+		root.routing_seed = 202609290333L;
+		root.tie_seed = 202609290334L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 34 ) {
+		root.arrival_seed = 202609290341L;
+		root.service_seed = 202609290342L;
+		root.routing_seed = 202609290343L;
+		root.tie_seed = 202609290344L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 35 ) {
+		root.arrival_seed = 202609290351L;
+		root.service_seed = 202609290352L;
+		root.routing_seed = 202609290353L;
+		root.tie_seed = 202609290354L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 36 ) {
+		root.arrival_seed = 202609290361L;
+		root.service_seed = 202609290362L;
+		root.routing_seed = 202609290363L;
+		root.tie_seed = 202609290364L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 37 ) {
+		root.arrival_seed = 202609290371L;
+		root.service_seed = 202609290372L;
+		root.routing_seed = 202609290373L;
+		root.tie_seed = 202609290374L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 38 ) {
+		root.arrival_seed = 202609290381L;
+		root.service_seed = 202609290382L;
+		root.routing_seed = 202609290383L;
+		root.tie_seed = 202609290384L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 39 ) {
+		root.arrival_seed = 202609290391L;
+		root.service_seed = 202609290392L;
+		root.routing_seed = 202609290393L;
+		root.tie_seed = 202609290394L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 40 ) {
+		root.arrival_seed = 202609290401L;
+		root.service_seed = 202609290402L;
+		root.routing_seed = 202609290403L;
+		root.tie_seed = 202609290404L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 41 ) {
+		root.arrival_seed = 202609290411L;
+		root.service_seed = 202609290412L;
+		root.routing_seed = 202609290413L;
+		root.tie_seed = 202609290414L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 42 ) {
+		root.arrival_seed = 202609290421L;
+		root.service_seed = 202609290422L;
+		root.routing_seed = 202609290423L;
+		root.tie_seed = 202609290424L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 43 ) {
+		root.arrival_seed = 202609290431L;
+		root.service_seed = 202609290432L;
+		root.routing_seed = 202609290433L;
+		root.tie_seed = 202609290434L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 44 ) {
+		root.arrival_seed = 202609290441L;
+		root.service_seed = 202609290442L;
+		root.routing_seed = 202609290443L;
+		root.tie_seed = 202609290444L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 45 ) {
+		root.arrival_seed = 202609290451L;
+		root.service_seed = 202609290452L;
+		root.routing_seed = 202609290453L;
+		root.tie_seed = 202609290454L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 46 ) {
+		root.arrival_seed = 202609290461L;
+		root.service_seed = 202609290462L;
+		root.routing_seed = 202609290463L;
+		root.tie_seed = 202609290464L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 47 ) {
+		root.arrival_seed = 202609290471L;
+		root.service_seed = 202609290472L;
+		root.routing_seed = 202609290473L;
+		root.tie_seed = 202609290474L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 48 ) {
+		root.arrival_seed = 202609290481L;
+		root.service_seed = 202609290482L;
+		root.routing_seed = 202609290483L;
+		root.tie_seed = 202609290484L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 49 ) {
+		root.arrival_seed = 202609290491L;
+		root.service_seed = 202609290492L;
+		root.routing_seed = 202609290493L;
+		root.tie_seed = 202609290494L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE".equals( root.input_sample_id )
+		&amp;&amp; replication == 50 ) {
+		root.arrival_seed = 202609290501L;
+		root.service_seed = 202609290502L;
+		root.routing_seed = 202609290503L;
+		root.tie_seed = 202609290504L;
+		seedGroupMatched = true;
+	}
+	if ( !seedGroupMatched )
+		throw new IllegalArgumentException(
+			"ServiceVariabilitySensitivity seed group is not frozen"
+		);
+	root.security_service_rng = null;
+	root.immigration_service_rng = null;
+	getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );</BeforeSimulationRunCode>
+			<AfterSimulationRunCode>if ( !"COMPLETE".equals( root.run_status ) )
+		throw new IllegalStateException( "operational run did not reach COMPLETE" );
+	if ( root.guard_hit || root.rejected_or_dropped_count != 0 )
+		throw new IllegalStateException( "guard, rejection, or drop detected" );
+	if ( root.admitted != root.completed )
+		throw new IllegalStateException( "full-drain conservation failed" );
+	if ( root.security_queue_count != 0 || root.security_in_service_count != 0
+		|| root.immigration_queue_count != 0 || root.immigration_in_service_count != 0 )
+		throw new IllegalStateException( "non-zero WIP after drain" );
+	int wipAtCutoff =
+		root.security_queue_at_cutoff + root.security_in_service_at_cutoff
+		+ root.immigration_queue_at_cutoff + root.immigration_in_service_at_cutoff;
+	boolean conservationPass =
+		root.admitted_at_cutoff == root.completed_at_cutoff + wipAtCutoff;
+	if ( !conservationPass )
+		throw new IllegalStateException( "cutoff conservation failed" );
+
+	java.util.ArrayList&lt;Double&gt; securitySorted =
+		new java.util.ArrayList&lt;Double&gt;( root.security_waits );
+	java.util.ArrayList&lt;Double&gt; immigrationSorted =
+		new java.util.ArrayList&lt;Double&gt;( root.immigration_waits );
+	java.util.ArrayList&lt;Double&gt; totalSorted =
+		new java.util.ArrayList&lt;Double&gt;( root.total_queue_waits );
+	java.util.ArrayList&lt;Double&gt; systemSorted =
+		new java.util.ArrayList&lt;Double&gt;( root.system_times );
+	java.util.Collections.sort( securitySorted );
+	java.util.Collections.sort( immigrationSorted );
+	java.util.Collections.sort( totalSorted );
+	java.util.Collections.sort( systemSorted );
+	double securitySum = 0.0, immigrationSum = 0.0, totalSum = 0.0, systemSum = 0.0;
+	for ( double value : securitySorted ) securitySum += value;
+	for ( double value : immigrationSorted ) immigrationSum += value;
+	for ( double value : totalSorted ) totalSum += value;
+	for ( double value : systemSorted ) systemSum += value;
+	int n = root.completed;
+	if ( n &lt;= 0 ) throw new IllegalStateException( "operational run generated no travellers" );
+	int p95Index = Math.max( 0, (int) Math.ceil( 0.95 * n ) - 1 );
+	double drainEnd = Math.max( root.arrival_cutoff_seconds, root.last_exit );
+	int cutoffBacklog = root.admitted_at_cutoff - root.completed_at_cutoff;
+	double securityUtilization =
+		root.security_busy_seconds / ( root.security_capacity * drainEnd );
+	double immigrationUtilization =
+		root.immigration_busy_seconds / ( root.immigration_capacity * drainEnd );
+	java.util.function.DoubleFunction&lt;String&gt; number = value -&gt;
+		String.format( java.util.Locale.ROOT, "%.9f", value );
+
+	java.io.File probe = new java.io.File(
+		System.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+	).getAbsoluteFile();
+	while ( probe != null
+		&amp;&amp; !new java.io.File( probe, "config/operational_scenarios.csv" ).isFile() ) {
+		probe = probe.getParentFile();
+	}
+	if ( probe == null )
+		throw new IllegalStateException( "Cannot locate repository root" );
+	java.nio.file.Path runDirectory = new java.io.File(
+		probe,
+		String.format(
+			java.util.Locale.ROOT,
+			"results/raw/%s/%s/%s/replication_%03d",
+			root.output_collection_id,
+			root.scenario_id,
+			root.input_sample_id,
+			root.replication_id
+		)
+	).toPath();
+	try {
+		java.nio.file.Files.createDirectories( runDirectory );
+		java.util.ArrayList&lt;String&gt; manifest = new java.util.ArrayList&lt;String&gt;();
+		manifest.add(
+			"schema_version,config_id,config_sha256,model_version,scenario_id,"
+			+ "scenario_family,reference_scenario_id,input_sample_id,replication_id,"
+			+ "master_seed,arrival_seed,service_seed,routing_seed,tie_seed,start_state,"
+			+ "arrival_mode,arrival_cutoff_seconds,drain_end_seconds,drain_rule,"
+			+ "engine_name,engine_version,calibration_status,claim_ceiling,"
+			+ "crn_alignment_status,run_status"
+		);
+		manifest.add( String.join( ",", new String[] {
+			root.schema_version, root.config_id, root.config_sha256, root.model_version,
+			root.scenario_id, root.scenario_family, root.reference_scenario_id,
+			root.input_sample_id, Integer.toString( root.replication_id ),
+			Long.toString( root.master_seed ), Long.toString( root.arrival_seed ),
+			Long.toString( root.service_seed ), Long.toString( root.routing_seed ),
+			Long.toString( root.tie_seed ), root.start_state, root.arrival_mode,
+			number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+			root.drain_rule, "AnyLogic", "8.9.9.202607020720",
+			root.calibration_status, root.claim_ceiling, root.crn_alignment_status,
+			root.run_status
+		} ) );
+		java.util.ArrayList&lt;String&gt; entities = new java.util.ArrayList&lt;String&gt;();
+		entities.add(
+			"schema_version,config_id,config_sha256,model_version,scenario_id,"
+			+ "input_sample_id,replication_id,traveller_id,arrival_seconds,"
+			+ "security_service_demand_seconds,"
+			+ "immigration_conventional_service_demand_seconds,automation_u,"
+			+ "additional_check_u,lane_tie_u,security_queue_join_seconds,"
+			+ "security_start_seconds,security_end_seconds,"
+			+ "immigration_queue_join_seconds,immigration_lane_id,"
+			+ "immigration_start_seconds,technology_flag,"
+			+ "immigration_primary_service_demand_seconds,"
+			+ "immigration_primary_end_seconds,additional_check_flag,"
+			+ "additional_check_service_demand_seconds,"
+			+ "additional_check_end_seconds,exit_seconds,security_resource_id,"
+			+ "immigration_resource_id"
+		);
+		entities.addAll( root.entity_log_rows );
+		java.util.ArrayList&lt;String&gt; kpis = new java.util.ArrayList&lt;String&gt;();
+		kpis.add(
+			"schema_version,config_id,config_sha256,model_version,scenario_id,"
+			+ "input_sample_id,replication_id,arrival_cutoff_seconds,"
+			+ "drain_end_seconds,arrivals,completed_at_cutoff,"
+			+ "security_queue_at_cutoff,security_in_service_at_cutoff,"
+			+ "immigration_queue_at_cutoff,immigration_in_service_at_cutoff,"
+			+ "wip_at_cutoff,completed_after_drain,rejected_or_dropped_count,"
+			+ "technology_count,additional_check_count,"
+			+ "security_wait_mean_seconds,security_wait_p95_seconds,"
+			+ "immigration_wait_mean_seconds,immigration_wait_p95_seconds,"
+			+ "total_queue_wait_mean_seconds,total_queue_wait_p95_seconds,"
+			+ "total_queue_wait_exceed_600_rate,total_queue_wait_exceed_900_rate,"
+			+ "total_queue_wait_exceed_1200_rate,system_time_mean_seconds,"
+			+ "system_time_p95_seconds,security_utilization,immigration_utilization,"
+			+ "cutoff_backlog,cutoff_backlog_fraction,"
+			+ "cohort_clear_time_after_cutoff_seconds,conservation_pass,run_status"
+		);
+		kpis.add( String.join( ",", new String[] {
+			root.schema_version, root.config_id, root.config_sha256, root.model_version,
+			root.scenario_id, root.input_sample_id, Integer.toString( root.replication_id ),
+			number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+			Integer.toString( root.admitted ), Integer.toString( root.completed_at_cutoff ),
+			Integer.toString( root.security_queue_at_cutoff ),
+			Integer.toString( root.security_in_service_at_cutoff ),
+			Integer.toString( root.immigration_queue_at_cutoff ),
+			Integer.toString( root.immigration_in_service_at_cutoff ),
+			Integer.toString( wipAtCutoff ), Integer.toString( root.completed ),
+			Integer.toString( root.rejected_or_dropped_count ),
+			Integer.toString( root.technology_count ),
+			Integer.toString( root.additional_check_count ),
+			number.apply( securitySum / n ), number.apply( securitySorted.get( p95Index ) ),
+			number.apply( immigrationSum / n ), number.apply( immigrationSorted.get( p95Index ) ),
+			number.apply( totalSum / n ), number.apply( totalSorted.get( p95Index ) ),
+			number.apply( (double) root.exceed_600_count / n ),
+			number.apply( (double) root.exceed_900_count / n ),
+			number.apply( (double) root.exceed_1200_count / n ),
+			number.apply( systemSum / n ), number.apply( systemSorted.get( p95Index ) ),
+			number.apply( securityUtilization ), number.apply( immigrationUtilization ),
+			Integer.toString( cutoffBacklog ),
+			number.apply( root.admitted_at_cutoff &gt; 0
+				? (double) cutoffBacklog / root.admitted_at_cutoff : 0.0 ),
+			number.apply( Math.max( 0.0, drainEnd - root.arrival_cutoff_seconds ) ),
+			Boolean.toString( conservationPass ), root.run_status
+		} ) );
+		java.nio.file.Files.write(
+			runDirectory.resolve( "run_manifest.csv" ), manifest,
+			java.nio.charset.StandardCharsets.UTF_8
+		);
+		java.nio.file.Files.write(
+			runDirectory.resolve( "entity_log.csv" ), entities,
+			java.nio.charset.StandardCharsets.UTF_8
+		);
+		java.nio.file.Files.write(
+			runDirectory.resolve( "replication_kpis.csv" ), kpis,
+			java.nio.charset.StandardCharsets.UTF_8
+		);
+	} catch ( java.io.IOException exception ) {
+		throw new RuntimeException( "Operational CSV export failed", exception );
+	}</AfterSimulationRunCode>
+			<SeedValue>1</SeedValue>
+			<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+			<VmArgs/>
+			<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+			<Variables>
+				<Variable Class="PlainVariable">
+					<Id>1785162970002</Id>
+					<Name><![CDATA[service_variability_auto_start_timer]]></Name>
+					<X>40</X><Y>120</Y>
+					<Label><X>10</X><Y>0</Y></Label>
+					<PublicFlag>false</PublicFlag>
+					<PresentationFlag>false</PresentationFlag>
+					<ShowLabel>false</ShowLabel>
+					<Properties SaveInSnapshot="false"
+	                Constant="false"
+	                AccessType="private"
+	                StaticVariable="false">
+						<Type><![CDATA[javax.swing.Timer]]></Type>
+						<InitialValue Class="CodeValue">
+							<Code><![CDATA[new javax.swing.Timer(300, event -> { ((javax.swing.Timer) event.getSource()).stop(); ServiceVariabilitySensitivity.this.run(); }) {{ setRepeats(false); start(); }}]]></Code>
+						</InitialValue>
+					</Properties>
+				</Variable>
+			</Variables>
+			<AllowParallelEvaluations>false</AllowParallelEvaluations>
+			<UseFreeformParameters>true</UseFreeformParameters>
+			<NumberOfRuns>9</NumberOfRuns>
+			<FreeformParamValue>
+				<Id>1785163110001</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["1.0"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110011</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["TASK3_OPERATIONAL_POOLED_SERVICE_VARIABILITY_V1"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110021</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["service_variability"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110031</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? "OP_SERVICE_VARIABILITY_SCV000_ICV000"
+		: index == 1 ? "OP_SERVICE_VARIABILITY_SCV000_ICV050"
+		: index == 2 ? "OP_SERVICE_VARIABILITY_SCV000_ICV100"
+		: index == 3 ? "OP_SERVICE_VARIABILITY_SCV050_ICV000"
+		: index == 4 ? "OP_SERVICE_VARIABILITY_SCV050_ICV050"
+		: index == 5 ? "OP_SERVICE_VARIABILITY_SCV050_ICV100"
+		: index == 6 ? "OP_SERVICE_VARIABILITY_SCV100_ICV000"
+		: index == 7 ? "OP_SERVICE_VARIABILITY_SCV100_ICV050"
+		: "OP_SERVICE_VARIABILITY_SCV100_ICV100"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110041</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? "be74beb301453572eb4b8b9417ed945f20d0b200bff7755ce6dd3e66a4a4e13a"
+		: index == 1 ? "fd37b40406df63f0ce0fc55e5c2df2a3f16016661be5ccc013c8ed063694ce07"
+		: index == 2 ? "de9a50bbb1efcb3c02afa0f609209384c42f3c64965224fe8bc223d9458f3052"
+		: index == 3 ? "e41dd9758e9e79b90aaa6a8e98aba74cac846c196739fe2b5e6b0c7fe13ebfd1"
+		: index == 4 ? "64e95390280cccba351d713b2071316ad8ce43762a0dafa60ff74d6c1268475b"
+		: index == 5 ? "16cd99b7ae2d4306df327b0182519efcc972ad5612d8f4b79c7ca7e21528adbf"
+		: index == 6 ? "f423da5c1b63bf87c5ab9c0398fcb51990eefe46ea9ad6c3cf095d7844191f57"
+		: index == 7 ? "61be8a09a4ad7a085ccead92803b979a0ec624d68513ef39a295a6c8c5ec19c8"
+		: "bf628790c4562d0fd696c01ee667edcbb8fd69627a96f7ce2652164835981320"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110051</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? "SERVICE_VARIABILITY_SCV000_ICV000"
+		: index == 1 ? "SERVICE_VARIABILITY_SCV000_ICV050"
+		: index == 2 ? "SERVICE_VARIABILITY_SCV000_ICV100"
+		: index == 3 ? "SERVICE_VARIABILITY_SCV050_ICV000"
+		: index == 4 ? "SERVICE_VARIABILITY_SCV050_ICV050"
+		: index == 5 ? "SERVICE_VARIABILITY_SCV050_ICV100"
+		: index == 6 ? "SERVICE_VARIABILITY_SCV100_ICV000"
+		: index == 7 ? "SERVICE_VARIABILITY_SCV100_ICV050"
+		: "SERVICE_VARIABILITY_SCV100_ICV100"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110061</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["SERVICE_VARIABILITY"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110071</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["SERVICE_VARIABILITY_SCV000_ICV000"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110081</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["LOCAL_WINDOW_HPP_BASE"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110091</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110101</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["EMPTY_AND_IDLE"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110111</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["NOT_CALIBRATED"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110121</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["COMPARATIVE_WHAT_IF_ONLY"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110131</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["PENDING_VALIDATION"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110141</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["HPP"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110151</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[1.3642132969720073]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110161</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[1.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110171</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[300.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110181</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[5000]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110191</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["FULL_DRAIN"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110201</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[36]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110211</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[5000]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110221</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? "FIXED"
+		: index == 1 ? "FIXED"
+		: index == 2 ? "FIXED"
+		: index == 3 ? "LOGNORMAL_MEAN_CV"
+		: index == 4 ? "LOGNORMAL_MEAN_CV"
+		: index == 5 ? "LOGNORMAL_MEAN_CV"
+		: index == 6 ? "LOGNORMAL_MEAN_CV"
+		: index == 7 ? "LOGNORMAL_MEAN_CV"
+		: "LOGNORMAL_MEAN_CV"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110231</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[21.818181818]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110241</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[21]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110251</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[5000]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110261</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? "FIXED"
+		: index == 1 ? "LOGNORMAL_MEAN_CV"
+		: index == 2 ? "LOGNORMAL_MEAN_CV"
+		: index == 3 ? "FIXED"
+		: index == 4 ? "LOGNORMAL_MEAN_CV"
+		: index == 5 ? "LOGNORMAL_MEAN_CV"
+		: index == 6 ? "FIXED"
+		: index == 7 ? "LOGNORMAL_MEAN_CV"
+		: "LOGNORMAL_MEAN_CV"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110271</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[13.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110281</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["pooled"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110291</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["DISABLED"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110301</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110311</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[1.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110321</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["NONE"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110331</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110341</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110351</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["UNSET"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110361</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110371</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202607290000L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110381</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202609290011L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110391</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202609290012L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110401</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202609290013L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110411</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202609290014L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110421</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? 0.0
+		: index == 1 ? 0.0
+		: index == 2 ? 0.0
+		: index == 3 ? 0.5
+		: index == 4 ? 0.5
+		: index == 5 ? 0.5
+		: index == 6 ? 1.0
+		: index == 7 ? 1.0
+		: 1.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110431</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? 0.0
+		: index == 1 ? 0.5
+		: index == 2 ? 1.0
+		: index == 3 ? 0.0
+		: index == 4 ? 0.5
+		: index == 5 ? 1.0
+		: index == 6 ? 0.0
+		: index == 7 ? 0.5
+		: 1.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110001</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110011</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110021</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110031</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110041</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110051</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110061</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110071</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110081</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110091</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110101</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110111</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110121</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110131</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110141</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110151</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110161</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110171</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110181</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110191</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110201</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110211</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110221</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110231</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110241</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110251</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110261</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110271</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110281</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110291</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110301</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110311</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110321</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110331</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110341</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110351</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110361</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110371</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110381</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110391</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110401</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110411</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110421</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110431</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<ModelTimeProperties>
+				<StopOption>Never</StopOption>
+				<InitialDate>1785024000000</InitialDate>
+				<InitialTime>0.0</InitialTime>
+				<FinalDate>1787702400000</FinalDate>
+				<FinalTime>300.0</FinalTime>
+			</ModelTimeProperties>
+			<PresentationProperties>
+				<EnableZoomAndPanning>true</EnableZoomAndPanning>
+				<Title>HTXCheckpointSimulation : ServiceVariabilitySensitivity</Title>
+				<EnableDeveloperPanel>true</EnableDeveloperPanel>
+				<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
+			</PresentationProperties>
+			<ReplicationsProperties>
+				<UseReplication>true</UseReplication>
+				<FixedReplicationsNumber>true</FixedReplicationsNumber>
+				<ReplicationPerIteration>50</ReplicationPerIteration>
+				<MinimumReplication>50</MinimumReplication>
+				<MaximumReplication>50</MaximumReplication>
+				<ConfidenceLevel>LEVEL_95</ConfidenceLevel>
+				<ErrorPercent>0.05</ErrorPercent>
+				<ExpressionForConfidenceComputation>0</ExpressionForConfidenceComputation>
+			</ReplicationsProperties>
+		</ParamVariationExperiment>
+		<ParamVariationExperiment ActiveObjectClassId="1785162520364">
+			<Id>1785162980001</Id>
+			<Name><![CDATA[PeakDurationSensitivity]]></Name>
+			<CommandLineArguments/>
+			<MaximumMemory>512</MaximumMemory>
+			<RandomNumberGenerationType>fixedSeed</RandomNumberGenerationType>
+			<CustomGeneratorCode>new Random()</CustomGeneratorCode>
+			<BeforeSimulationRunCode>root.presentation_animation_enabled = false;
+	if ( !"1.0".equals( root.schema_version ) )
+		throw new IllegalArgumentException( "schema_version must be 1.0" );
+	if ( !root.config_sha256.matches( "[0-9a-f]{64}" ) )
+		throw new IllegalArgumentException( "config_sha256 must be 64 lowercase hex characters" );
+	if ( !root.output_collection_id.matches( "[a-z0-9_]+" ) )
+		throw new IllegalArgumentException( "output_collection_id is unsafe" );
+	if ( !"HPP".equals( root.arrival_mode ) )
+		throw new IllegalArgumentException( "arrival_mode must be HPP" );
+	if ( !( root.arrival_rate_per_second &gt; 0.0 ) || !( root.demand_multiplier &gt; 0.0 ) )
+		throw new IllegalArgumentException( "arrival rate and demand multiplier must be positive" );
+	if ( !( root.arrival_cutoff_seconds &gt; 0.0 ) || root.arrival_guard &lt;= 1 )
+		throw new IllegalArgumentException( "arrival cutoff and guard are invalid" );
+	if ( root.arrival_rate_per_second * root.demand_multiplier * root.arrival_cutoff_seconds &gt;= root.arrival_guard )
+		throw new IllegalArgumentException( "arrival_guard must exceed expected arrivals" );
+	if ( !"FULL_DRAIN".equals( root.drain_rule ) )
+		throw new IllegalArgumentException( "drain_rule must be FULL_DRAIN" );
+	if ( root.security_capacity &lt;= 0 || root.immigration_capacity &lt;= 0 )
+		throw new IllegalArgumentException( "resource capacities must be positive" );
+	if ( root.security_queue_capacity &lt;= 0 || root.immigration_queue_capacity &lt;= 0 )
+		throw new IllegalArgumentException( "queue capacities must be positive" );
+	if ( !( root.security_service_p1_seconds &gt; 0.0 )
+		|| !( root.immigration_service_p1_seconds &gt; 0.0 ) )
+		throw new IllegalArgumentException( "primary service demands must be positive" );
+	boolean securityServiceContractValid =
+		( "FIXED".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.security_service_distribution )
+			&amp;&amp; root.security_service_cv &gt; 0.0
+			&amp;&amp; root.security_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.security_service_cv ) );
+	boolean immigrationServiceContractValid =
+		( "FIXED".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv == 0.0 )
+		|| ( "LOGNORMAL_MEAN_CV".equals( root.immigration_service_distribution )
+			&amp;&amp; root.immigration_service_cv &gt; 0.0
+			&amp;&amp; root.immigration_service_cv &lt;= 2.0
+			&amp;&amp; Double.isFinite( root.immigration_service_cv ) );
+	if ( !securityServiceContractValid || !immigrationServiceContractValid )
+		throw new IllegalArgumentException(
+			"primary service distribution/CV contract is invalid"
+		);
+	if ( "TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version )
+		&amp;&amp; ( !"FIXED".equals( root.security_service_distribution )
+			|| !"FIXED".equals( root.immigration_service_distribution )
+			|| root.security_service_cv != 0.0
+			|| root.immigration_service_cv != 0.0 ) )
+		throw new IllegalArgumentException(
+			"TASK3_OPERATIONAL_POOLED_V1 is frozen to FIXED service and CV=0"
+		);
+	if ( !"pooled".equals( root.queue_policy ) )
+		throw new IllegalArgumentException( "v1 implements pooled FCFS only" );
+	if ( "DISABLED".equals( root.automation_mapping_mode ) ) {
+		if ( root.automation_uptake != 0.0 || root.automation_multiplier != 1.0 )
+			throw new IllegalArgumentException( "DISABLED automation requires uptake=0 and multiplier=1" );
+	} else if ( "MULTIPLIER".equals( root.automation_mapping_mode ) ) {
+		if ( !( root.automation_uptake &gt; 0.0 &amp;&amp; root.automation_uptake &lt;= 1.0 )
+			|| !( root.automation_multiplier &gt; 0.0 &amp;&amp; root.automation_multiplier &lt; 1.0 ) )
+			throw new IllegalArgumentException( "automation inputs are outside their domains" );
+	} else {
+		throw new IllegalArgumentException( "unknown automation_mapping_mode" );
+	}
+	if ( "NONE".equals( root.additional_check_semantics ) ) {
+		if ( root.additional_check_probability_conventional != 0.0
+			|| root.additional_check_probability_technology != 0.0
+			|| !"UNSET".equals( root.additional_check_service_distribution )
+			|| root.additional_check_service_p1_seconds != 0.0 )
+			throw new IllegalArgumentException( "NONE additional-check contract violated" );
+	} else if ( "COUNTER_HELD_RISK_REFERRAL_PROXY".equals( root.additional_check_semantics ) ) {
+		if ( !"FIXED".equals( root.additional_check_service_distribution )
+			|| root.additional_check_probability_conventional &lt; 0.0
+			|| root.additional_check_probability_conventional &gt; 1.0
+			|| root.additional_check_probability_technology &lt; 0.0
+			|| root.additional_check_probability_technology &gt; 1.0
+			|| !( root.additional_check_service_p1_seconds &gt; 0.0 ) )
+			throw new IllegalArgumentException( "risk-proxy inputs are invalid" );
+	} else {
+		throw new IllegalArgumentException( "unknown additional_check_semantics" );
+	}
+	if ( !"EMPTY_AND_IDLE".equals( root.start_state )
+		|| !"NOT_CALIBRATED".equals( root.calibration_status )
+		|| !"COMPARATIVE_WHAT_IF_ONLY".equals( root.claim_ceiling )
+		|| !( "NOT_TESTED".equals( root.crn_alignment_status )
+			|| "PENDING_VALIDATION".equals( root.crn_alignment_status ) ) )
+		throw new IllegalArgumentException( "claim-boundary fields were weakened" );
+	if ( !"TASK3_OPERATIONAL_POOLED_V1".equals( root.model_version ) )
+		throw new IllegalArgumentException(
+			"PeakDurationSensitivity model_version mismatch"
+		);
+	if ( !"peak_duration_sensitivity".equals( root.output_collection_id ) )
+		throw new IllegalArgumentException(
+			"PeakDurationSensitivity output collection mismatch"
+		);
+	if ( root.master_seed != 202607290000L )
+		throw new IllegalArgumentException(
+			"PeakDurationSensitivity master seed mismatch"
+		);
+	String expectedConfigId = null;
+	String expectedConfigHash = null;
+	if ( "PEAK_DURATION_S36_I21_T300".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S36_I21_T300";
+		expectedConfigHash = "6c0d5c2b33ccb2182fcc161fcb010842260acd75f037c9189d6976f3113c6562";
+	}
+	else if ( "PEAK_DURATION_S36_I21_T900".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S36_I21_T900";
+		expectedConfigHash = "a2eb5d98b3d179b634f72925a8e7957c345c3816e83b825dba2fd232916578c5";
+	}
+	else if ( "PEAK_DURATION_S36_I21_T1800".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S36_I21_T1800";
+		expectedConfigHash = "d136f1a5610e1a2864b4ca49113f7db6f78ef7456560aa57c878d4d5bb95bdb6";
+	}
+	else if ( "PEAK_DURATION_S36_I21_T3600".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S36_I21_T3600";
+		expectedConfigHash = "9bb0a3cb33f2be9f66c99c6d0b4c005ce9a358eac9db956ec1c72888614528dc";
+	}
+	else if ( "PEAK_DURATION_S36_I21_T7200".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S36_I21_T7200";
+		expectedConfigHash = "a9c64577749b02066ecfc527423c2cfd336cd7decba085a1f8e3ceb11ff72a50";
+	}
+	else if ( "PEAK_DURATION_S30_I18_T300".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S30_I18_T300";
+		expectedConfigHash = "75804ec054b5fc2d1af868eb5d58199a3c03b205fc2d5d0fb81a4de1df3c014e";
+	}
+	else if ( "PEAK_DURATION_S30_I18_T900".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S30_I18_T900";
+		expectedConfigHash = "d7eb57643b73aae7c6fcf987f1d166d7ebb9b6fb9894f44e51299f5d41094474";
+	}
+	else if ( "PEAK_DURATION_S30_I18_T1800".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S30_I18_T1800";
+		expectedConfigHash = "e2cc8678f32a3af21fb44f8f0fb993065a3ba184f24920b8407a5cf2fc4d2182";
+	}
+	else if ( "PEAK_DURATION_S30_I18_T3600".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S30_I18_T3600";
+		expectedConfigHash = "b22eefe03cd7594f418eb8c99973950b447c8cfc0287ba2eef354c48c603f15f";
+	}
+	else if ( "PEAK_DURATION_S30_I18_T7200".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S30_I18_T7200";
+		expectedConfigHash = "fa845700f6ba5c25800acf918ff5a73e095ca553ec479456066ab0d0c830350d";
+	}
+	else if ( "PEAK_DURATION_S29_I17_T300".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S29_I17_T300";
+		expectedConfigHash = "9260910fb5a084a4398ce79f428d3bf16f64e0e62cd704c2a3613a8f303f4d85";
+	}
+	else if ( "PEAK_DURATION_S29_I17_T900".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S29_I17_T900";
+		expectedConfigHash = "aa5d09f4b4a9e7a02dcbd59ed8687ee3b1a3d5d700a05a34f3cc5e96284badcb";
+	}
+	else if ( "PEAK_DURATION_S29_I17_T1800".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S29_I17_T1800";
+		expectedConfigHash = "8a52a38f6f59e85fb97261373732e809529572ba7b33dcbdc9ed15877c918de8";
+	}
+	else if ( "PEAK_DURATION_S29_I17_T3600".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S29_I17_T3600";
+		expectedConfigHash = "a1d12fb057c77d9d393a6834dfac3bc556f7286866f25e9bd0cd43c35d293d50";
+	}
+	else if ( "PEAK_DURATION_S29_I17_T7200".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S29_I17_T7200";
+		expectedConfigHash = "8590869ba45b1078766501841dbede54ef006922e2e5a9f19e9da93684c38706";
+	}
+	else if ( "PEAK_DURATION_S28_I16_T300".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S28_I16_T300";
+		expectedConfigHash = "fb54f006081219d4cf11a22fa20f08c8e853945f393fd05bc2e198624095a77f";
+	}
+	else if ( "PEAK_DURATION_S28_I16_T900".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S28_I16_T900";
+		expectedConfigHash = "e10a5b0b47646811c5f9e0af865eef5938c7b24a6afc8f96383b52e1c63b36c7";
+	}
+	else if ( "PEAK_DURATION_S28_I16_T1800".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S28_I16_T1800";
+		expectedConfigHash = "990ea446ba2689a49128aab0bb0be4335ab0c0a45a19ebaa598776a6cfee5433";
+	}
+	else if ( "PEAK_DURATION_S28_I16_T3600".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S28_I16_T3600";
+		expectedConfigHash = "bd6deeb1f9724bdc97b0e955f6d6e27f4193f159579a0ed48998639e82f7de35";
+	}
+	else if ( "PEAK_DURATION_S28_I16_T7200".equals( root.scenario_id )
+		&amp;&amp; "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id ) ) {
+		expectedConfigId = "OP_PEAK_DURATION_BASE_S28_I16_T7200";
+		expectedConfigHash = "f0c74c79c657cf06ef035cfacef1216d00f7e6c6a1bf40016fa89f09984bdc86";
+	}
+	if ( expectedConfigId == null || expectedConfigHash == null )
+		throw new IllegalArgumentException(
+			"PeakDurationSensitivity received an unknown scenario/input cell"
+		);
+	if ( !expectedConfigId.equals( root.config_id )
+		|| !expectedConfigHash.equals( root.config_sha256 ) )
+		throw new IllegalArgumentException(
+			"PeakDurationSensitivity lineage mismatch for "
+			+ root.scenario_id + "/" + root.input_sample_id
+		);
+	int replication = getCurrentReplication();
+	if ( replication &lt; 1 || replication &gt; 50 )
+		throw new IllegalArgumentException(
+			"PeakDurationSensitivity replication must be 1..50"
+		);
+	root.replication_id = replication;
+	boolean seedGroupMatched = false;
+	if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 1 ) {
+		root.arrival_seed = 202609290011L;
+		root.service_seed = 202609290012L;
+		root.routing_seed = 202609290013L;
+		root.tie_seed = 202609290014L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 2 ) {
+		root.arrival_seed = 202609290021L;
+		root.service_seed = 202609290022L;
+		root.routing_seed = 202609290023L;
+		root.tie_seed = 202609290024L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 3 ) {
+		root.arrival_seed = 202609290031L;
+		root.service_seed = 202609290032L;
+		root.routing_seed = 202609290033L;
+		root.tie_seed = 202609290034L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 4 ) {
+		root.arrival_seed = 202609290041L;
+		root.service_seed = 202609290042L;
+		root.routing_seed = 202609290043L;
+		root.tie_seed = 202609290044L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 5 ) {
+		root.arrival_seed = 202609290051L;
+		root.service_seed = 202609290052L;
+		root.routing_seed = 202609290053L;
+		root.tie_seed = 202609290054L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 6 ) {
+		root.arrival_seed = 202609290061L;
+		root.service_seed = 202609290062L;
+		root.routing_seed = 202609290063L;
+		root.tie_seed = 202609290064L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 7 ) {
+		root.arrival_seed = 202609290071L;
+		root.service_seed = 202609290072L;
+		root.routing_seed = 202609290073L;
+		root.tie_seed = 202609290074L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 8 ) {
+		root.arrival_seed = 202609290081L;
+		root.service_seed = 202609290082L;
+		root.routing_seed = 202609290083L;
+		root.tie_seed = 202609290084L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 9 ) {
+		root.arrival_seed = 202609290091L;
+		root.service_seed = 202609290092L;
+		root.routing_seed = 202609290093L;
+		root.tie_seed = 202609290094L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 10 ) {
+		root.arrival_seed = 202609290101L;
+		root.service_seed = 202609290102L;
+		root.routing_seed = 202609290103L;
+		root.tie_seed = 202609290104L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 11 ) {
+		root.arrival_seed = 202609290111L;
+		root.service_seed = 202609290112L;
+		root.routing_seed = 202609290113L;
+		root.tie_seed = 202609290114L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 12 ) {
+		root.arrival_seed = 202609290121L;
+		root.service_seed = 202609290122L;
+		root.routing_seed = 202609290123L;
+		root.tie_seed = 202609290124L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 13 ) {
+		root.arrival_seed = 202609290131L;
+		root.service_seed = 202609290132L;
+		root.routing_seed = 202609290133L;
+		root.tie_seed = 202609290134L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 14 ) {
+		root.arrival_seed = 202609290141L;
+		root.service_seed = 202609290142L;
+		root.routing_seed = 202609290143L;
+		root.tie_seed = 202609290144L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 15 ) {
+		root.arrival_seed = 202609290151L;
+		root.service_seed = 202609290152L;
+		root.routing_seed = 202609290153L;
+		root.tie_seed = 202609290154L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 16 ) {
+		root.arrival_seed = 202609290161L;
+		root.service_seed = 202609290162L;
+		root.routing_seed = 202609290163L;
+		root.tie_seed = 202609290164L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 17 ) {
+		root.arrival_seed = 202609290171L;
+		root.service_seed = 202609290172L;
+		root.routing_seed = 202609290173L;
+		root.tie_seed = 202609290174L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 18 ) {
+		root.arrival_seed = 202609290181L;
+		root.service_seed = 202609290182L;
+		root.routing_seed = 202609290183L;
+		root.tie_seed = 202609290184L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 19 ) {
+		root.arrival_seed = 202609290191L;
+		root.service_seed = 202609290192L;
+		root.routing_seed = 202609290193L;
+		root.tie_seed = 202609290194L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 20 ) {
+		root.arrival_seed = 202609290201L;
+		root.service_seed = 202609290202L;
+		root.routing_seed = 202609290203L;
+		root.tie_seed = 202609290204L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 21 ) {
+		root.arrival_seed = 202609290211L;
+		root.service_seed = 202609290212L;
+		root.routing_seed = 202609290213L;
+		root.tie_seed = 202609290214L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 22 ) {
+		root.arrival_seed = 202609290221L;
+		root.service_seed = 202609290222L;
+		root.routing_seed = 202609290223L;
+		root.tie_seed = 202609290224L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 23 ) {
+		root.arrival_seed = 202609290231L;
+		root.service_seed = 202609290232L;
+		root.routing_seed = 202609290233L;
+		root.tie_seed = 202609290234L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 24 ) {
+		root.arrival_seed = 202609290241L;
+		root.service_seed = 202609290242L;
+		root.routing_seed = 202609290243L;
+		root.tie_seed = 202609290244L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 25 ) {
+		root.arrival_seed = 202609290251L;
+		root.service_seed = 202609290252L;
+		root.routing_seed = 202609290253L;
+		root.tie_seed = 202609290254L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 26 ) {
+		root.arrival_seed = 202609290261L;
+		root.service_seed = 202609290262L;
+		root.routing_seed = 202609290263L;
+		root.tie_seed = 202609290264L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 27 ) {
+		root.arrival_seed = 202609290271L;
+		root.service_seed = 202609290272L;
+		root.routing_seed = 202609290273L;
+		root.tie_seed = 202609290274L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 28 ) {
+		root.arrival_seed = 202609290281L;
+		root.service_seed = 202609290282L;
+		root.routing_seed = 202609290283L;
+		root.tie_seed = 202609290284L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 29 ) {
+		root.arrival_seed = 202609290291L;
+		root.service_seed = 202609290292L;
+		root.routing_seed = 202609290293L;
+		root.tie_seed = 202609290294L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 30 ) {
+		root.arrival_seed = 202609290301L;
+		root.service_seed = 202609290302L;
+		root.routing_seed = 202609290303L;
+		root.tie_seed = 202609290304L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 31 ) {
+		root.arrival_seed = 202609290311L;
+		root.service_seed = 202609290312L;
+		root.routing_seed = 202609290313L;
+		root.tie_seed = 202609290314L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 32 ) {
+		root.arrival_seed = 202609290321L;
+		root.service_seed = 202609290322L;
+		root.routing_seed = 202609290323L;
+		root.tie_seed = 202609290324L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 33 ) {
+		root.arrival_seed = 202609290331L;
+		root.service_seed = 202609290332L;
+		root.routing_seed = 202609290333L;
+		root.tie_seed = 202609290334L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 34 ) {
+		root.arrival_seed = 202609290341L;
+		root.service_seed = 202609290342L;
+		root.routing_seed = 202609290343L;
+		root.tie_seed = 202609290344L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 35 ) {
+		root.arrival_seed = 202609290351L;
+		root.service_seed = 202609290352L;
+		root.routing_seed = 202609290353L;
+		root.tie_seed = 202609290354L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 36 ) {
+		root.arrival_seed = 202609290361L;
+		root.service_seed = 202609290362L;
+		root.routing_seed = 202609290363L;
+		root.tie_seed = 202609290364L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 37 ) {
+		root.arrival_seed = 202609290371L;
+		root.service_seed = 202609290372L;
+		root.routing_seed = 202609290373L;
+		root.tie_seed = 202609290374L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 38 ) {
+		root.arrival_seed = 202609290381L;
+		root.service_seed = 202609290382L;
+		root.routing_seed = 202609290383L;
+		root.tie_seed = 202609290384L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 39 ) {
+		root.arrival_seed = 202609290391L;
+		root.service_seed = 202609290392L;
+		root.routing_seed = 202609290393L;
+		root.tie_seed = 202609290394L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 40 ) {
+		root.arrival_seed = 202609290401L;
+		root.service_seed = 202609290402L;
+		root.routing_seed = 202609290403L;
+		root.tie_seed = 202609290404L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 41 ) {
+		root.arrival_seed = 202609290411L;
+		root.service_seed = 202609290412L;
+		root.routing_seed = 202609290413L;
+		root.tie_seed = 202609290414L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 42 ) {
+		root.arrival_seed = 202609290421L;
+		root.service_seed = 202609290422L;
+		root.routing_seed = 202609290423L;
+		root.tie_seed = 202609290424L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 43 ) {
+		root.arrival_seed = 202609290431L;
+		root.service_seed = 202609290432L;
+		root.routing_seed = 202609290433L;
+		root.tie_seed = 202609290434L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 44 ) {
+		root.arrival_seed = 202609290441L;
+		root.service_seed = 202609290442L;
+		root.routing_seed = 202609290443L;
+		root.tie_seed = 202609290444L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 45 ) {
+		root.arrival_seed = 202609290451L;
+		root.service_seed = 202609290452L;
+		root.routing_seed = 202609290453L;
+		root.tie_seed = 202609290454L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 46 ) {
+		root.arrival_seed = 202609290461L;
+		root.service_seed = 202609290462L;
+		root.routing_seed = 202609290463L;
+		root.tie_seed = 202609290464L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 47 ) {
+		root.arrival_seed = 202609290471L;
+		root.service_seed = 202609290472L;
+		root.routing_seed = 202609290473L;
+		root.tie_seed = 202609290474L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 48 ) {
+		root.arrival_seed = 202609290481L;
+		root.service_seed = 202609290482L;
+		root.routing_seed = 202609290483L;
+		root.tie_seed = 202609290484L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 49 ) {
+		root.arrival_seed = 202609290491L;
+		root.service_seed = 202609290492L;
+		root.routing_seed = 202609290493L;
+		root.tie_seed = 202609290494L;
+		seedGroupMatched = true;
+	}
+	else if ( "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION".equals( root.input_sample_id )
+		&amp;&amp; replication == 50 ) {
+		root.arrival_seed = 202609290501L;
+		root.service_seed = 202609290502L;
+		root.routing_seed = 202609290503L;
+		root.tie_seed = 202609290504L;
+		seedGroupMatched = true;
+	}
+	if ( !seedGroupMatched )
+		throw new IllegalArgumentException(
+			"PeakDurationSensitivity seed group is not frozen"
+		);
+	getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );</BeforeSimulationRunCode>
+			<AfterSimulationRunCode>if ( !"COMPLETE".equals( root.run_status ) )
+		throw new IllegalStateException( "operational run did not reach COMPLETE" );
+	if ( root.guard_hit || root.rejected_or_dropped_count != 0 )
+		throw new IllegalStateException( "guard, rejection, or drop detected" );
+	if ( root.admitted != root.completed )
+		throw new IllegalStateException( "full-drain conservation failed" );
+	if ( root.security_queue_count != 0 || root.security_in_service_count != 0
+		|| root.immigration_queue_count != 0 || root.immigration_in_service_count != 0 )
+		throw new IllegalStateException( "non-zero WIP after drain" );
+	int wipAtCutoff =
+		root.security_queue_at_cutoff + root.security_in_service_at_cutoff
+		+ root.immigration_queue_at_cutoff + root.immigration_in_service_at_cutoff;
+	boolean conservationPass =
+		root.admitted_at_cutoff == root.completed_at_cutoff + wipAtCutoff;
+	if ( !conservationPass )
+		throw new IllegalStateException( "cutoff conservation failed" );
+
+	java.util.ArrayList&lt;Double&gt; securitySorted =
+		new java.util.ArrayList&lt;Double&gt;( root.security_waits );
+	java.util.ArrayList&lt;Double&gt; immigrationSorted =
+		new java.util.ArrayList&lt;Double&gt;( root.immigration_waits );
+	java.util.ArrayList&lt;Double&gt; totalSorted =
+		new java.util.ArrayList&lt;Double&gt;( root.total_queue_waits );
+	java.util.ArrayList&lt;Double&gt; systemSorted =
+		new java.util.ArrayList&lt;Double&gt;( root.system_times );
+	java.util.Collections.sort( securitySorted );
+	java.util.Collections.sort( immigrationSorted );
+	java.util.Collections.sort( totalSorted );
+	java.util.Collections.sort( systemSorted );
+	double securitySum = 0.0, immigrationSum = 0.0, totalSum = 0.0, systemSum = 0.0;
+	for ( double value : securitySorted ) securitySum += value;
+	for ( double value : immigrationSorted ) immigrationSum += value;
+	for ( double value : totalSorted ) totalSum += value;
+	for ( double value : systemSorted ) systemSum += value;
+	int n = root.completed;
+	if ( n &lt;= 0 ) throw new IllegalStateException( "operational run generated no travellers" );
+	int p95Index = Math.max( 0, (int) Math.ceil( 0.95 * n ) - 1 );
+	double drainEnd = Math.max( root.arrival_cutoff_seconds, root.last_exit );
+	int cutoffBacklog = root.admitted_at_cutoff - root.completed_at_cutoff;
+	double securityUtilization =
+		root.security_busy_seconds / ( root.security_capacity * drainEnd );
+	double immigrationUtilization =
+		root.immigration_busy_seconds / ( root.immigration_capacity * drainEnd );
+	java.util.function.DoubleFunction&lt;String&gt; number = value -&gt;
+		String.format( java.util.Locale.ROOT, "%.9f", value );
+
+	java.io.File probe = new java.io.File(
+		System.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+	).getAbsoluteFile();
+	while ( probe != null
+		&amp;&amp; !new java.io.File( probe, "config/operational_scenarios.csv" ).isFile() ) {
+		probe = probe.getParentFile();
+	}
+	if ( probe == null )
+		throw new IllegalStateException( "Cannot locate repository root" );
+	java.nio.file.Path runDirectory = new java.io.File(
+		probe,
+		String.format(
+			java.util.Locale.ROOT,
+			"results/raw/%s/%s/%s/replication_%03d",
+			root.output_collection_id,
+			root.scenario_id,
+			root.input_sample_id,
+			root.replication_id
+		)
+	).toPath();
+	try {
+		java.nio.file.Files.createDirectories( runDirectory );
+		java.util.ArrayList&lt;String&gt; manifest = new java.util.ArrayList&lt;String&gt;();
+		manifest.add(
+			"schema_version,config_id,config_sha256,model_version,scenario_id,"
+			+ "scenario_family,reference_scenario_id,input_sample_id,replication_id,"
+			+ "master_seed,arrival_seed,service_seed,routing_seed,tie_seed,start_state,"
+			+ "arrival_mode,arrival_cutoff_seconds,drain_end_seconds,drain_rule,"
+			+ "engine_name,engine_version,calibration_status,claim_ceiling,"
+			+ "crn_alignment_status,run_status"
+		);
+		manifest.add( String.join( ",", new String[] {
+			root.schema_version, root.config_id, root.config_sha256, root.model_version,
+			root.scenario_id, root.scenario_family, root.reference_scenario_id,
+			root.input_sample_id, Integer.toString( root.replication_id ),
+			Long.toString( root.master_seed ), Long.toString( root.arrival_seed ),
+			Long.toString( root.service_seed ), Long.toString( root.routing_seed ),
+			Long.toString( root.tie_seed ), root.start_state, root.arrival_mode,
+			number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+			root.drain_rule, "AnyLogic", "8.9.9.202607020720",
+			root.calibration_status, root.claim_ceiling, root.crn_alignment_status,
+			root.run_status
+		} ) );
+		java.util.ArrayList&lt;String&gt; entities = new java.util.ArrayList&lt;String&gt;();
+		entities.add(
+			"schema_version,config_id,config_sha256,model_version,scenario_id,"
+			+ "input_sample_id,replication_id,traveller_id,arrival_seconds,"
+			+ "security_service_demand_seconds,"
+			+ "immigration_conventional_service_demand_seconds,automation_u,"
+			+ "additional_check_u,lane_tie_u,security_queue_join_seconds,"
+			+ "security_start_seconds,security_end_seconds,"
+			+ "immigration_queue_join_seconds,immigration_lane_id,"
+			+ "immigration_start_seconds,technology_flag,"
+			+ "immigration_primary_service_demand_seconds,"
+			+ "immigration_primary_end_seconds,additional_check_flag,"
+			+ "additional_check_service_demand_seconds,"
+			+ "additional_check_end_seconds,exit_seconds,security_resource_id,"
+			+ "immigration_resource_id"
+		);
+		entities.addAll( root.entity_log_rows );
+		java.util.ArrayList&lt;String&gt; kpis = new java.util.ArrayList&lt;String&gt;();
+		kpis.add(
+			"schema_version,config_id,config_sha256,model_version,scenario_id,"
+			+ "input_sample_id,replication_id,arrival_cutoff_seconds,"
+			+ "drain_end_seconds,arrivals,completed_at_cutoff,"
+			+ "security_queue_at_cutoff,security_in_service_at_cutoff,"
+			+ "immigration_queue_at_cutoff,immigration_in_service_at_cutoff,"
+			+ "wip_at_cutoff,completed_after_drain,rejected_or_dropped_count,"
+			+ "technology_count,additional_check_count,"
+			+ "security_wait_mean_seconds,security_wait_p95_seconds,"
+			+ "immigration_wait_mean_seconds,immigration_wait_p95_seconds,"
+			+ "total_queue_wait_mean_seconds,total_queue_wait_p95_seconds,"
+			+ "total_queue_wait_exceed_600_rate,total_queue_wait_exceed_900_rate,"
+			+ "total_queue_wait_exceed_1200_rate,system_time_mean_seconds,"
+			+ "system_time_p95_seconds,security_utilization,immigration_utilization,"
+			+ "cutoff_backlog,cutoff_backlog_fraction,"
+			+ "cohort_clear_time_after_cutoff_seconds,conservation_pass,run_status"
+		);
+		kpis.add( String.join( ",", new String[] {
+			root.schema_version, root.config_id, root.config_sha256, root.model_version,
+			root.scenario_id, root.input_sample_id, Integer.toString( root.replication_id ),
+			number.apply( root.arrival_cutoff_seconds ), number.apply( drainEnd ),
+			Integer.toString( root.admitted ), Integer.toString( root.completed_at_cutoff ),
+			Integer.toString( root.security_queue_at_cutoff ),
+			Integer.toString( root.security_in_service_at_cutoff ),
+			Integer.toString( root.immigration_queue_at_cutoff ),
+			Integer.toString( root.immigration_in_service_at_cutoff ),
+			Integer.toString( wipAtCutoff ), Integer.toString( root.completed ),
+			Integer.toString( root.rejected_or_dropped_count ),
+			Integer.toString( root.technology_count ),
+			Integer.toString( root.additional_check_count ),
+			number.apply( securitySum / n ), number.apply( securitySorted.get( p95Index ) ),
+			number.apply( immigrationSum / n ), number.apply( immigrationSorted.get( p95Index ) ),
+			number.apply( totalSum / n ), number.apply( totalSorted.get( p95Index ) ),
+			number.apply( (double) root.exceed_600_count / n ),
+			number.apply( (double) root.exceed_900_count / n ),
+			number.apply( (double) root.exceed_1200_count / n ),
+			number.apply( systemSum / n ), number.apply( systemSorted.get( p95Index ) ),
+			number.apply( securityUtilization ), number.apply( immigrationUtilization ),
+			Integer.toString( cutoffBacklog ),
+			number.apply( root.admitted_at_cutoff &gt; 0
+				? (double) cutoffBacklog / root.admitted_at_cutoff : 0.0 ),
+			number.apply( Math.max( 0.0, drainEnd - root.arrival_cutoff_seconds ) ),
+			Boolean.toString( conservationPass ), root.run_status
+		} ) );
+		java.nio.file.Files.write(
+			runDirectory.resolve( "run_manifest.csv" ), manifest,
+			java.nio.charset.StandardCharsets.UTF_8
+		);
+		java.nio.file.Files.write(
+			runDirectory.resolve( "entity_log.csv" ), entities,
+			java.nio.charset.StandardCharsets.UTF_8
+		);
+		java.nio.file.Files.write(
+			runDirectory.resolve( "replication_kpis.csv" ), kpis,
+			java.nio.charset.StandardCharsets.UTF_8
+		);
+	} catch ( java.io.IOException exception ) {
+		throw new RuntimeException( "Operational CSV export failed", exception );
+	}</AfterSimulationRunCode>
+			<SeedValue>1</SeedValue>
+			<SelectionModeForSimultaneousEvents>LIFO</SelectionModeForSimultaneousEvents>
+			<VmArgs/>
+			<LoadRootFromSnapshot>false</LoadRootFromSnapshot>
+			<Variables>
+				<Variable Class="PlainVariable">
+					<Id>1785162980002</Id>
+					<Name><![CDATA[peak_duration_auto_start_timer]]></Name>
+					<X>40</X><Y>120</Y>
+					<Label><X>10</X><Y>0</Y></Label>
+					<PublicFlag>false</PublicFlag>
+					<PresentationFlag>false</PresentationFlag>
+					<ShowLabel>false</ShowLabel>
+					<Properties SaveInSnapshot="false"
+	                Constant="false"
+	                AccessType="private"
+	                StaticVariable="false">
+						<Type><![CDATA[javax.swing.Timer]]></Type>
+						<InitialValue Class="CodeValue">
+							<Code><![CDATA[new javax.swing.Timer(300, event -> { ((javax.swing.Timer) event.getSource()).stop(); PeakDurationSensitivity.this.run(); }) {{ setRepeats(false); start(); }}]]></Code>
+						</InitialValue>
+					</Properties>
+				</Variable>
+			</Variables>
+			<AllowParallelEvaluations>false</AllowParallelEvaluations>
+			<UseFreeformParameters>true</UseFreeformParameters>
+			<NumberOfRuns>20</NumberOfRuns>
+			<FreeformParamValue>
+				<Id>1785163110001</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["1.0"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110011</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["TASK3_OPERATIONAL_POOLED_V1"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110021</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["peak_duration_sensitivity"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110031</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? "OP_PEAK_DURATION_BASE_S36_I21_T300"
+		: index == 1 ? "OP_PEAK_DURATION_BASE_S36_I21_T900"
+		: index == 2 ? "OP_PEAK_DURATION_BASE_S36_I21_T1800"
+		: index == 3 ? "OP_PEAK_DURATION_BASE_S36_I21_T3600"
+		: index == 4 ? "OP_PEAK_DURATION_BASE_S36_I21_T7200"
+		: index == 5 ? "OP_PEAK_DURATION_BASE_S30_I18_T300"
+		: index == 6 ? "OP_PEAK_DURATION_BASE_S30_I18_T900"
+		: index == 7 ? "OP_PEAK_DURATION_BASE_S30_I18_T1800"
+		: index == 8 ? "OP_PEAK_DURATION_BASE_S30_I18_T3600"
+		: index == 9 ? "OP_PEAK_DURATION_BASE_S30_I18_T7200"
+		: index == 10 ? "OP_PEAK_DURATION_BASE_S29_I17_T300"
+		: index == 11 ? "OP_PEAK_DURATION_BASE_S29_I17_T900"
+		: index == 12 ? "OP_PEAK_DURATION_BASE_S29_I17_T1800"
+		: index == 13 ? "OP_PEAK_DURATION_BASE_S29_I17_T3600"
+		: index == 14 ? "OP_PEAK_DURATION_BASE_S29_I17_T7200"
+		: index == 15 ? "OP_PEAK_DURATION_BASE_S28_I16_T300"
+		: index == 16 ? "OP_PEAK_DURATION_BASE_S28_I16_T900"
+		: index == 17 ? "OP_PEAK_DURATION_BASE_S28_I16_T1800"
+		: index == 18 ? "OP_PEAK_DURATION_BASE_S28_I16_T3600"
+		: "OP_PEAK_DURATION_BASE_S28_I16_T7200"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110041</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? "6c0d5c2b33ccb2182fcc161fcb010842260acd75f037c9189d6976f3113c6562"
+		: index == 1 ? "a2eb5d98b3d179b634f72925a8e7957c345c3816e83b825dba2fd232916578c5"
+		: index == 2 ? "d136f1a5610e1a2864b4ca49113f7db6f78ef7456560aa57c878d4d5bb95bdb6"
+		: index == 3 ? "9bb0a3cb33f2be9f66c99c6d0b4c005ce9a358eac9db956ec1c72888614528dc"
+		: index == 4 ? "a9c64577749b02066ecfc527423c2cfd336cd7decba085a1f8e3ceb11ff72a50"
+		: index == 5 ? "75804ec054b5fc2d1af868eb5d58199a3c03b205fc2d5d0fb81a4de1df3c014e"
+		: index == 6 ? "d7eb57643b73aae7c6fcf987f1d166d7ebb9b6fb9894f44e51299f5d41094474"
+		: index == 7 ? "e2cc8678f32a3af21fb44f8f0fb993065a3ba184f24920b8407a5cf2fc4d2182"
+		: index == 8 ? "b22eefe03cd7594f418eb8c99973950b447c8cfc0287ba2eef354c48c603f15f"
+		: index == 9 ? "fa845700f6ba5c25800acf918ff5a73e095ca553ec479456066ab0d0c830350d"
+		: index == 10 ? "9260910fb5a084a4398ce79f428d3bf16f64e0e62cd704c2a3613a8f303f4d85"
+		: index == 11 ? "aa5d09f4b4a9e7a02dcbd59ed8687ee3b1a3d5d700a05a34f3cc5e96284badcb"
+		: index == 12 ? "8a52a38f6f59e85fb97261373732e809529572ba7b33dcbdc9ed15877c918de8"
+		: index == 13 ? "a1d12fb057c77d9d393a6834dfac3bc556f7286866f25e9bd0cd43c35d293d50"
+		: index == 14 ? "8590869ba45b1078766501841dbede54ef006922e2e5a9f19e9da93684c38706"
+		: index == 15 ? "fb54f006081219d4cf11a22fa20f08c8e853945f393fd05bc2e198624095a77f"
+		: index == 16 ? "e10a5b0b47646811c5f9e0af865eef5938c7b24a6afc8f96383b52e1c63b36c7"
+		: index == 17 ? "990ea446ba2689a49128aab0bb0be4335ab0c0a45a19ebaa598776a6cfee5433"
+		: index == 18 ? "bd6deeb1f9724bdc97b0e955f6d6e27f4193f159579a0ed48998639e82f7de35"
+		: "f0c74c79c657cf06ef035cfacef1216d00f7e6c6a1bf40016fa89f09984bdc86"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110051</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? "PEAK_DURATION_S36_I21_T300"
+		: index == 1 ? "PEAK_DURATION_S36_I21_T900"
+		: index == 2 ? "PEAK_DURATION_S36_I21_T1800"
+		: index == 3 ? "PEAK_DURATION_S36_I21_T3600"
+		: index == 4 ? "PEAK_DURATION_S36_I21_T7200"
+		: index == 5 ? "PEAK_DURATION_S30_I18_T300"
+		: index == 6 ? "PEAK_DURATION_S30_I18_T900"
+		: index == 7 ? "PEAK_DURATION_S30_I18_T1800"
+		: index == 8 ? "PEAK_DURATION_S30_I18_T3600"
+		: index == 9 ? "PEAK_DURATION_S30_I18_T7200"
+		: index == 10 ? "PEAK_DURATION_S29_I17_T300"
+		: index == 11 ? "PEAK_DURATION_S29_I17_T900"
+		: index == 12 ? "PEAK_DURATION_S29_I17_T1800"
+		: index == 13 ? "PEAK_DURATION_S29_I17_T3600"
+		: index == 14 ? "PEAK_DURATION_S29_I17_T7200"
+		: index == 15 ? "PEAK_DURATION_S28_I16_T300"
+		: index == 16 ? "PEAK_DURATION_S28_I16_T900"
+		: index == 17 ? "PEAK_DURATION_S28_I16_T1800"
+		: index == 18 ? "PEAK_DURATION_S28_I16_T3600"
+		: "PEAK_DURATION_S28_I16_T7200"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110061</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["PEAK_DURATION"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110071</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["REFERENCE_ASSUMPTION_SANDBOX_V1"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110081</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110091</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110101</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["EMPTY_AND_IDLE"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110111</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["NOT_CALIBRATED"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110121</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["COMPARATIVE_WHAT_IF_ONLY"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110131</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["PENDING_VALIDATION"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110141</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["HPP"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110151</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[1.3642132969720073]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110161</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[1.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110171</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? 300.0
+		: index == 1 ? 900.0
+		: index == 2 ? 1800.0
+		: index == 3 ? 3600.0
+		: index == 4 ? 7200.0
+		: index == 5 ? 300.0
+		: index == 6 ? 900.0
+		: index == 7 ? 1800.0
+		: index == 8 ? 3600.0
+		: index == 9 ? 7200.0
+		: index == 10 ? 300.0
+		: index == 11 ? 900.0
+		: index == 12 ? 1800.0
+		: index == 13 ? 3600.0
+		: index == 14 ? 7200.0
+		: index == 15 ? 300.0
+		: index == 16 ? 900.0
+		: index == 17 ? 1800.0
+		: index == 18 ? 3600.0
+		: 7200.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110181</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? 5000
+		: index == 1 ? 5000
+		: index == 2 ? 5000
+		: index == 3 ? 5712
+		: index == 4 ? 10914
+		: index == 5 ? 5000
+		: index == 6 ? 5000
+		: index == 7 ? 5000
+		: index == 8 ? 5712
+		: index == 9 ? 10914
+		: index == 10 ? 5000
+		: index == 11 ? 5000
+		: index == 12 ? 5000
+		: index == 13 ? 5712
+		: index == 14 ? 10914
+		: index == 15 ? 5000
+		: index == 16 ? 5000
+		: index == 17 ? 5000
+		: index == 18 ? 5712
+		: 10914]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110191</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["FULL_DRAIN"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110201</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? 36
+		: index == 1 ? 36
+		: index == 2 ? 36
+		: index == 3 ? 36
+		: index == 4 ? 36
+		: index == 5 ? 30
+		: index == 6 ? 30
+		: index == 7 ? 30
+		: index == 8 ? 30
+		: index == 9 ? 30
+		: index == 10 ? 29
+		: index == 11 ? 29
+		: index == 12 ? 29
+		: index == 13 ? 29
+		: index == 14 ? 29
+		: index == 15 ? 28
+		: index == 16 ? 28
+		: index == 17 ? 28
+		: index == 18 ? 28
+		: 28]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110211</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? 5000
+		: index == 1 ? 5000
+		: index == 2 ? 5000
+		: index == 3 ? 5712
+		: index == 4 ? 10914
+		: index == 5 ? 5000
+		: index == 6 ? 5000
+		: index == 7 ? 5000
+		: index == 8 ? 5712
+		: index == 9 ? 10914
+		: index == 10 ? 5000
+		: index == 11 ? 5000
+		: index == 12 ? 5000
+		: index == 13 ? 5712
+		: index == 14 ? 10914
+		: index == 15 ? 5000
+		: index == 16 ? 5000
+		: index == 17 ? 5000
+		: index == 18 ? 5712
+		: 10914]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110221</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["FIXED"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110231</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[21.818181818]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110241</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? 21
+		: index == 1 ? 21
+		: index == 2 ? 21
+		: index == 3 ? 21
+		: index == 4 ? 21
+		: index == 5 ? 18
+		: index == 6 ? 18
+		: index == 7 ? 18
+		: index == 8 ? 18
+		: index == 9 ? 18
+		: index == 10 ? 17
+		: index == 11 ? 17
+		: index == 12 ? 17
+		: index == 13 ? 17
+		: index == 14 ? 17
+		: index == 15 ? 16
+		: index == 16 ? 16
+		: index == 17 ? 16
+		: index == 18 ? 16
+		: 16]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110251</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[index == 0 ? 5000
+		: index == 1 ? 5000
+		: index == 2 ? 5000
+		: index == 3 ? 5712
+		: index == 4 ? 10914
+		: index == 5 ? 5000
+		: index == 6 ? 5000
+		: index == 7 ? 5000
+		: index == 8 ? 5712
+		: index == 9 ? 10914
+		: index == 10 ? 5000
+		: index == 11 ? 5000
+		: index == 12 ? 5000
+		: index == 13 ? 5712
+		: index == 14 ? 10914
+		: index == 15 ? 5000
+		: index == 16 ? 5000
+		: index == 17 ? 5000
+		: index == 18 ? 5712
+		: 10914]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110261</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["FIXED"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110271</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[13.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110281</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["pooled"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110291</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["DISABLED"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110301</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110311</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[1.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110321</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["NONE"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110331</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110341</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110351</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA["UNSET"]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110361</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110371</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202607290000L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110381</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202609290011L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110391</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202609290012L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110401</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202609290013L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110411</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[202609290014L]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110421</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<FreeformParamValue>
+				<Id>1785163110431</Id>
+				<Expression Class="CodeValue">
+					<Code><![CDATA[0.0]]></Code>
+				</Expression>
+			</FreeformParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110001</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110011</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110021</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110031</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110041</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110051</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110061</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110071</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110081</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110091</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110101</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110111</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110121</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110131</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110141</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110151</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110161</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110171</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110181</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110191</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110201</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110211</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110221</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110231</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110241</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110251</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110261</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110271</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110281</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110291</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110301</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110311</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110321</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110331</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110341</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110351</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110361</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110371</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110381</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110391</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110401</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110411</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110421</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<RangeVariationParamValue>
+				<Id>1785163110431</Id>
+				<Type><![CDATA[FIXED]]></Type>
+			</RangeVariationParamValue>
+			<ModelTimeProperties>
+				<StopOption>Never</StopOption>
+				<InitialDate>1785024000000</InitialDate>
+				<InitialTime>0.0</InitialTime>
+				<FinalDate>1787702400000</FinalDate>
+				<FinalTime>300.0</FinalTime>
+			</ModelTimeProperties>
+			<PresentationProperties>
+				<EnableZoomAndPanning>true</EnableZoomAndPanning>
+				<Title>HTXCheckpointSimulation : PeakDurationSensitivity</Title>
 				<EnableDeveloperPanel>true</EnableDeveloperPanel>
 				<ShowDeveloperPanelOnStart>false</ShowDeveloperPanelOnStart>
 			</PresentationProperties>
