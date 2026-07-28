@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0.0",
+  "policy_id": "HTX_PUBLIC_RELEASE_DATA_BOUNDARY_V1",
+  "status": "ENFORCED",
+  "allowed_public_data_classes": [
+    "Protocols, schemas, configuration, source hashes, and reproducibility manifests",
+    "Aggregate counts and rates that contain no source pixels or appearance descriptions",
+    "Accepted-only, non-pixel crossing-event ledgers after registered review and detached sign-off",
+    "De-identified numerical method-audit tables whose local tracker tokens are confined to this single video",
+    "Synthetic simulation inputs, run-level summaries, aggregate results, charts, and non-pixel schematics"
+  ],
+  "restricted_data_classes": [
+    "The supplied source video or audio",
+    "Decoded frames, crops, thumbnails, contact sheets, review videos, and evidence packets that reproduce source pixels",
+    "Faces, face templates, biometric features, appearance descriptions, identity embeddings, or re-identification features",
+    "Cross-camera or cross-dataset identity links and persistent person identifiers",
+    "Raw review-item history, reviewer free-text notes, and private alias-to-person mappings",
+    "Unapproved raw or intermediate experiment exports"
+  ],
+  "restricted_path_prefixes": [
+    "_work/",
+    "data/raw/",
+    "data/private/",
+    "data/restricted/",
+    "results/raw/",
+    "results/intermediate/"
+  ],
+  "tracked_placeholder_exceptions": [
+    "data/raw/README.md"
+  ],
+  "always_restricted_media_extensions": [
+    ".3gp",
+    ".aac",
+    ".avi",
+    ".flac",
+    ".m4a",
+    ".m4v",
+    ".mkv",
+    ".mov",
+    ".mp3",
+    ".mp4",
+    ".mpeg",
+    ".mpg",
+    ".ogg",
+    ".wav",
+    ".webm",
+    ".wmv"
+  ],
+  "raster_image_extensions": [
+    ".bmp",
+    ".gif",
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".tif",
+    ".tiff",
+    ".webp"
+  ],
+  "opaque_binary_extensions_restricted": [
+    ".faiss",
+    ".npy",
+    ".npz",
+    ".pickle",
+    ".pkl"
+  ],
+  "archive_extensions_to_inspect": [
+    ".docx",
+    ".pptx",
+    ".xlsx",
+    ".zip"
+  ],
+  "restricted_path_tokens": [
+    "annotated_video",
+    "contact_sheet",
+    "evidence_packet",
+    "face_crop",
+    "identity_embedding",
+    "raw_video",
+    "review_frame",
+    "review_image",
+    "review_video",
+    "source_frame"
+  ],
+  "restricted_structured_field_tokens": [
+    "appearance_description",
+    "appearance_embedding",
+    "biometric_template",
+    "cross_camera_id",
+    "face_embedding",
+    "face_id",
+    "identity_embedding",
+    "identity_feature",
+    "permanent_person_id",
+    "reid_embedding",
+    "reidentification_id",
+    "subject_id"
+  ],
+  "restricted_structured_field_prefixes": [
+    "appearance_",
+    "biometric_",
+    "cross_camera_",
+    "face_",
+    "gait_embedding",
+    "identity_embedding",
+    "reid_",
+    "reidentification_",
+    "subject_"
+  ],
+  "approved_non_pixel_media_sha256": {
+    "655ee252efa12ce85309efabce3c9fe3b4b4a133186fcecd3130eca21d3c5880": "Capacity-response heatmap generated from aggregate simulation results",
+    "b50c6d0eea9b73cbceb794738bf8064b7689b85a47c08682c8d2e7316e71bce7": "Capacity-response SVG heatmap with embedded rasters generated solely from aggregate simulation results",
+    "b383501d083e6cab8840a14b2c6ac11bb847e447a6f6478ec81b4372ed04e8b8": "AnyLogic operational dashboard screenshot containing synthetic state only",
+    "d8085c2766444455fb1d80c8a6d3334dea04ce426682cdb82fa42920c66f4b5e": "AnyLogic completed-run screenshot containing synthetic state only",
+    "fcd249529b882e55d6e4b76ae873714c4247f3028cba7c0e2c078e6ba4abe68e": "Capacity-response curves generated from aggregate simulation results"
+  },
+  "restricted_content_sha256": {
+    "4e2adef6a7c11ff4bac604a034229a08dfd53747360862cc53d0098f53bc7a2c": "Supplied TestVidTask.mov source video",
+    "c6996d8d9afff105757b6e42fb4fd4957128aeafa57322b0e518ea1842f0b797": "Source-video-derived 1280x720 frame embedded in the current Task 4 deck"
+  },
+  "task1_public_artifacts": {
+    "reviewer_alias_pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+    "reviewer_alias_rule": "Use a project-scoped role alias only; never publish a name, email address, employee identifier, phone number, or reusable cross-project handle.",
+    "public_ledger_globs": [
+      "data/derived/task1_signed_crossing_ledger*.csv"
+    ],
+    "public_signoff_globs": [
+      "data/derived/task1_*signoff*.json"
+    ],
+    "forbidden_public_ledger_fields": [
+      "appearance_description",
+      "appearance_embedding",
+      "face_id",
+      "identity_embedding",
+      "person_id",
+      "reviewer_email",
+      "reviewer_name",
+      "reviewer_notes",
+      "source_local_ids",
+      "track_id"
+    ],
+    "event_id_scope": "Ledger-local crossing event only; it must not be used as a stable person identifier.",
+    "cross_camera_reidentification_permitted": false
+  },
+  "retention_and_deletion": {
+    "restricted_working_artifacts": "Keep only for registered review, issue resolution, and submission verification. Delete within 30 calendar days after the later of final submission and closure of the assessment/review window, unless the assessment issuer requires earlier deletion or a documented legal hold applies.",
+    "reviewer_alias_mapping": "Keep locally and access-controlled only if accountability requires it; never commit it. Delete with the restricted review package when no longer required.",
+    "public_non_pixel_artifacts": "Protocols, hashes, aggregate data, signed accepted-event ledgers, and reproducible simulation summaries may be retained as the public audit record.",
+    "deletion_evidence": "Record the deletion date and artifact classes, not filenames containing personal information or source pixels."
+  }
+}

@@ -4,7 +4,8 @@
 
 **Decision date:** 2026-07-27
 
-**Decision owner:** Wang Yu, assessment candidate and project owner
+**Decision owner:** `OWNER_REVIEWER_A`, project-scoped role alias for the
+assessment candidate/project owner
 
 **Accepted full-video aggregate:** 12 left-to-right and 34 right-to-left
 crossings over 24.922788889 seconds

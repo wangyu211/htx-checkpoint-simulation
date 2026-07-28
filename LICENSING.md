@@ -74,7 +74,9 @@ covered only when the output's content is itself a covered work. Consequently,
 a local personal experiment and a numerical methods report present a
 materially different risk from handing an integrated package or model weights
 to another organisation. The assessment video has its own separate copyright
-boundary.
+boundary. Its stricter non-redistribution, privacy, retention, and embedded
+media controls are documented in
+[`docs/privacy_and_data_governance.md`](docs/privacy_and_data_governance.md).
 
 ## Use-case boundary
 

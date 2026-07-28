@@ -92,6 +92,10 @@
     "all_review_items_resolved": true,
     "accepted_events_unique": true,
     "reviewer_id_required": true,
+    "reviewer_alias_pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+    "reviewer_alias_is_project_scoped": true,
+    "reviewer_alias_mapping_is_public": false,
+    "ai_assistant_counts_as_human_reviewer": false,
     "reviewed_at_utc_required": true,
     "reason_code_required": true,
     "expected_total_for_validation": null,
@@ -183,8 +187,24 @@
     "publish_raw_video_or_pixel_evidence": false,
     "publish_appearance_features_or_embeddings": false,
     "publish_permanent_person_identifiers": false,
+    "publish_review_item_history_or_reviewer_notes": false,
+    "publish_alias_to_person_mapping": false,
     "publish_non_pixel_ledger_after_signoff": true,
-    "publish_protocol_and_hashes": true
+    "publish_protocol_and_hashes": true,
+    "cross_camera_reidentification_permitted": false,
+    "event_id_scope": "LEDGER_LOCAL_CROSSING_EVENT_ONLY"
+  },
+  "restricted_artifact_retention": {
+    "scope": [
+      "source video",
+      "decoded frames and pixel derivatives",
+      "evidence packets",
+      "raw review-item history and reviewer notes",
+      "private reviewer alias mapping"
+    ],
+    "delete_by": "Within 30 calendar days after the later of final submission and closure of the assessment/review window, unless the assessment issuer requires earlier deletion or a documented legal hold applies.",
+    "public_audit_record": "Protocols, hashes, aggregate data, signed accepted-event ledgers, and reproducible simulation summaries contain no source pixels and may be retained.",
+    "deletion_record": "Record deletion date and artifact classes only; do not reproduce personal information, source pixels, or restricted filenames."
   },
   "interpretation_limits": [
     "The short clip does not establish stationarity or time-of-day demand.",

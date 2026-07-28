@@ -9,8 +9,16 @@ __pycache__/
 # Local task inputs and restricted derivatives
 data/raw/*
 !data/raw/README.md
+data/private/
+data/restricted/
 data/derived/annotated_*
 data/derived/frames/
+data/derived/contact_sheets/
+data/derived/evidence_packets/
+data/derived/review_*
+**/*face_crop*
+**/*identity_embedding*
+**/*reid_embedding*
 
 # Model weights and caches
 models/*.onnx

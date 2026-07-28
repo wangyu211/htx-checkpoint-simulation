@@ -181,6 +181,9 @@ Evidence:
 - [x] Task 2 requirements/design.
 - [x] Task 3 simulation logic and key outputs/metrics.
 - [x] Task 4 slides.
-- [x] Current release passes the clean-clone precheck, including the complete
-  test suite, local-link audit, and compact-evidence hash contracts.
+- [ ] Current release passes the clean-clone precheck, including the complete
+  test suite, local-link audit, compact-evidence hash contracts, and privacy
+  gate. As of the 2026-07-29 audit, two copies of a source-video-derived frame
+  embedded in the canonical deck block public release; see
+  [`privacy_and_data_governance.md`](privacy_and_data_governance.md).
 - [ ] Repository URL ready for submission by email.

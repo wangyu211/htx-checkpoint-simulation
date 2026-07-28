@@ -68,3 +68,7 @@ See `LICENSING.md` for the repository-level deployment boundary.
 `TestVidTask.mov`, decoded frames, annotated videos, and other derivatives that
 reproduce source pixels are not redistributed. Users must obtain the assessment
 input from an authorised source.
+
+The repository's stricter public/private data boundary, including embedded
+presentation-media checks, is documented in
+[`docs/privacy_and_data_governance.md`](docs/privacy_and_data_governance.md).

@@ -1,4 +1,4 @@
 sweep_candidate_id,approx_time_seconds,candidate_direction,source_track_segments,ai_assisted_assessment,evidence_summary,owner_decision
-FN01,1.854211,left_to_right,18,HIGH_CONFIDENCE,White-shirted black-backpack person crosses at frame-top boundary; track centroid x=640.174 at frame 56,
-FN02,5.1-5.3,right_to_left,41->81,HIGH_CONFIDENCE,White-shirted dark-capped person crosses while identity fragments at the line,
-FN03,22.389233-22.522578,right_to_left,128->200,HIGH_CONFIDENCE,Black-clad flatbed-trolley pusher crosses while identity fragments at the line,
+FN01,1.854211,left_to_right,18,HIGH_CONFIDENCE,Boundary-partial trajectory crosses the line; track centroid x=640.174 at frame 56,
+FN02,5.1-5.3,right_to_left,41->81,HIGH_CONFIDENCE,Continuous trajectory crosses while the local tracker fragments at the line,
+FN03,22.389233-22.522578,right_to_left,128->200,HIGH_CONFIDENCE,Continuous trajectory crosses while the local tracker fragments at the line,

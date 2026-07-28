@@ -162,10 +162,23 @@ There is no `expected_total=46` acceptance test.
   being silently forced into the point estimate.
 
 Raw video, crops, pages, and evidence packets remain under ignored `_work/`.
-The public repository may contain the protocol, hashes, non-pixel ledger,
-sign-off, validation report, and reproducible scripts. It must not publish
-appearance descriptions, embeddings, cross-camera identities, or permanent
-person IDs.
+The public repository may contain the protocol, hashes, accepted-only non-pixel
+ledger, sign-off, validation report, and reproducible scripts. Review-item
+history, reviewer notes, and the private reviewer-alias mapping remain local.
+It must not publish appearance descriptions, embeddings, cross-camera
+identities, or permanent person IDs.
+
+Use a project-scoped role alias matching `^[A-Z][A-Z0-9_]{2,63}$`; do not put a
+name, email address, employee identifier, phone number, or reusable
+cross-project handle in public artifacts. Event IDs are ledger-local crossing
+tokens and must never be linked across videos, cameras, datasets, or projects.
+Cross-camera re-identification is prohibited.
+
+Delete restricted review artifacts within 30 calendar days after the later of
+final submission and closure of the assessment/review window, unless the
+assessment issuer requires earlier deletion or a documented legal hold applies.
+The complete boundary is
+[`privacy_and_data_governance.md`](privacy_and_data_governance.md).
 
 ## Trace-replay interpretation
 

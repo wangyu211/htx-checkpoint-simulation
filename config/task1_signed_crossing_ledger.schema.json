@@ -211,7 +211,9 @@
     "No source pixels",
     "No evidence file paths",
     "No tracker IDs or permanent person identifiers",
+    "No cross-camera or cross-dataset identity linkage",
     "No free-text notes",
-    "No personal names or email addresses"
+    "No personal names or email addresses",
+    "reviewer_id is a project-scoped role alias only"
   ]
 }
