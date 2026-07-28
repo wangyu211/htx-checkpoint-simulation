@@ -273,7 +273,9 @@ not stable across rates.
 
 No option is labelled an operational optimum or final recommendation. All
 results are conditional on a non-calibrated, fixed-service-time pooled-FCFS
-sandbox. Separate-queue evaluation, field calibration, richer input
-distributions, costs, implementation risk, and roster constraints remain
-outside scope; the study does not provide a calibrated baseline, staffing
-answer, or economic claim.
+sandbox. Separate-queue evaluation is outside this confirmatory AnyLogic
+batch; the distinct exact-gated offline replay above is a conditional
+mechanism counterfactual, not part of the capacity claim. Field calibration,
+richer input distributions, costs, implementation risk, and roster constraints
+remain outside scope; the study does not provide a calibrated baseline,
+staffing answer, or economic claim.

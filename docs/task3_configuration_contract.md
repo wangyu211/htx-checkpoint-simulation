@@ -93,8 +93,10 @@ controls:
 | `automation_multiplier` | strictly between `0.0` and `1.0` when uptake is positive; reset to `1.0` when uptake is zero |
 
 All other mechanism and lineage fields are fixed by the experiment. Pooled
-FCFS is the only implemented queue policy, so the UI deliberately has no
-queue-policy selector. Inputs are set before Run; structural changes are reset
+FCFS is the only queue policy implemented in this AnyLogic experiment, so the
+UI deliberately has no queue-policy selector. The distinct separate-lane
+counterfactual is an offline exact-gated replay, not an interactive control.
+Inputs are set before Run; structural changes are reset
 by stopping and reopening the experiment. Replication `0` output is labelled
 `INTERACTIVE_EXPLORATORY` and kept outside reportable replicated collections.
 Reportable claims must come from validated replication outputs, not an

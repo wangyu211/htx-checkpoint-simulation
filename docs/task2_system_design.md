@@ -80,7 +80,8 @@ has an invalid event sequence.
 | Effective automation uptake × multiplier | `IMPLEMENTED_PROXY` | technology-service sensitivity |
 | Counter-held additional work | `IMPLEMENTED_PROXY` | pessimistic risk boundary |
 | Separate per-counter queues at both stages (offline entity-ledger replay) | `EVIDENCE_ACCEPTED_CONDITIONAL_REPLAY` | paired mechanism contrast at two frozen scales; not an AnyLogic UI/site-policy claim |
-| Time-of-day demand and stochastic service | `BLOCKED_INPUT` | require timestamp and variability evidence |
+| Time-of-day demand | `BLOCKED_INPUT` | the short clip cannot identify a daily profile |
+| Mean-preserving stochastic-service sensitivity | `IMPLEMENTED_NOT_EXECUTED` | lognormal CV grid is an uncalibrated assumption sensitivity; no result is released until all 450 runs pass |
 | Separate secondary queue/resources | `BLOCKED_INPUT` | require routing, capacity, and service evidence |
 | Calibrated walking and physical congestion | `OUT_OF_SCOPE_V1` | no spatial-performance claim |
 
@@ -223,11 +224,14 @@ For scenario index `i` and replication `r`, the stream base is
 `master_seed + 100000i + 100r`; arrival, service, routing, and tie seeds use
 offsets `+1` to `+4`. Arrival consumes its stream, while fixed v1 service does
 not consume `service_seed`. The reserved tie draw has no routing effect in the
-pooled model. Recording a seed or draw is not evidence that stochastic service,
-CRN alignment, or separate lanes are implemented. The pilot's CRN status
-therefore remains `NOT_TESTED`. The confirmatory study uses a separate frozen
-seed manifest and permits paired inference only because its traveller-level
-alignment gate returned `PASS`.
+pooled model. Within these fixed-service batches, recording a seed or draw is
+not evidence that stochastic service, CRN alignment, or separate lanes are
+implemented. The independent service-CV study is implemented but has no
+accepted run output, and the separate-lane evidence comes only from the
+exact-gated offline replay above. The pilot's CRN status therefore remains
+`NOT_TESTED`. The confirmatory study uses a separate frozen seed manifest and
+permits paired inference only because its traveller-level alignment gate
+returned `PASS`.
 
 Part 2 keeps that 600-run expansion study immutable and tests the complementary
 availability question. It executes Security `32/21`, Immigration `36/18`,
