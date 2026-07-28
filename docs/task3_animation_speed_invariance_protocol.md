@@ -182,7 +182,9 @@ The command returns non-zero unless:
 - all ordered core fields are exactly equal.
 
 Before three genuine runs exist, the only permitted state is
-`IMPLEMENTED_NOT_EXECUTED`. A `PASS` supports only this bounded statement:
+`IMPLEMENTED_NOT_EXECUTED`. Three complete captures with any mismatch become
+`EXECUTED_VALIDATION_FAILED`, not accepted evidence. A `PASS` supports only
+this bounded statement:
 
 > For the registered interactive reference run, the exported model-time event
 > trajectory and KPIs were identical at GUI 1x, GUI 10x and virtual time.

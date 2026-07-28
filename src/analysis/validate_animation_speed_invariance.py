@@ -610,7 +610,7 @@ def validate_evidence(
         "evidence_state": (
             "EVIDENCE_ACCEPTED"
             if status == "PASS"
-            else "IMPLEMENTED_NOT_EXECUTED"
+            else "EXECUTED_VALIDATION_FAILED"
         ),
         "evidence_root": _portable(root),
         "comparison_semantics": "EXACT_ORDERED_FIELD_EQUALITY",

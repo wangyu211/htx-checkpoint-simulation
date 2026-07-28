@@ -217,6 +217,9 @@ class AnimationSpeedInvarianceTests(unittest.TestCase):
             self._refresh_hash(root / "02_gui_10x", candidate.name)
             report = validate_evidence(DEFAULT_PROTOCOL, root)
         self.assertEqual(report["status"], "FAIL")
+        self.assertEqual(
+            report["evidence_state"], "EXECUTED_VALIDATION_FAILED"
+        )
         differences = report["comparisons"][0]["tables"][1][
             "first_differences"
         ]
