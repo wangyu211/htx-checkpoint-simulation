@@ -1,6 +1,10 @@
 # Task 3 selected-cell peak-duration sensitivity design
 
-**Status:** frozen input design only; `0/1000` proposed runs have been executed.
+**Design status:** frozen before execution.
+
+**Implementation status:** `IMPLEMENTED_NOT_EXECUTED`; the
+`PeakDurationSensitivity` AnyLogic experiment and fail-closed Python analyser
+are contract-tested, but `0/1000` registered runs have been accepted.
 
 **Frozen on:** 29 July 2026
 
@@ -65,9 +69,10 @@ The frozen plan is:
 - no adaptive extension after outcome inspection; and
 - parallel evaluations disabled for deterministic artifact ordering.
 
-At this design-only stage, there are no model outputs or empirical duration
-curves. The machine-readable design records `execution_status=NOT_EXECUTED`
-and `completed_run_count=0`.
+At this implemented-but-unexecuted stage, there are no model outputs or
+empirical duration curves. The machine-readable design records
+`execution_status=NOT_EXECUTED` and `completed_run_count=0`; implementation
+does not change either field.
 
 ## 4. Dynamic non-binding guards
 
@@ -160,6 +165,6 @@ The validator fails closed on the four capacity cells, five cutoffs, guard
 formula and computed values, synchronized queue caps, canonical scenario
 schema, exact Base seed reuse, run cap, ordering, and `NOT_EXECUTED` status.
 
-Any later AnyLogic implementation and result collection is a separate,
-auditable step. This document does not claim that implementation or execution
-has already occurred.
+The AnyLogic and analysis implementations are complete. Result collection is
+a separate, auditable step, and this document does not claim that execution
+or validation has occurred.

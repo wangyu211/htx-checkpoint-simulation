@@ -8,6 +8,13 @@ Model version: `TASK3_OPERATIONAL_POOLED_SERVICE_VARIABILITY_V1`
 
 Design status: `FROZEN_PRE_RUN`
 Analysis role: `EXPLORATORY_ASSUMPTION_SENSITIVITY_NOT_CALIBRATION`
+Implementation status: `IMPLEMENTED_NOT_EXECUTED`
+
+The `ServiceVariabilitySensitivity` AnyLogic experiment, the independent
+stage-local service RNGs, and the fail-closed Python analysis layer are now
+implemented and contract-tested. No real batch output has yet been accepted:
+`0/450` registered runs have been validated, so this document contains no
+service-variability result or directional claim.
 
 The registered 300-second capacity studies use fixed Security and Immigration
 service demands. Fixed service is a low-variability modelling assumption; it
@@ -110,6 +117,19 @@ Security-service and Immigration-service RNGs derived from `service_seed`.
 It must never use the AnyLogic default generator, which remains reserved for
 the HPP arrival stream.
 
+The implemented derivation is frozen and tested:
+
+```text
+Security RNG seed    = service_seed XOR 0x13579BDF2468ACE1
+Immigration RNG seed = service_seed XOR 0x2468ACE113579BDF
+normal draw          = explicit two-uniform Box-Muller transform
+```
+
+The fixed arm returns the arithmetic mean without consuming either service
+stream. Positive-CV cells therefore share stage-local latent draws with one
+another; the deterministic arm shares the arrival, routing, and tie streams
+only.
+
 The CRN gate must verify:
 
 1. exact 9 × 50 coverage and registered seed tuples;
@@ -165,5 +185,6 @@ Before any result is interpreted:
 - the cross-batch fixed-service check must pass;
 - the applicable CRN alignment report must explicitly return `PASS`.
 
-This document freezes design intent only. It does not claim that the AnyLogic
-service sampler or the 450-run experiment has already been implemented or run.
+This document freezes the design and records an implemented-but-unexecuted
+study. Implementation is not evidence: no estimate may be released until all
+450 runs and every runtime acceptance gate above pass.
