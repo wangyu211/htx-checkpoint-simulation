@@ -371,6 +371,30 @@ class AnimationSpeedInvarianceTests(unittest.TestCase):
                     confirm_finished=True,
                 )
 
+    def test_stage_rejects_identical_but_noncanonical_input(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            source = base / "source"
+            self._write_core(source)
+            manifest = source / RESULT_FILES["run_manifest"]
+            fields, rows = self._read_csv(manifest)
+            rows[0]["scenario_id"] = "INTERACTIVE_D120_SEC036_IMM021_U000_M100"
+            self._write_csv(manifest, fields, rows)
+            screenshot = base / "wrong.png"
+            screenshot.write_bytes(PNG_SIGNATURE + b"wrong")
+            with self.assertRaisesRegex(
+                ValueError, "not the canonical interactive identity"
+            ):
+                stage_capture(
+                    run_mode="GUI_1X",
+                    operator_role_alias="model_owner",
+                    model_git_commit=MODEL_COMMIT,
+                    ui_evidence=screenshot,
+                    source_dir=source,
+                    evidence_root=base / "evidence",
+                    confirm_finished=True,
+                )
+
     @staticmethod
     def _read_csv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
         with path.open(encoding="utf-8", newline="") as stream:

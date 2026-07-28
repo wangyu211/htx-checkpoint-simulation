@@ -823,8 +823,18 @@ def stage_capture(
         raise ValueError("source replication_kpis must have exactly one row")
     if not source_tables["entity_log"]:
         raise ValueError("source entity_log must not be empty")
-    if source_tables["run_manifest"][0].get("run_status") != "COMPLETE":
-        raise ValueError("source run_manifest is not COMPLETE")
+    source_manifest = source_tables["run_manifest"][0]
+    identity_mismatches = [
+        f"{field}: expected {expected!r}, found "
+        f"{source_manifest.get(field)!r}"
+        for field, expected in protocol["expected_run_identity"].items()
+        if source_manifest.get(field) != expected
+    ]
+    if identity_mismatches:
+        raise ValueError(
+            "source run is not the canonical interactive identity: "
+            + "; ".join(identity_mismatches)
+        )
     if source_tables["replication_kpis"][0].get("run_status") != "COMPLETE":
         raise ValueError("source replication_kpis is not COMPLETE")
     if source_tables["replication_kpis"][0].get("conservation_pass") != "true":
