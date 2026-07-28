@@ -259,7 +259,19 @@ population demand study.
 This adjudication was performed as a full-video **aggregate count**. It did not
 produce a signed row for every physical crossing, so the candidate event IDs
 and timestamps in the earlier ledgers must not be relabelled as the final 46
-people. The authoritative non-pixel freeze product is
+people. The available candidate traces cannot fill that gap. YOLO26m +
+BoT-SORT proposed 30 right-to-left crossings, while classical CV produced 32
+post-warm-up alerts spanning 27 track IDs. Time/position reconciliation yielded
+a deduplicated candidate union of 34 (23 cross-method matches, four blob-only,
+and seven BoT-SORT-only), but the 11 single-method candidates did not receive
+completed row-level owner adjudication. The Hungarian trace also happened to
+total 34 right-to-left crossings, but its disagreement audit identified
+compensating false associations and missed true crossings.
+
+Consequently, selecting 34 timestamps retrospectively would be target-fitting,
+not reconstruction. The HPP arrival model is conditional on the accepted
+`N = 34`; within-window stationarity and empirical inter-arrival structure
+remain untested. The authoritative non-pixel freeze product is
 [`task1_final_aggregate.csv`](../data/derived/task1_final_aggregate.csv).
 
 ## 5. Counting-rule sensitivity

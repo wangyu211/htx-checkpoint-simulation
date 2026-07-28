@@ -141,6 +141,35 @@ non-canonical configuration hashes.
 | Automation / additional work | disabled | isolated in sensitivity rows |
 | Replications | `10` per scenario | variance and pipeline pilot, not confirmatory precision |
 
+### Load-regime design and utilization semantics
+
+The reference capacities were selected before outcome inspection using
+`ceil(lambda × mean_service / 0.85)`. They were not retuned after the
+confirmatory results. At the three frozen arrival-rate levels, the resulting
+nominal offered loads are:
+
+| Arrival level | Rate (/s) | Reference Security / Immigration | Joint +4/+3 Security / Immigration |
+|---|---:|---:|---:|
+| Exact-count low | `0.944757` | `0.573 / 0.585` | `0.515 / 0.512` |
+| Point estimate / base | `1.364213` | `0.827 / 0.845` | `0.744 / 0.739` |
+| Exact-count high | `1.906351` | `1.155 / 1.180` | `1.040 / 1.033` |
+
+This grid deliberately crosses from light load through a decision-relevant
+stressed regime. Three quantities must not be conflated:
+
+1. **Nominal offered load** is `lambda × mean_service / capacity`.
+2. **Arrival-window utilization** is busy resource-time divided by available
+   resource-time during the fixed 300-second arrival window.
+3. **Full-drain utilization** uses the longer, scenario-specific drain
+   horizon and can fall when a long tail extends that denominator.
+
+The original run KPI exports the third quantity. A post-hoc supporting
+analysis derives the first two from the immutable entity ledger without
+rerunning or changing the frozen 600-run study. For example, high-rate
+arrival-window utilization is `0.964 / 0.902` for reference and
+`0.948 / 0.881` for joint +4/+3. These are model diagnostics, not measured
+checkpoint utilization.
+
 `OperationalInteractive` exposes exactly five editable pre-run parameters:
 `demand_multiplier`, `security_capacity`, `immigration_capacity`,
 `automation_uptake`, and `automation_multiplier`. The queue policy is not an
@@ -193,7 +222,7 @@ scenario-minus-reference contrasts.
 |---|---|
 | Flow integrity | arrivals, completions at cutoff, total completions at full drain, `rejected_or_dropped_count`, `conservation_pass`, and `run_status` |
 | Cutoff state | stage queues, stage in-service counts, total WIP, fraction not exited |
-| Waiting and time | stage/total mean and within-replication P95, 600/900/1200-second exceedance, system time |
+| Waiting and time | stage/total mean and within-replication P95, registered 600/900/1200-second exceedance, system time; post-hoc 15/30/60-second model-scale diagnostics are kept separate |
 | Resources and branches | full-drain utilization, technology count, additional-check count |
 | Recovery | drain-end time and cohort clear time after cutoff |
 
@@ -216,13 +245,19 @@ The primary estimand is the mean across replications of each replication's
 `total_queue_wait_p95_seconds`. Scenario estimates use 95% Student-t
 intervals. Within a replication, P95 is the nearest-rank observation at
 `ceil(0.95n) - 1` in zero-based indexing; exceedance rates use strict `>` at
-600, 900, and 1200 seconds. Pilot common-random-number alignment is
+600, 900, and 1200 seconds. Those registered thresholds remain useful for
+extreme risk-bound rows but do not discriminate the capacity study. The
+supplement therefore reports strict `>` 15/30/60-second total-wait rates as
+post-hoc supporting diagnostics only—not ICA service standards or
+prospectively registered decision rules. Pilot common-random-number alignment is
 `NOT_TESTED`, so pilot contrasts use independent Welch intervals. The frozen
 confirmatory capacity study passed its seed, traveller-set, and
 branch-invariant-draw alignment gate and therefore uses the pre-specified
 paired Student-t method within an arrival-rate level.
-Maximum/time-weighted queue length, lane KPIs, technology subgroup gaps, and
-arrival-window utilization are not exported in v1.
+Maximum/time-weighted queue length, lane KPIs, and technology subgroup gaps
+are not exported in v1. Arrival-window utilization is not an original run KPI;
+it is reconstructed in the post-hoc supplement from the immutable stage
+timestamps and is hash-linked to the same 253,756-row entity ledger.
 
 ## E. Assumptions
 
@@ -241,6 +276,14 @@ arrival-window utilization are not exported in v1.
 | Statistics | Ten independent pilot replications; 50 per confirmatory cell with verified within-rate CRN | pilot rankings remain provisional; confirmatory claims remain limited to the frozen question |
 | Scope | Walking, spatial congestion, costs, nationality/eligibility routing, and rosters excluded | no layout, equity, staffing, or economic recommendation |
 | Validity | Local service, roster, queue, referral, and outcome data are unavailable | no calibrated baseline or site forecast |
+
+The accepted `N = 34` arrival aggregate cannot be reconstructed as a signed
+event-time ledger without target-fitting across incompatible candidate
+outputs. Accordingly, the HPP layer is conditional on the accepted aggregate;
+within-window stationarity and empirical inter-arrival structure remain
+untested. The generic `parameter_registry.csv` records the measurement layer;
+the executable capacity and service truth is
+`config/operational_scenarios.csv`.
 
 APICS/APCS group processing would require a batch-service mechanism.
 Identification-on-the-move would require sensing, walking-throughput, failure,

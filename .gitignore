@@ -28,6 +28,8 @@ _work/
 .idea/
 .vscode/
 *.log
+*.alp.autosave
+*.pptx.inspect.ndjson
 ~$*
 Thumbs.db
 .DS_Store

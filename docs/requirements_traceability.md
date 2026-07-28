@@ -42,6 +42,21 @@ claimed to estimate long-run checkpoint demand.
 
 ## Task 3 - Simulation implementation
 
+### Core-requirement cross-check
+
+| Brief minimum | Executed evidence | Status |
+|---|---|---|
+| 2D representation | Four labelled Arrival, Security, Immigration, and Exit zones in `OperationalInteractive` | VERIFIED |
+| Traveller movement through both stages | Native `Source -> Service -> Service -> Sink` traveller flow | VERIFIED |
+| Queueing at both stages | Pooled FCFS queues with live queue counts at Security and Immigration | VERIFIED |
+| Finite processing resources | Separate finite AnyLogic `ResourcePool` objects for both stages | VERIFIED |
+| User-adjustable inputs | Five genuine pre-run controls: demand, two capacities, uptake, and automation multiplier | VERIFIED |
+| Operational outputs | Live state plus post-run queue, wait, utilization, throughput, cutoff, and recovery evidence | VERIFIED |
+| Multiple scenarios / experiments | 15 × 10 pilot and frozen 4 × 3 × 50 confirmatory capacity study | VERIFIED |
+
+The four-zone display is a schematic process view, not a calibrated physical
+layout or spatial digital twin.
+
 - [x] Native AnyLogic model opens, compiles, and runs in PLE 8.9.9.
 - [x] GUI experiment executes two input samples × three replications.
 - [x] Fixed-schema manifest, entity, and summary CSV export.
@@ -145,5 +160,6 @@ Evidence:
 - [x] Task 2 requirements/design.
 - [x] Task 3 simulation logic and key outputs/metrics.
 - [x] Task 4 slides.
-- [ ] Clean-clone run completes without errors.
+- [x] Current release commit passes the clean-clone precheck: clean tree,
+  129 tests, 143 local links, and all compact-evidence hash contracts.
 - [ ] Repository URL ready for submission by email.

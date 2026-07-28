@@ -12,13 +12,19 @@ baseline, a site forecast, a staffing answer, or an economic recommendation.
 
 ## Executive finding
 
-The most defensible result is a **mechanism finding**, not a winning policy:
+The decision is **conditional but explicit**:
 
-> Under the frozen confirmatory assumptions, joint `Security +4 /
-> Immigration +3` capacity reduced the base-rate mean replication-level total
-> queue-wait P95 by `2.678732 s` relative to reference. The supporting
-> low/base/high results show that the magnitude is rate-dependent; they do not
-> establish a universally dominant option.
+> Advance joint `Security +4 / Immigration +3` to field calibration at a
+> candidate site **only if** measured time-of-day demand and service
+> distributions reproduce material peak queues. Do not issue a staffing or
+> rollout recommendation from this sandbox.
+
+The evidence is rate-dependent: the reference-minus-joint improvement is
+`2.678732 s` at the base rate and `33.158314 s` at the high endpoint, while
+the `0.066904 s` low-rate improvement is operationally negligible. The joint
+case also prevents the bottleneck migration seen when only one serial stage is
+expanded. The trigger is therefore an observed stressed operating regime—not
+the mere existence of a statistically resolved difference.
 
 This is exactly why the pipeline retains stage timestamps, cutoff state, full
 drain, replication-level KPIs, configuration lineage, and confidence
@@ -55,7 +61,9 @@ paired n = 50; half-width = 0.382159515 s
 ```
 
 The interval excludes zero and meets the registered `1.0 s` half-width
-target. This confirms a reduction in the modelled metric under the frozen
+target. That target is a Monte Carlo numerical-precision target for the
+pre-specified base contrast, not a minimum operationally worthwhile effect.
+The interval confirms a reduction in the modelled metric under the frozen
 assumptions; it does not establish a staffing or economic recommendation.
 
 For interpretability, the supporting reference-minus-joint improvements are:
@@ -65,6 +73,52 @@ For interpretability, the supporting reference-minus-joint improvements are:
 | Exact 95% low | `0.066904` | `[0.006751, 0.127058]` |
 | Point estimate / base | `2.678732` | `[2.296573, 3.060892]` |
 | Exact 95% high | `33.158314` | `[31.410389, 34.906238]` |
+
+## Operating-regime and bottleneck evidence
+
+The capacity grid was designed before outcome inspection and already crosses
+the nonlinear region. Reference capacity is `36 / 21`, derived as
+`ceil(lambda × mean_service / 0.85)` at the base rate; it has not been changed
+after seeing results.
+
+| Frozen arrival level | Reference nominal max offered load | Reference total-wait P95 | Joint +4/+3 total-wait P95 | Decision interpretation |
+|---|---:|---:|---:|---|
+| Low `0.944757/s` | `0.585` | `0.067 s` | `0.000 s` | no capacity action |
+| Base `1.364213/s` | `0.845` | `3.929 s` | `1.250 s` | small modelled gain; calibrate before acting |
+| High `1.906351/s` | `1.180` | `51.671 s` | `18.513 s` | material stressed-regime signal |
+
+Nominal offered load, 300-second arrival-window utilization, and full-drain
+utilization are different denominators. At the high endpoint, reference
+arrival-window utilization is `0.964 / 0.902` for Security / Immigration;
+joint +4/+3 is `0.948 / 0.881`. The lower full-drain values must not be read as
+evidence that the reference is uncongested.
+
+High-rate stage P95s expose bottleneck migration:
+
+| Capacity scenario | Security P95 | Immigration P95 | Total P95 |
+|---|---:|---:|---:|
+| Reference | `44.107 s` | `8.948 s` | `51.671 s` |
+| Security +4 | `17.616 s` | `35.902 s` | `51.305 s` |
+| Immigration +3 | `44.107 s` | `1.957 s` | `44.321 s` |
+| Joint +4/+3 | `17.616 s` | `2.645 s` | `18.513 s` |
+
+Security-only expansion moves the constraint downstream; Immigration-only
+leaves the Security bottleneck. This serial interaction is the substantive
+reason to carry the joint mechanism forward.
+
+The immutable entity ledger also supports post-hoc model-scale diagnostics:
+
+| High-rate total queue wait | Reference | Joint +4/+3 | Paired reference-minus-joint difference |
+|---|---:|---:|---:|
+| `>15 s` | `68.720%` | `20.235%` | `48.485 pp` `[42.780, 54.191]` |
+| `>30 s` | `40.997%` | `1.365%` | `39.632 pp` `[35.032, 44.232]` |
+| `>60 s` | `4.459%` | `0.000%` | `4.459 pp` `[2.309, 6.609]` |
+
+These 15/30/60-second thresholds were added after the frozen confirmatory
+analysis to make the operating regime legible. They are supporting
+descriptives—not ICA service standards, SLA thresholds, or new confirmatory
+endpoints—and required no AnyLogic rerun. The source entity-log hash and
+derived artifact hashes are recorded in the compact audit package.
 
 For total queue-wait P95, joint was lowest at the base and high rates and
 tied with Immigration +3 at `0.000 s` at the low endpoint. Some other
@@ -80,6 +134,9 @@ Tracked evidence:
 - [rate rankings](../results/analysis/confirmatory_capacity/rate_rankings.csv)
 - [pairwise contrasts](../results/analysis/confirmatory_capacity/within_rate_pairwise_contrasts.csv)
 - [ranking stability](../results/analysis/confirmatory_capacity/ranking_stability.json)
+- [post-hoc load-regime manifest](../results/analysis/confirmatory_capacity/regime_diagnostics_manifest.json)
+- [post-hoc regime estimates](../results/analysis/confirmatory_capacity/regime_estimates.csv)
+- [post-hoc reference-versus-joint contrasts](../results/analysis/confirmatory_capacity/regime_reference_joint_contrasts.csv)
 
 ## Pilot evidence retained
 

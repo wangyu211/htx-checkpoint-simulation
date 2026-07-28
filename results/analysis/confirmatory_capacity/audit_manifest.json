@@ -25,7 +25,11 @@
     "run_manifest.csv": "7dd80e38f9e7704b046b6e673647532f0eced50599712df2517f904906750ddb",
     "replication_kpis.csv": "699994dba748501ece7ca07f8a2f915954c05ac1cc58ec9f9ed22d5e75e33b3a",
     "validation.json": "b480ef7b406cd3164f2bb62a91afbd8694efb260541e5fced2587de8f47ecbe9",
-    "crn_alignment.json": "8f33151c7e5008b058ab3a136f77eea3b4d234d39a492e7de9fce82049966f96"
+    "crn_alignment.json": "8f33151c7e5008b058ab3a136f77eea3b4d234d39a492e7de9fce82049966f96",
+    "regime_diagnostics_by_replication.csv": "029693a649dbf983e7253a8cac26853908db632ffd2c2a520c33e6d38f4b9ba0",
+    "regime_estimates.csv": "e5d659e17cab301e7137af12c0f56e7f8bc2aaca8ec935576c8555294be52014",
+    "regime_reference_joint_contrasts.csv": "d25b10d87adde496e9cdbcb7c4ac085f987ef937a8ccb9a4539411629eddc2a3",
+    "regime_diagnostics_manifest.json": "db39d8e1adae80c1fad124f95a54f5f546f6a2a0ab32ec175594fbd65216ca9b"
   },
   "claim_boundary": "Conditional capacity-mechanism evidence under registered pooled-FCFS, fixed-service-time, empty-start and full-drain assumptions; not a calibrated HTX baseline, staffing answer or costed deployment decision."
 }

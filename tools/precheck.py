@@ -36,6 +36,10 @@ REQUIRED_TRACKED = {
     "results/analysis/confirmatory_capacity/primary_result.json",
     "results/analysis/confirmatory_capacity/ranking_stability.json",
     "results/analysis/confirmatory_capacity/rate_rankings.csv",
+    "results/analysis/confirmatory_capacity/regime_diagnostics_by_replication.csv",
+    "results/analysis/confirmatory_capacity/regime_diagnostics_manifest.json",
+    "results/analysis/confirmatory_capacity/regime_estimates.csv",
+    "results/analysis/confirmatory_capacity/regime_reference_joint_contrasts.csv",
     "results/analysis/confirmatory_capacity/replication_kpis.csv",
     "results/analysis/confirmatory_capacity/run_manifest.csv",
     "results/analysis/confirmatory_capacity/scenario_contrasts.csv",
@@ -223,6 +227,11 @@ def validate_confirmatory_audit() -> list[str]:
         analysis_manifest = json.loads(
             (root / "analysis_manifest.json").read_text(encoding="utf-8")
         )
+        regime_manifest = json.loads(
+            (root / "regime_diagnostics_manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
     except (FileNotFoundError, json.JSONDecodeError) as exc:
         return [f"confirmatory compact audit package is unreadable: {exc}"]
 
@@ -248,6 +257,39 @@ def validate_confirmatory_audit() -> list[str]:
         or validation.get("entity_count") != 253756
     ):
         errors.append("confirmatory validation report is not a clean 600-run PASS")
+
+    if (
+        regime_manifest.get("status") != "PASS"
+        or regime_manifest.get("analysis_role")
+        != "POST_HOC_SUPPORTING_LOAD_DIAGNOSTIC"
+        or regime_manifest.get("replication_row_count") != 600
+        or regime_manifest.get("estimate_row_count") != 84
+        or regime_manifest.get("contrast_row_count") != 9
+        or regime_manifest.get("thresholds_seconds") != [15.0, 30.0, 60.0]
+    ):
+        errors.append("post-hoc load-regime diagnostic contract is incomplete")
+    regime_entity = regime_manifest.get("source_entity_log")
+    if (
+        not isinstance(regime_entity, dict)
+        or regime_entity.get("row_count") != 253756
+        or regime_entity.get("sha256")
+        != "7fea0ee6215f277b1ef48cd9d2dab18ea1b761158b66a037fbd9012f644b2657"
+    ):
+        errors.append("post-hoc load-regime source evidence is incomplete")
+    regime_outputs = regime_manifest.get("outputs")
+    if not isinstance(regime_outputs, dict):
+        errors.append("post-hoc load-regime output inventory is missing")
+    else:
+        for relative, expected in regime_outputs.items():
+            path = PROJECT_ROOT / str(relative)
+            if not path.is_file():
+                errors.append(
+                    f"post-hoc load-regime artifact is missing: {relative}"
+                )
+            elif sha256(path) != expected:
+                errors.append(
+                    f"post-hoc load-regime artifact hash mismatch: {relative}"
+                )
 
     output_inventory = analysis_manifest.get("outputs")
     if not isinstance(output_inventory, list):

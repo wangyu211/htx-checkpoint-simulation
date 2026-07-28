@@ -11,6 +11,10 @@ from src.analysis.analyse_confirmatory_capacity import (
     confirmatory_alignment_report_passes,
 )
 from src.analysis.analyse_operational_replications import METRICS
+from src.analysis.analyse_regime_diagnostics import (
+    interval_overlap,
+    summarise_diagnostics,
+)
 from src.analysis.confirmatory_design import (
     CAPACITY_SCENARIO_IDS,
     DEFAULT_DESIGN,
@@ -364,6 +368,63 @@ class ConfirmatoryAnalysisTests(unittest.TestCase):
                     results_dir=results,
                 )
             )
+
+    def test_regime_interval_overlap_is_window_bounded(self) -> None:
+        self.assertEqual(interval_overlap(10.0, 20.0, 0.0, 30.0), 10.0)
+        self.assertEqual(interval_overlap(-5.0, 5.0, 0.0, 30.0), 5.0)
+        self.assertEqual(interval_overlap(25.0, 40.0, 0.0, 30.0), 5.0)
+        self.assertEqual(interval_overlap(31.0, 40.0, 0.0, 30.0), 0.0)
+        with self.assertRaises(ValueError):
+            interval_overlap(2.0, 1.0, 0.0, 30.0)
+
+    def test_regime_contrast_uses_paired_replication_rates(self) -> None:
+        rows: list[dict[str, object]] = []
+        for sample_id, level_id in (
+            ("LOCAL_WINDOW_HPP_EXACT95_LOW", "EXACT95_LOW"),
+            ("LOCAL_WINDOW_HPP_BASE", "MLE_BASE"),
+            ("LOCAL_WINDOW_HPP_EXACT95_HIGH", "EXACT95_HIGH"),
+        ):
+            for scenario_id, offset in (
+                ("REFERENCE_ASSUMPTION_SANDBOX_V1", 0.4),
+                ("CAPACITY_SECURITY_PLUS_4", 0.3),
+                ("CAPACITY_IMMIGRATION_PLUS_3", 0.2),
+                ("CAPACITY_BOTH_PLUS", 0.1),
+            ):
+                for replication in range(1, 51):
+                    row: dict[str, object] = {
+                        "study_id": "STUDY",
+                        "scenario_id": scenario_id,
+                        "arrival_level_id": level_id,
+                        "input_sample_id": sample_id,
+                        "replication_id": str(replication),
+                    }
+                    for metric in (
+                        "security_nominal_offered_load",
+                        "immigration_nominal_offered_load",
+                        "security_arrival_window_utilization",
+                        "immigration_arrival_window_utilization",
+                    ):
+                        row[metric] = offset
+                    for threshold in (15, 30, 60):
+                        row[f"total_queue_wait_exceed_{threshold}_rate"] = (
+                            offset + replication / 1000.0
+                        )
+                    rows.append(row)
+
+        estimates, contrasts = summarise_diagnostics(rows)
+
+        self.assertEqual(len(estimates), 4 * 3 * 7)
+        self.assertEqual(len(contrasts), 3 * 3)
+        self.assertTrue(
+            all(
+                abs(
+                    float(row["difference_mean_percentage_points"]) - 30.0
+                )
+                < 1e-10
+                for row in contrasts
+            )
+        )
+        self.assertTrue(all(row["n_pairs"] == 50 for row in contrasts))
 
 
 if __name__ == "__main__":

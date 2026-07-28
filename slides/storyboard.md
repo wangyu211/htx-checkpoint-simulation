@@ -38,26 +38,33 @@ inference, and the evidence needed before deployment.
 - Achieved primary 95% half-width `0.382 s`, within the frozen `1.0 s`
   target; no post-hoc extension.
 
-## Slide 4 — Confirmatory result and rate sensitivity
+## Slide 4 — Operating regime and bottleneck migration
 
-> Joint +4/+3 cuts base-rate P95; the modelled gain is rate-dependent
+> Capacity matters in the stressed regime; single-stage relief moves the
+> bottleneck
 
-- Primary joint-minus-reference effect: `−2.678732 s`, paired 95% CI
-  `[−3.060892, −2.296573]`, `n=50`.
-- Reference-minus-joint supporting improvements: `0.066904 s` low,
-  `2.678732 s` base, and `33.158314 s` high; all three intervals exclude zero.
-- Joint is lowest at base/high. At the low endpoint, joint and Immigration +3
-  tie at `0.000 s`.
-- Other pairwise intervals remain unresolved, so no universal option-dominance
-  claim is made.
+- Reference versus joint +4/+3 total-wait P95 is `0.067/0.000 s` at low,
+  `3.929/1.250 s` at base, and `51.671/18.513 s` at high.
+- Reference nominal maximum offered load is `0.585 / 0.845 / 1.180`; the
+  frozen grid already crosses into overload without post-result retuning.
+- At high load, Security +4 leaves Immigration P95 at `35.902 s`, while
+  Immigration +3 leaves Security P95 at `44.107 s`.
+- The high-rate joint improvement is `33.158 s`
+  (`95% CI [31.410, 34.906]`).
+- Post-hoc 15/30/60-second diagnostics are supporting model-scale
+  descriptives, not ICA SLAs or new confirmatory endpoints.
 
 ## Slide 5 — Bounded decision and next evidence
 
-> Advance joint +4/+3 to field calibration—not staffing rollout
+> Recommend a conditional joint-capacity pilot—triggered by observed peak load
 
-The study supports carrying the joint mechanism into field calibration. It
-does not support immediate staffing, forecasting, cost, or rollout decisions.
-The next gates are:
+**Now:** carry the joint +4/+3 mechanism into one-site field calibration.
+
+**Trigger:** price a controlled pilot only if measured time-of-day arrivals and
+stage service distributions reproduce material peak queues.
+
+**Limit:** no staffing, forecasting, cost, or rollout decision is supported
+until the following evidence gates pass:
 
 1. time-of-day arrivals and a signed event ledger;
 2. stage service-time and exception distributions;

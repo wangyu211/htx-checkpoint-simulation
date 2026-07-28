@@ -74,6 +74,18 @@ evidence, not a calibrated staffing result. See the
 [`confirmatory design`](docs/task3_confirmatory_design.md) and
 [`compact audit package`](results/analysis/confirmatory_capacity/README.md).
 
+The frozen grid already spans light through stressed conditions. Reference
+nominal maximum offered load is `0.585 / 0.845 / 1.180` at low/base/high;
+reference versus joint +4/+3 total-wait P95 is
+`0.067/0.000 s`, `3.929/1.250 s`, and `51.671/18.513 s`.
+At high load, single-stage expansion moves the bottleneck to the other stage,
+whereas joint capacity reduces the modelled P95 by `33.158 s`
+(`[31.410, 34.906]`). The resulting recommendation is conditional: carry the
+joint mechanism into field calibration only where observed peak demand and
+service distributions reproduce material queues; do not infer a staffing
+rollout. Post-hoc 15/30/60-second diagnostics are labelled as model-scale
+supporting evidence, not ICA SLAs.
+
 `OperationalInteractive` provides the reviewer-facing simulation surface:
 four labelled Arrival → Security → Immigration → Exit zones, live queue and
 in-service state, run status, and exactly five genuine pre-run controls

@@ -1,0 +1,28 @@
+{
+  "analysis": "TASK3_POST_HOC_LOAD_REGIME_DIAGNOSTICS_V1",
+  "analysis_role": "POST_HOC_SUPPORTING_LOAD_DIAGNOSTIC",
+  "claim_boundary": "Post-hoc supporting diagnostics conditional on the frozen assumption sandbox; not a service-level agreement, site forecast, or staffing recommendation.",
+  "contrast_row_count": 9,
+  "estimate_row_count": 84,
+  "outputs": {
+    "results/analysis/confirmatory_capacity/regime_diagnostics_by_replication.csv": "029693a649dbf983e7253a8cac26853908db632ffd2c2a520c33e6d38f4b9ba0",
+    "results/analysis/confirmatory_capacity/regime_estimates.csv": "e5d659e17cab301e7137af12c0f56e7f8bc2aaca8ec935576c8555294be52014",
+    "results/analysis/confirmatory_capacity/regime_reference_joint_contrasts.csv": "d25b10d87adde496e9cdbcb7c4ac085f987ef937a8ccb9a4539411629eddc2a3"
+  },
+  "replication_row_count": 600,
+  "schema_version": "1.0",
+  "source_entity_log": {
+    "path": "results/raw/confirmatory_capacity_consolidated/entity_log.csv",
+    "row_count": 253756,
+    "sha256": "7fea0ee6215f277b1ef48cd9d2dab18ea1b761158b66a037fbd9012f644b2657",
+    "tracked": false
+  },
+  "status": "PASS",
+  "study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+  "threshold_semantics": "Illustrative model-scale diagnostics; not ICA service standards and not prospectively registered confirmatory endpoints.",
+  "thresholds_seconds": [
+    15.0,
+    30.0,
+    60.0
+  ]
+}
