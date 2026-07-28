@@ -1,0 +1,163 @@
+{
+  "schema_version": "1.0",
+  "study_id": "TASK3_PEAK_DURATION_SENSITIVITY_EXPLORATORY_V1",
+  "design_status": "FROZEN_PRE_RUN",
+  "execution_status": "NOT_EXECUTED",
+  "frozen_on": "2026-07-29",
+  "purpose": "Preserve the completed 300-second evidence and independently test how the same Base-rate stationary-HPP assumption accumulates delay, queue, backlog, and recovery burden over longer terminating arrival windows at four selected capacity cells.",
+  "analysis_role": "EXPLORATORY_DURATION_SENSITIVITY_NOT_CONFIRMATORY",
+  "claim_ceiling": "CONDITIONAL_FINITE_HORIZON_DURATION_SENSITIVITY_ONLY",
+  "post_outcome_disclosure": "This duration study was designed after inspection of the registered 300-second capacity results and the exploratory response surface. It may expose finite-horizon accumulation and recovery mechanisms, but it does not replace, overwrite, or retroactively confirm either completed study.",
+  "fixed_inputs": {
+    "arrival_level_id": "MLE_BASE",
+    "input_sample_id": "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION",
+    "arrival_mode": "HPP",
+    "arrival_rate_per_second": 1.3642132969720073,
+    "demand_multiplier": 1.0,
+    "drain_rule": "FULL_DRAIN",
+    "queue_policy": "pooled",
+    "security_service_distribution": "FIXED",
+    "security_service_p1_seconds": 21.818181818,
+    "immigration_service_distribution": "FIXED",
+    "immigration_service_p1_seconds": 13,
+    "automation_mapping_mode": "DISABLED",
+    "additional_check_semantics": "NONE",
+    "start_state": "EMPTY_AND_IDLE"
+  },
+  "selected_capacity_cells": [
+    {
+      "security_capacity": 36,
+      "immigration_capacity": 21,
+      "cell_role": "REFERENCE_HEADROOM",
+      "selection_boundary": "Target-utilisation-derived model capacity; not an observed roster."
+    },
+    {
+      "security_capacity": 30,
+      "immigration_capacity": 18,
+      "cell_role": "NEAR_CRITICAL",
+      "selection_boundary": "Selected near the fixed-mean offered-work thresholds; not an observed roster."
+    },
+    {
+      "security_capacity": 29,
+      "immigration_capacity": 17,
+      "cell_role": "JOINT_ABOVE_RHO_ONE_PROXY",
+      "selection_boundary": "Selected as a finite-horizon accumulation case; no steady-state claim."
+    },
+    {
+      "security_capacity": 28,
+      "immigration_capacity": 16,
+      "cell_role": "SEVERE_FINITE_HORIZON_STRESS",
+      "selection_boundary": "Selected as an exploratory stress boundary; not a site forecast."
+    }
+  ],
+  "arrival_window": {
+    "cutoff_seconds": [
+      300,
+      900,
+      1800,
+      3600,
+      7200
+    ],
+    "duration_labels": [
+      "5 minutes",
+      "15 minutes",
+      "30 minutes",
+      "60 minutes",
+      "120 minutes"
+    ],
+    "start_state": "EMPTY_AND_IDLE",
+    "arrival_process_during_window": "STATIONARY_HPP_AT_FIXED_BASE_RATE",
+    "post_cutoff_rule": "STOP_ARRIVALS_THEN_FULL_DRAIN",
+    "warm_up": "NONE_TERMINATING_COHORT",
+    "independent_runs_by_duration": true,
+    "interpretation": "Each duration is a separate empty-start terminating cohort. Longer windows extend the same stationary short-window rate as a controlled assumption; they are not prefixes cut from one run and are not observed time-of-day demand."
+  },
+  "guard_policy": {
+    "formula": "ceil(max(5000, lambda*T + 10*sqrt(lambda*T) + 100))",
+    "minimum_guard": 5000,
+    "standard_deviation_multiples": 10,
+    "fixed_margin": 100,
+    "queue_capacity_rule": "security_queue_capacity = immigration_queue_capacity = arrival_guard",
+    "purpose": "Keep the HPP source and both finite queue buffers effectively non-binding under the registered scenario while failing loudly if the guard is nevertheless reached.",
+    "computed_values": [
+      {
+        "cutoff_seconds": 300,
+        "arrival_and_queue_guard": 5000
+      },
+      {
+        "cutoff_seconds": 900,
+        "arrival_and_queue_guard": 5000
+      },
+      {
+        "cutoff_seconds": 1800,
+        "arrival_and_queue_guard": 5000
+      },
+      {
+        "cutoff_seconds": 3600,
+        "arrival_and_queue_guard": 5712
+      },
+      {
+        "cutoff_seconds": 7200,
+        "arrival_and_queue_guard": 10914
+      }
+    ],
+    "restriction": "A large computational guard is not a measured physical queue capacity."
+  },
+  "execution": {
+    "proposed_experiment_name": "PeakDurationSensitivity",
+    "proposed_output_collection_id": "peak_duration_sensitivity",
+    "selected_capacity_cell_count": 4,
+    "duration_level_count": 5,
+    "study_cell_count": 20,
+    "replications_per_cell": 50,
+    "planned_run_count": 1000,
+    "completed_run_count": 0,
+    "parallel_evaluations": false,
+    "adaptive_extension_allowed": false,
+    "current_scope": "DESIGN_AND_INPUT_FREEZE_ONLY"
+  },
+  "seed_policy": {
+    "source_study_id": "TASK3_CAPACITY_MECHANISM_CONFIRMATORY_V1",
+    "source_manifest": "config/confirmatory_seed_manifest.csv",
+    "source_arrival_level_id": "MLE_BASE",
+    "source_input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "target_input_sample_id": "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION",
+    "input_identity_mapping": "LOCAL_WINDOW_HPP_BASE supplies only the measured short-window rate and registered seed tuple; every newly executed 300-7200 second duration cell is labelled LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION so the stationary extrapolation is not misidentified as an observed window.",
+    "reuse_rule": "For replication r, every capacity-duration cell uses the exact Base-demand pairing_group_id, master, arrival, service, routing, and tie seed tuple from the registered confirmatory manifest while assigning the distinct stationary-extension input_sample_id.",
+    "alignment_intent": "COMMON_EXOGENOUS_STREAMS_ACROSS_ALL_CAPACITY_DURATION_CELLS",
+    "paired_interpretation_gate": "Exact seed-tuple, arrival-prefix, and traveller-level exogenous-draw alignment must pass before paired duration or capacity contrasts are reported.",
+    "duration_prefix_note": "Using the same arrival seed is intended to make a longer run share the shorter run's HPP prefix. This remains a claim to validate from emitted arrival ledgers, not an assumption to report as achieved."
+  },
+  "analysis_plan": {
+    "primary_question": "How does finite-horizon congestion burden accumulate with a longer stationary arrival window at selected capacity regimes?",
+    "primary_views": [
+      "duration_by_capacity_curve_for_total_queue_wait_p95_seconds",
+      "duration_by_capacity_curve_for_peak_total_waiting_queue",
+      "duration_by_capacity_curve_for_cutoff_backlog",
+      "duration_by_capacity_curve_for_cohort_clear_time_after_cutoff_seconds"
+    ],
+    "supporting_metrics": [
+      "total_queue_wait_mean_seconds",
+      "time_weighted_mean_total_waiting_queue",
+      "security_wait_p95_seconds",
+      "immigration_wait_p95_seconds",
+      "late_arrival_total_queue_wait_seconds",
+      "arrival_window_queue_growth_slope"
+    ],
+    "finite_horizon_policy": "All KPIs are terminating-cohort outputs indexed by arrival-window duration. Do not describe them as steady-state estimates.",
+    "rho_greater_or_equal_one_policy": "Where the offered-work utilization proxy is at or above one, do not report a stationary service-level KPI. Report cutoff backlog, arrival-window queue growth, late-arrival wait, and recovery/clear time as finite-horizon stress outputs.",
+    "uncertainty": "After execution, report replication-level means with 95 percent intervals. Paired differences are allowed only after CRN alignment passes.",
+    "plot_policy": "Plot only simulated duration levels as evidence. Lines may connect points as a labelled visual guide and must not imply intermediate durations were simulated.",
+    "multiplicity_rule": "This is post-outcome exploratory sensitivity. No confirmatory p-value, calibrated threshold, site forecast, or staffing recommendation may be inferred."
+  },
+  "calibration_boundary": {
+    "calibration_status": "NOT_CALIBRATED",
+    "stationary_rate_extension_is_observed_peak": false,
+    "time_of_day_profile_claim": false,
+    "steady_state_claim": false,
+    "site_forecast_claim": false,
+    "observed_roster_claim": false,
+    "physical_queue_capacity_claim": false,
+    "staffing_recommendation_claim": false
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "study_id": "TASK3_SERVICE_VARIABILITY_SENSITIVITY_V1",
+  "model_version": "TASK3_OPERATIONAL_POOLED_SERVICE_VARIABILITY_V1",
+  "design_status": "FROZEN_PRE_RUN",
+  "frozen_on": "2026-07-29",
+  "purpose": "Quantify how transparent, mean-preserving service-time variability assumptions change delay, queueing, and clearance outcomes while the Base arrival input, service means, capacity, routing, and queue policy remain fixed.",
+  "analysis_role": "EXPLORATORY_ASSUMPTION_SENSITIVITY_NOT_CALIBRATION",
+  "claim_ceiling": "CONDITIONAL_SERVICE_VARIABILITY_SENSITIVITY_ONLY",
+  "post_outcome_disclosure": "This study was designed after the registered capacity studies. It tests robustness to unmeasured service-time variability and does not modify, replace, or retroactively reinterpret the frozen 300-second confirmatory, capacity-availability, or response-surface results.",
+  "fixed_inputs": {
+    "arrival_mode": "HPP",
+    "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "arrival_rate_per_second": 1.3642132969720073,
+    "demand_multiplier": 1.0,
+    "arrival_cutoff_seconds": 300,
+    "arrival_guard": 5000,
+    "drain_rule": "FULL_DRAIN",
+    "security_capacity": 36,
+    "security_queue_capacity": 5000,
+    "security_service_mean_seconds": 21.818181818,
+    "immigration_capacity": 21,
+    "immigration_queue_capacity": 5000,
+    "immigration_service_mean_seconds": 13,
+    "queue_policy": "pooled",
+    "automation_mapping_mode": "DISABLED",
+    "additional_check_semantics": "NONE",
+    "start_state": "EMPTY_AND_IDLE"
+  },
+  "service_cv_grid": {
+    "security_cv_levels": [
+      0,
+      0.5,
+      1.0
+    ],
+    "immigration_cv_levels": [
+      0,
+      0.5,
+      1.0
+    ],
+    "factorial_cell_count": 9,
+    "reference_cell": {
+      "security_cv": 0,
+      "immigration_cv": 0,
+      "scenario_id": "SERVICE_VARIABILITY_SCV000_ICV000"
+    },
+    "selection_rationale": "The three levels distinguish deterministic service, moderate positive variability, and high positive variability without claiming that either positive CV was measured at an HTX site. The full factorial separates stage-specific effects from joint interaction."
+  },
+  "distribution_contract": {
+    "zero_cv_distribution": "FIXED",
+    "positive_cv_distribution": "LOGNORMAL_MEAN_CV",
+    "p1_semantics": "ARITHMETIC_MEAN_SECONDS",
+    "mean_preserving_formula": "sigma2=ln(1+cv^2); service=mean*exp(-0.5*sigma2+sqrt(sigma2)*z)",
+    "support": "STRICTLY_POSITIVE_FOR_CV_GT_ZERO",
+    "latent_draw": "STANDARD_NORMAL_FROM_EXPLICIT_STAGE_LOCAL_RNG",
+    "stage_stream_rule": "Security and Immigration use separate java.util.Random instances deterministically derived from the registered service_seed. The AnyLogic default generator remains arrival-only.",
+    "fixed_arm_rule": "CV zero has no service shock. It shares arrival, routing, and tie streams with positive-CV arms, but no service-shock alignment is claimed for a deterministic service demand."
+  },
+  "execution": {
+    "experiment_name": "ServiceVariabilitySensitivity",
+    "output_collection_id": "service_variability",
+    "study_cell_count": 9,
+    "replications_per_cell": 50,
+    "total_runs": 450,
+    "parallel_evaluations": false,
+    "adaptive_extension_allowed": false
+  },
+  "seed_policy": {
+    "source_manifest": "config/confirmatory_seed_manifest.csv",
+    "source_arrival_level_id": "MLE_BASE",
+    "source_input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "reuse_rule": "For replication r, all nine CV cells copy the exact Base master, arrival, service, routing, and tie seed tuple from the registered confirmatory manifest.",
+    "alignment_intent": "COMMON_ARRIVAL_ROUTING_AND_TIE_STREAMS_ACROSS_ALL_CELLS_AND_COMMON_STAGE_LOCAL_SERVICE_LATENTS_ACROSS_POSITIVE_CV_CELLS",
+    "paired_interpretation_gate": "Paired intervals may be reported only after exact coverage and seed checks, traveller-level arrival/routing/tie alignment, and positive-CV implied-latent alignment all pass."
+  },
+  "analysis": {
+    "primary_descriptive_metric": "total_queue_wait_p95_seconds",
+    "primary_descriptive_contrast": "SERVICE_VARIABILITY_SCV100_ICV100_MINUS_SERVICE_VARIABILITY_SCV000_ICV000",
+    "supporting_metrics": [
+      "security_wait_p95_seconds",
+      "immigration_wait_p95_seconds",
+      "total_queue_wait_mean_seconds",
+      "peak_total_waiting_queue",
+      "time_weighted_mean_total_waiting_queue",
+      "system_time_p95_seconds",
+      "system_time_p99_seconds",
+      "system_time_max_seconds",
+      "cutoff_backlog",
+      "cohort_clear_time_after_cutoff_seconds"
+    ],
+    "required_views": [
+      "security_cv_slice_at_immigration_cv_0",
+      "immigration_cv_slice_at_security_cv_0",
+      "balanced_joint_cv_path",
+      "full_security_cv_by_immigration_cv_heatmap",
+      "factorial_interaction"
+    ],
+    "uncertainty": "Report replication-level means with 95% Student-t intervals. Use paired differences only after the registered CRN alignment gate passes.",
+    "multiplicity_rule": "No confirmatory p-value, calibrated distribution claim, or staffing decision claim. Treat all stage rankings, curvature, interactions, and tail diagnostics as descriptive exploratory findings.",
+    "cross_batch_reference": {
+      "source_collection": "capacity_response_surface",
+      "source_scenario_id": "CAPACITY_RESPONSE_S36_I21",
+      "new_scenario_id": "SERVICE_VARIABILITY_SCV000_ICV000",
+      "role": "NUMERICAL_REPRODUCIBILITY_CHECK_ONLY",
+      "restriction": "The old run is not pooled into the new estimates and is never overwritten."
+    }
+  },
+  "calibration_boundary": {
+    "service_distribution_observed": false,
+    "service_cv_observed": false,
+    "site_forecast_claim": false,
+    "observed_roster_claim": false,
+    "staffing_recommendation_claim": false,
+    "interpretation": "Results describe sensitivity of the existing assumption sandbox to declared service-time shape choices. They do not identify the service distribution of an HTX checkpoint."
+  }
+}
