@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "contract_id": "TASK3_ANIMATION_SPEED_INVARIANCE_V1",
+  "evidence_id": "OP_INTERACTIVE_REFERENCE_GUI_SPEED_V1",
+  "current_evidence_state": "IMPLEMENTED_NOT_EXECUTED",
+  "experiment_name": "OperationalInteractive",
+  "model_version": "TASK3_OPERATIONAL_POOLED_V1",
+  "source_run_directory": "results/raw/anylogic_operational/INTERACTIVE_D100_SEC036_IMM021_U000_M100/LOCAL_WINDOW_HPP_BASE/replication_000",
+  "evidence_root": "results/raw/animation_speed_invariance/OP_INTERACTIVE_REFERENCE_GUI_SPEED_V1",
+  "validation_report": "results/analysis/animation_speed_invariance/validation.json",
+  "required_core_files": [
+    "run_manifest.csv",
+    "entity_log.csv",
+    "replication_kpis.csv"
+  ],
+  "required_run_order": [
+    {
+      "run_mode": "GUI_1X",
+      "directory_name": "01_gui_1x",
+      "execution_mode": "REAL_TIME_SCALE",
+      "real_time_scale": 1,
+      "animation_condition": "PRESENTATION_RENDERED"
+    },
+    {
+      "run_mode": "GUI_10X",
+      "directory_name": "02_gui_10x",
+      "execution_mode": "REAL_TIME_SCALE",
+      "real_time_scale": 10,
+      "animation_condition": "PRESENTATION_RENDERED"
+    },
+    {
+      "run_mode": "GUI_VIRTUAL_TIME",
+      "directory_name": "03_gui_virtual_time",
+      "execution_mode": "VIRTUAL_TIME",
+      "real_time_scale": null,
+      "animation_condition": "ANIMATION_NOT_REQUIRED_BY_EXECUTION_MODE"
+    }
+  ],
+  "core_comparison": {
+    "reference_run_mode": "GUI_1X",
+    "comparison_semantics": "EXACT_ORDERED_FIELD_EQUALITY",
+    "compared_tables": [
+      "run_manifest",
+      "entity_log",
+      "replication_kpis"
+    ],
+    "excluded_from_core_equality": [
+      "capture_metadata.json",
+      "ui_finished.png",
+      "filesystem_paths",
+      "filesystem_timestamps",
+      "capture_utc",
+      "wall_clock_elapsed_seconds",
+      "display_or_window_metadata"
+    ]
+  },
+  "claim_boundary": "A PASS establishes that the exported model-time trajectory and KPIs are identical across the three registered GUI execution modes for one fixed scenario, configuration, seed set, engine build, and model commit. It does not compare wall-clock performance, prove determinism for every scenario, or prove that the virtual-time GUI rendered zero frames."
+}
