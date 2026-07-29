@@ -12,18 +12,19 @@ The backup is not part of the canonical Task 4 submission and is intentionally
 not tracked because the release contract permits exactly one Task 4 PPTX.
 Every slide contains speaker notes and a repository-relative `[Sources]` block.
 
-## Canonical slide 1 — evidence boundary
+## Canonical slide 1 — business problem, objective, and evidence boundary
 
 > Evidence-Driven Checkpoint Simulation
 
-- **Problem Statement:** a 24.9-second corridor video supplies a defensible
-  arrival snapshot, but it does not measure time-of-day demand, stage-service
-  behaviour, or observed staffing.
-- **Objective:** build an auditable traveller-level DES that combines measured
-  arrivals with editable service assumptions to stress-test queues, delays,
-  and bottleneck shifts.
-- `34` accepted right-to-left crossings and `1.364/s` are presented with that
-  boundary visible.
+- **Problem Statement:** for peak and holiday periods, checkpoint leaders need
+  to understand how traveller demand, staffing, and queue/SOP choices interact
+  to create bottlenecks and delays.
+- **Objective:** build an auditable traveller-level DES decision sandbox to
+  compare operational scenarios and SOPs, quantifying queues, delays, clearance
+  time, and bottleneck shifts before implementation.
+- `34` accepted right-to-left crossings and `1.364/s` are presented as a
+  `24.9-second` corridor-flow anchor—not a time-of-day demand profile or
+  staffing estimate.
 - A synthetic AnyLogic screenshot replaces all source-video-derived pixels.
 - The executed evidence chain now comprises `4,750` validated AnyLogic runs:
   `600` confirmatory, `2,700` capacity-surface, `450` service-variability, and
