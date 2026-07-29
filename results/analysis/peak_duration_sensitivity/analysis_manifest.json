@@ -1,0 +1,96 @@
+{
+  "analysis": "TASK3_PEAK_DURATION_SENSITIVITY_ANALYSIS_V1",
+  "analysis_role": "EXPLORATORY_DURATION_SENSITIVITY_NOT_CONFIRMATORY",
+  "claim_boundary": "CONDITIONAL_FINITE_HORIZON_DURATION_SENSITIVITY_ONLY",
+  "coverage": {
+    "capacity_cell_count": 4,
+    "duration_level_count": 5,
+    "replications_per_cell": 50,
+    "run_count": 1000,
+    "study_cell_count": 20
+  },
+  "cross_batch_reproducibility_status": "PASS",
+  "input_sample_id": "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION",
+  "outputs": {
+    "cell_estimates.csv": {
+      "path": "results/analysis/peak_duration_sensitivity/cell_estimates.csv",
+      "row_count": 320,
+      "sha256": "1f53f9e4dec07533e06243e569efa6bdbaea90b002fda60a50fa59956c5dd762"
+    },
+    "crn_alignment.json": {
+      "path": "results/analysis/peak_duration_sensitivity/crn_alignment.json",
+      "row_count": 1,
+      "sha256": "f2b53310b1ab9bf0429bbe7c21a66bdcf5073d11b6ab44424fdcf9817c8caf65"
+    },
+    "cross_batch_reproducibility.json": {
+      "path": "results/analysis/peak_duration_sensitivity/cross_batch_reproducibility.json",
+      "row_count": 1,
+      "sha256": "8b11a8ca079fb1c5aeaeba59ccaebd020f3f78ad3ebabbc616be008d2db2d999"
+    },
+    "curves_payload.json": {
+      "path": "results/analysis/peak_duration_sensitivity/curves_payload.json",
+      "row_count": 1,
+      "sha256": "4b93564e94b3df910d45059907597e5498198077aa24040e1c0a4f0d53c61fbe"
+    },
+    "duration_increments.csv": {
+      "path": "results/analysis/peak_duration_sensitivity/duration_increments.csv",
+      "row_count": 128,
+      "sha256": "cb937bca016f034d7c5a1392841d3dab325b82aa2becc28667c5920c01f7b46b"
+    },
+    "growth_diagnostics.csv": {
+      "path": "results/analysis/peak_duration_sensitivity/growth_diagnostics.csv",
+      "row_count": 20,
+      "sha256": "fedb79b863410a1068a301a52feb6a45127ecdfcc788a86620aec5f443cbd11c"
+    },
+    "peak_duration_by_replication.csv": {
+      "path": "results/analysis/peak_duration_sensitivity/peak_duration_by_replication.csv",
+      "row_count": 1000,
+      "sha256": "6a20f3d26e8d12b6091f7dbfb95d6272b339b8b9e45801141f2caa1880e392b9"
+    },
+    "raw_artifact_manifest.csv": {
+      "path": "results/analysis/peak_duration_sensitivity/raw_artifact_manifest.csv",
+      "row_count": 3000,
+      "sha256": "de10a260fc8f5910a00e84384d4239527ebf9197287beb907ca0351e14a41fc4"
+    },
+    "validation.json": {
+      "path": "results/analysis/peak_duration_sensitivity/validation.json",
+      "row_count": 1,
+      "sha256": "219f4f026303271204fc57907011d86f65bbb80f083163f481a74b8f2dc0695c"
+    }
+  },
+  "paired_analysis_gate": {
+    "comparison_method": "PAIRED_STUDENT_T",
+    "cross_duration_nested_prefix_status": "PASS",
+    "same_duration_cross_capacity_status": "PASS"
+  },
+  "queue_reconstruction": {
+    "cutoff_state": "queue and backlog reconstructed from entity ledger",
+    "growth_estimator": "replication-level OLS slope of five window queue means against window midpoint seconds",
+    "growth_windows": [
+      "[0.5T,0.6T)",
+      "[0.6T,0.7T)",
+      "[0.7T,0.8T)",
+      "[0.8T,0.9T)",
+      "[0.9T,T)"
+    ],
+    "late_arrival_definition": "arrival_seconds in [0.8*T,T)",
+    "time_weighted_mean_and_peak_window": "[0,T)"
+  },
+  "schema_version": "1.0",
+  "source": {
+    "artifact_hashes": {
+      "design_sha256": "831a865fd8634c49aedca1c0ca88a9a79f17203a4a00d81a0d0efcbdd7717b74",
+      "scenarios_sha256": "0109ba018d1d4dba4c8fb768561e1346112ea84097e2117bdac65adf1f97ab60",
+      "schema_registry_sha256": "c26bbe0006f45b8b8f10c184ed5339920ffb73e7987471473a20ffcfd1911b05",
+      "seed_manifest_sha256": "a2a0e3d050c62069a35f778cea645f32228c059be55039888fa12303416c3ee4"
+    },
+    "entity_logs_copied_to_analysis_package": false,
+    "entity_row_count": 3768780,
+    "raw_file_count": 3000,
+    "raw_results_root": "results/raw/peak_duration_sensitivity",
+    "raw_tree_sha256": "7fabab048e42d2a5afea92ce46d72dcf4cb0c5843c16866555cc9a0908ae64dd"
+  },
+  "status": "PASS",
+  "steady_state_policy": "No steady-state KPI. rho>=1 cells are reported only through finite-horizon queue, backlog, late-wait, and clear-time outputs.",
+  "study_id": "TASK3_PEAK_DURATION_SENSITIVITY_EXPLORATORY_V1"
+}

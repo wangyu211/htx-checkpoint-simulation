@@ -2,9 +2,16 @@
 
 **Design status:** frozen before execution.
 
-**Implementation status:** `IMPLEMENTED_NOT_EXECUTED`; the
-`PeakDurationSensitivity` AnyLogic experiment and fail-closed Python analyser
-are contract-tested, but `0/1000` registered runs have been accepted.
+**Accepted-evidence status:** `EVIDENCE_ACCEPTED`; the
+`PeakDurationSensitivity` AnyLogic experiment completed `1000/1000`
+registered runs, and the fail-closed analyser accepted all validation, CRN,
+cross-batch, conservation, full-drain, zero-loss, and computational-guard
+gates.
+
+The immutable machine-readable design deliberately remains a pre-run intent
+record with `execution_status=NOT_EXECUTED` and `completed_run_count=0`.
+Those fields are not retroactively rewritten. Execution status is recorded in
+the hash-bound analysis package and in this post-run evidence record.
 
 **Frozen on:** 29 July 2026
 
@@ -69,10 +76,10 @@ The frozen plan is:
 - no adaptive extension after outcome inspection; and
 - parallel evaluations disabled for deterministic artifact ordering.
 
-At this implemented-but-unexecuted stage, there are no model outputs or
-empirical duration curves. The machine-readable design records
-`execution_status=NOT_EXECUTED` and `completed_run_count=0`; implementation
-does not change either field.
+All `1000/1000` planned runs were subsequently accepted. The pre-run
+machine-readable design remains immutable; the accepted run count, raw-tree
+digest, validation results, and estimates are recorded separately under
+`results/analysis/peak_duration_sensitivity/`.
 
 ## 4. Dynamic non-binding guards
 
@@ -117,9 +124,9 @@ PASS from seed-tuple, arrival-ledger/prefix, and traveller-level exogenous-draw
 checks. Until that gate passes, common random numbers are not claimed as
 achieved.
 
-## 6. Planned finite-horizon analysis
+## 6. Registered finite-horizon analysis
 
-After execution, the primary evidence views are duration-by-capacity curves
+The primary evidence views are duration-by-capacity curves
 for:
 
 1. total queue wait P95;
@@ -140,9 +147,44 @@ service-level interpretation is invalid. Those cells are instead described
 through finite-horizon backlog accumulation, late-arrival delay, and recovery
 burden. Every estimate must retain a replication-level 95% interval, and
 connected plot lines are only visual guides between the five simulated
-durations.
+durations. The reported P95 estimand is the mean of 50 replication-level P95
+queue waits, not a P95 pooled across all travellers.
 
-## 7. Critical boundary: this is not an observed peak
+## 7. Accepted execution and result
+
+The analyser accepted:
+
+- `20` study cells x `50` replications = `1000/1000` runs;
+- `3,768,780` traveller entity rows and `3,000` raw result files;
+- exact same-duration, cross-capacity and nested-duration-prefix CRN gates;
+- exact T=300 cross-batch reproduction over `200` runs and `82,488`
+  traveller rows;
+- zero rejection/drop, exact conservation, full cohort drain, and non-binding
+  computational guards.
+
+The main finite-horizon result is a regime change that the 300-second
+empty-start surface could not show:
+
+| Capacity S / I | Maximum offered-work `rho` proxy | 5-minute mean P95 wait | 120-minute mean P95 wait | Interpretation inside this sandbox |
+|---:|---:|---:|---:|---|
+| `36 / 21` | `0.845` | `3.929 s` | `4.472 s` | low, stable finite-horizon queue burden |
+| `30 / 18` | `0.992` | `13.556 s` | `55.910 s` | near-critical long transient |
+| `29 / 17` | `1.043` | `21.394 s` | `307.148 s` | sustained finite-horizon accumulation |
+| `28 / 16` | `1.108` | `35.920 s` | `748.204 s` | stronger sustained accumulation |
+
+The 120-minute mean cutoff waiting queue is `1.40`, `52.58`, `425.92`, and
+`973.46` travellers respectively. At `29/17` and `28/16`, no steady-state
+SLA is estimated because `rho >= 1`; only terminating-cohort accumulation
+and recovery evidence is reported. The `30/18` result shows why `rho < 1`
+does not imply a short warm-up: near-critical stochastic systems can retain a
+long transient even though the terminating cohort eventually drains.
+
+Accepted visual summaries:
+
+- [`peak_duration_queue_sensitivity.png`](../results/analysis/peak_duration_sensitivity/figures/peak_duration_queue_sensitivity.png)
+- [`peak_duration_recovery_diagnostics.png`](../results/analysis/peak_duration_sensitivity/figures/peak_duration_recovery_diagnostics.png)
+
+## 8. Critical boundary: this is not an observed peak
 
 The 24.9-second video supports a directional local-window crossing rate. It
 does not establish that the same rate persists for 15, 30, 60, or 120 minutes.
@@ -154,17 +196,22 @@ covering relevant days and periods, plus a registered piecewise/non-stationary
 arrival model. This design must never be described as reconstructing such a
 profile.
 
-## 8. Reproduce and validate the frozen design
+## 9. Reproduce and validate the frozen design and evidence
 
 ```powershell
 .\.venv\Scripts\python.exe -m src.analysis.peak_duration_sensitivity_design
 .\.venv\Scripts\python.exe -m unittest tests.test_peak_duration_sensitivity_design
+.\.venv\Scripts\python.exe -m src.analysis.analyse_peak_duration_sensitivity
+.\.venv\Scripts\python.exe -m src.analysis.plot_peak_duration_sensitivity
 ```
 
 The validator fails closed on the four capacity cells, five cutoffs, guard
 formula and computed values, synchronized queue caps, canonical scenario
 schema, exact Base seed reuse, run cap, ordering, and `NOT_EXECUTED` status.
 
-The AnyLogic and analysis implementations are complete. Result collection is
-a separate, auditable step, and this document does not claim that execution
-or validation has occurred.
+The design validator checks the immutable pre-run contract. The analysis
+command separately fails closed unless all 1,000 raw runs, event-ledger
+reconstruction, CRN gates, T=300 cross-batch reproduction, conservation,
+full drain, zero-loss, and computational-guard checks pass. Confidence
+intervals quantify Monte Carlo error conditional on the registered model
+inputs; they do not include input uncertainty or model-form error.

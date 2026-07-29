@@ -80,6 +80,13 @@ CROSS_BATCH_ID = "PEAK_DURATION_T300_CROSS_BATCH_REPRODUCIBILITY_V1"
 SCHEMA_VERSION = "1.0"
 DEFAULT_CI_LEVEL = 0.95
 DEFAULT_NUMERIC_TOLERANCE = 1e-9
+# AnyLogic serialises each event timestamp, service demand, and KPI to nine
+# decimal places.  A duration reconstructed from two independently rounded
+# timestamps and compared with an independently rounded demand/KPI can
+# therefore differ by up to 1.5 ns even when the underlying values agree.
+# Keep this as a narrow absolute tolerance: a relative tolerance would
+# silently widen as durations and finite-horizon KPIs grow.
+CSV_DERIVED_DURATION_TOLERANCE = 2e-9
 REPLICATION_IDS = tuple(range(1, EXPECTED_REPLICATIONS_PER_CELL + 1))
 CAPACITY_CELLS = EXPECTED_CAPACITY_CELLS
 CUTOFF_SECONDS = EXPECTED_CUTOFF_SECONDS
@@ -269,6 +276,27 @@ RAW_ARTIFACT_FIELDS = (
     "sha256",
     "row_count",
 )
+CROSS_BATCH_EVENT_FIELDS = (
+    "arrival_seconds",
+    "security_service_demand_seconds",
+    "immigration_conventional_service_demand_seconds",
+    "automation_u",
+    "additional_check_u",
+    "lane_tie_u",
+    "security_queue_join_seconds",
+    "security_start_seconds",
+    "security_end_seconds",
+    "immigration_queue_join_seconds",
+    "immigration_lane_id",
+    "immigration_start_seconds",
+    "technology_flag",
+    "immigration_primary_service_demand_seconds",
+    "immigration_primary_end_seconds",
+    "additional_check_flag",
+    "additional_check_service_demand_seconds",
+    "additional_check_end_seconds",
+    "exit_seconds",
+)
 
 Capacity = tuple[int, int]
 RunKey = tuple[Capacity, int, int]
@@ -335,6 +363,23 @@ def _same_number(
             float(left),
             float(right),
             rel_tol=tolerance,
+            abs_tol=tolerance,
+        )
+    except (TypeError, ValueError):
+        return False
+
+
+def _same_absolute_number(
+    left: object,
+    right: object,
+    *,
+    tolerance: float,
+) -> bool:
+    try:
+        return math.isclose(
+            float(left),
+            float(right),
+            rel_tol=0.0,
             abs_tol=tolerance,
         )
     except (TypeError, ValueError):
@@ -617,6 +662,7 @@ def _validate_entity_chronology(
     cutoff_seconds: float,
     drain_end_seconds: float,
     label: str,
+    duration_tolerance: float = CSV_DERIVED_DURATION_TOLERANCE,
 ) -> None:
     ordered_fields = (
         "arrival_seconds",
@@ -646,9 +692,17 @@ def _validate_entity_chronology(
         row["immigration_primary_service_demand_seconds"],
         f"{label}:immigration_primary_service_demand_seconds",
     )
-    if not _same_number(times[3] - times[2], security_demand):
+    if not _same_absolute_number(
+        times[3] - times[2],
+        security_demand,
+        tolerance=duration_tolerance,
+    ):
         raise ValueError(f"{label}: Security service duration is inconsistent")
-    if not _same_number(times[6] - times[5], immigration_demand):
+    if not _same_absolute_number(
+        times[6] - times[5],
+        immigration_demand,
+        tolerance=duration_tolerance,
+    ):
         raise ValueError(
             f"{label}: Immigration service duration is inconsistent"
         )
@@ -667,6 +721,61 @@ def _validate_entity_chronology(
         "additional_check_end_seconds"
     ]:
         raise ValueError(f"{label}: disabled additional-check fields not blank")
+
+
+def _validate_fixed_service_demands(
+    row: Mapping[str, str],
+    *,
+    security_service_seconds: float,
+    immigration_service_seconds: float,
+    label: str,
+    numeric_tolerance: float = CSV_DERIVED_DURATION_TOLERANCE,
+) -> None:
+    """Fail closed on any drift from the frozen CV-zero service contract."""
+
+    security_demand = _float(
+        row["security_service_demand_seconds"],
+        f"{label}:security_service_demand_seconds",
+    )
+    immigration_conventional = _float(
+        row["immigration_conventional_service_demand_seconds"],
+        f"{label}:immigration_conventional_service_demand_seconds",
+    )
+    immigration_applied = _float(
+        row["immigration_primary_service_demand_seconds"],
+        f"{label}:immigration_primary_service_demand_seconds",
+    )
+    if not _same_absolute_number(
+        immigration_conventional,
+        immigration_applied,
+        tolerance=numeric_tolerance,
+    ):
+        raise ValueError(
+            f"{label}: disabled-routing Immigration demand changed"
+        )
+    if not _same_absolute_number(
+        security_demand,
+        security_service_seconds,
+        tolerance=numeric_tolerance,
+    ):
+        raise ValueError(
+            f"{label}: CV-zero Security demand differs from frozen service"
+        )
+    if (
+        not _same_absolute_number(
+            immigration_conventional,
+            immigration_service_seconds,
+            tolerance=numeric_tolerance,
+        )
+        or not _same_absolute_number(
+            immigration_applied,
+            immigration_service_seconds,
+            tolerance=numeric_tolerance,
+        )
+    ):
+        raise ValueError(
+            f"{label}: CV-zero Immigration demand differs from frozen service"
+        )
 
 
 def _signature_for_rows(
@@ -692,6 +801,59 @@ def _signature_for_rows(
                     *[
                         _canonical_numeric(row.get(field, ""))
                         for field in DRAW_FIELDS
+                    ],
+                ],
+                ensure_ascii=True,
+                separators=(",", ":"),
+            )
+        )
+    digest = hashlib.sha256(
+        ("\n".join(sorted(signatures)) + "\n").encode("utf-8")
+    ).hexdigest()
+    return len(signatures), digest
+
+
+def _traveller_ordinal(traveller_id: str, *, label: str) -> str:
+    _, separator, ordinal = traveller_id.rpartition("_T")
+    if not separator or not ordinal.isdigit():
+        raise ValueError(
+            f"{label}: traveller_id {traveller_id!r} has no numeric _T suffix"
+        )
+    return ordinal
+
+
+def _cross_batch_event_signature(
+    entity_rows: Sequence[Mapping[str, str]],
+    *,
+    label: str,
+) -> tuple[int, str]:
+    """Hash exact behaviour while excluding batch lineage and resource IDs."""
+
+    signatures: list[str] = []
+    traveller_ids: set[str] = set()
+    traveller_ordinals: set[str] = set()
+    for row_index, row in enumerate(entity_rows, start=1):
+        traveller_id = str(row.get("traveller_id", "")).strip()
+        if not traveller_id:
+            raise ValueError(f"{label}: entity {row_index} has no traveller_id")
+        if traveller_id in traveller_ids:
+            raise ValueError(
+                f"{label}: duplicate traveller_id {traveller_id!r}"
+            )
+        traveller_ids.add(traveller_id)
+        ordinal = _traveller_ordinal(traveller_id, label=label)
+        if ordinal in traveller_ordinals:
+            raise ValueError(
+                f"{label}: duplicate traveller ordinal {ordinal!r}"
+            )
+        traveller_ordinals.add(ordinal)
+        signatures.append(
+            json.dumps(
+                [
+                    ordinal,
+                    *[
+                        str(row.get(field, "")).strip()
+                        for field in CROSS_BATCH_EVENT_FIELDS
                     ],
                 ],
                 ensure_ascii=True,
@@ -962,17 +1124,24 @@ def _validate_run_records(
     if drain_end < cutoff_seconds:
         raise ValueError(f"{run_label}: drain ends before cutoff")
     for row_index, entity in enumerate(entities, start=2):
+        entity_label = f"{run_label}/entity_log.csv:{row_index}"
         for field in LINEAGE_FIELDS:
             if entity[field] != manifest[field]:
                 raise ValueError(
-                    f"{run_label}/entity_log.csv:{row_index}: "
-                    f"{field} differs from manifest"
+                    f"{entity_label}: {field} differs from manifest"
                 )
+        _validate_fixed_service_demands(
+            entity,
+            security_service_seconds=security_service_seconds,
+            immigration_service_seconds=immigration_service_seconds,
+            label=entity_label,
+        )
         _validate_entity_chronology(
             entity,
             cutoff_seconds=float(cutoff_seconds),
             drain_end_seconds=drain_end,
-            label=f"{run_label}/entity_log.csv:{row_index}",
+            label=entity_label,
+            duration_tolerance=CSV_DERIVED_DURATION_TOLERANCE,
         )
 
     derived = derive_duration_metrics(
@@ -989,7 +1158,11 @@ def _validate_run_records(
         "cutoff_backlog",
         "cohort_clear_time_after_cutoff_seconds",
     ):
-        if not _same_number(kpi[field], derived[field]):
+        if not _same_absolute_number(
+            kpi[field],
+            derived[field],
+            tolerance=CSV_DERIVED_DURATION_TOLERANCE,
+        ):
             raise ValueError(
                 f"{run_label}: KPI {field} differs from entity reconstruction"
             )
@@ -1577,8 +1750,8 @@ def build_peak_duration_analysis(
 
 def _cross_batch_report(
     current_rows: Sequence[Mapping[str, object]],
-    current_prefixes: Mapping[PrefixKey, tuple[int, str]],
     *,
+    current_results_root: Path,
     prior_results_root: Path,
     prior_scenarios_path: Path,
     schemas: Mapping[str, Sequence[Mapping[str, str]]],
@@ -1625,7 +1798,10 @@ def _cross_batch_report(
     }
     errors: list[str] = []
     compared = 0
+    compared_entity_rows = 0
+    event_ledger_compared_runs = 0
     max_difference = 0.0
+    event_ledger_exact_match = True
     model_version_pairs: set[tuple[str, str]] = set()
     for capacity in CAPACITY_CELLS:
         prior_scenario_id = response_scenario_id(*capacity)
@@ -1634,6 +1810,12 @@ def _cross_batch_report(
             errors.append(f"prior scenario missing: {prior_scenario_id}")
             continue
         for replication_id in REPLICATION_IDS:
+            current_run_dir = _run_directory(
+                current_results_root,
+                duration_scenario_id(*capacity, 300),
+                EXPECTED_TARGET_INPUT_SAMPLE_ID,
+                replication_id,
+            )
             run_dir = _run_directory(
                 prior_results_root,
                 prior_scenario_id,
@@ -1666,6 +1848,11 @@ def _cross_batch_report(
                     "entity_log",
                     schemas["entity_log"],
                 )
+                current_entities = _load_table(
+                    current_run_dir / RESULT_FILES["entity_log"],
+                    "entity_log",
+                    schemas["entity_log"],
+                )
                 if manifest["config_sha256"] != scenario_config_sha256(
                     prior_scenario
                 ):
@@ -1681,15 +1868,19 @@ def _cross_batch_report(
                     entities,
                     cutoff_seconds=300.0,
                 )
-                prior_signature = _signature_for_rows(
+                prior_signature = _cross_batch_event_signature(
                     entities,
                     label=str(paths["entity_log"]),
                 )
-                current_signature = current_prefixes[
-                    (capacity, 300, replication_id, 300)
-                ]
+                current_signature = _cross_batch_event_signature(
+                    current_entities,
+                    label=str(current_run_dir / RESULT_FILES["entity_log"]),
+                )
+                compared_entity_rows += current_signature[0]
+                event_ledger_compared_runs += 1
                 if prior_signature != current_signature:
-                    raise ValueError("T=300 exogenous signature differs")
+                    event_ledger_exact_match = False
+                    raise ValueError("T=300 behavioural event ledger differs")
                 current_row = current[(capacity, replication_id)]
                 model_version_pairs.add(
                     (
@@ -1729,9 +1920,32 @@ def _cross_batch_report(
         "study_id": study_id,
         "status": status,
         "compared_run_count": compared,
+        "compared_entity_rows": compared_entity_rows,
+        "event_ledger_compared_run_count": event_ledger_compared_runs,
+        "compared_event_fields_per_entity": (
+            1 + len(CROSS_BATCH_EVENT_FIELDS)
+        ),
+        "event_ledger_fields": [
+            "traveller_ordinal",
+            *CROSS_BATCH_EVENT_FIELDS,
+        ],
+        "event_ledger_exact_match": (
+            event_ledger_exact_match
+            and event_ledger_compared_runs
+            == len(CAPACITY_CELLS) * len(REPLICATION_IDS)
+        ),
+        "event_identity_policy": (
+            "Compare the exact numeric _T traveller ordinal and all recorded "
+            "behavioural demand/draw/event/flag fields; exclude batch lineage, "
+            "the traveller ID prefix, and presentation-only resource IDs."
+        ),
         "expected_run_count_if_available": len(CAPACITY_CELLS)
         * len(REPLICATION_IDS),
         "numeric_tolerance": numeric_tolerance,
+        "csv_derived_duration_tolerance_seconds": (
+            CSV_DERIVED_DURATION_TOLERANCE
+        ),
+        "csv_derived_relative_tolerance": 0.0,
         "maximum_absolute_metric_difference": max_difference,
         "metrics": list(CROSS_BATCH_METRICS),
         "model_version_pairs": [
@@ -1749,6 +1963,25 @@ def _cross_batch_report(
             "separate LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION T=300 cell."
         ),
     }
+
+
+def _require_cross_batch_pass(report: Mapping[str, object]) -> None:
+    """Fail closed unless the registered cross-batch gate passed."""
+
+    status = str(report.get("status", "MISSING"))
+    if status == "PASS":
+        return
+    raw_errors = report.get("errors", [])
+    errors = (
+        [str(value) for value in raw_errors]
+        if isinstance(raw_errors, list)
+        else [str(raw_errors)]
+    )
+    detail = "; ".join(errors[:5]) or "no diagnostic was provided"
+    raise ValueError(
+        "T=300 cross-batch reproducibility did not pass "
+        f"(status={status}): {detail}"
+    )
 
 
 def _write_csv(
@@ -1782,10 +2015,12 @@ def _write_csv(
 def _write_json(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+    with temporary.open(
+        "w",
         encoding="utf-8",
-    )
+        newline="\n",
+    ) as stream:
+        stream.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     temporary.replace(path)
 
 
@@ -1933,7 +2168,7 @@ def package_peak_duration_sensitivity_analysis(
 
     cross_batch = _cross_batch_report(
         replication_rows,
-        prefix_signatures,
+        current_results_root=results_root,
         prior_results_root=prior_results_root,
         prior_scenarios_path=prior_scenarios_path,
         schemas=schemas,
@@ -1944,11 +2179,7 @@ def package_peak_duration_sensitivity_analysis(
         immigration_service_seconds=immigration_service,
         numeric_tolerance=numeric_tolerance,
     )
-    if cross_batch["status"] == "FAIL":
-        raise ValueError(
-            "T=300 cross-batch reproducibility failed: "
-            + "; ".join(map(str, cross_batch["errors"][:5]))
-        )
+    _require_cross_batch_pass(cross_batch)
 
     analysis = build_peak_duration_analysis(
         replication_rows,
@@ -1971,6 +2202,7 @@ def package_peak_duration_sensitivity_analysis(
         "canonical_schema_status": "PASS",
         "manifest_lineage_status": "PASS",
         "frozen_config_hash_status": "PASS",
+        "fixed_service_demand_status": "PASS",
         "single_model_version_status": "PASS",
         "seed_status": "PASS",
         "run_status": "PASS",
@@ -1978,6 +2210,11 @@ def package_peak_duration_sensitivity_analysis(
         "guard_nonbinding_status": "PASS",
         "zero_drop_status": "PASS",
         "entity_reconstruction_status": "PASS",
+        "numeric_tolerance": numeric_tolerance,
+        "csv_derived_duration_tolerance_seconds": (
+            CSV_DERIVED_DURATION_TOLERANCE
+        ),
+        "csv_derived_relative_tolerance": 0.0,
         "crn_alignment_status": crn["status"],
         "cross_batch_reproducibility_status": cross_batch["status"],
         "capacity_cell_count": len(CAPACITY_CELLS),

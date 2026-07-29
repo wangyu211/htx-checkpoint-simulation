@@ -157,6 +157,29 @@ open-resource schedules reproduce material queues; do not infer a staffing
 rollout. Post-hoc 15/30/60-second diagnostics are labelled as model-scale
 supporting evidence, not ICA SLAs.
 
+The independent peak-duration sensitivity has now also completed:
+`4` selected capacity cells x `5` arrival-window durations x `50`
+replications produced `1000/1000` valid AnyLogic runs and `3,768,780`
+traveller rows. Exact CRN-prefix alignment, full drain, conservation,
+zero-loss, computational-guard, and T=300 cross-batch reproduction gates all
+returned `PASS`; the latter covered 200 runs and 82,488 traveller rows. The
+result shows why the 300-second empty-start surface is not enough to
+characterise sustained exposure. Under the model's maximum offered-work
+`rho` proxy, `36/21` (`0.845`) remains stable across the tested horizons,
+`30/18` (`0.992`) exhibits a long near-critical transient, and `29/17`
+(`1.043`) plus `28/16` (`1.108`) accumulate backlog. Mean
+replication-level total queue-wait P95 at 120 minutes is `4.472`, `55.910`,
+`307.148`, and `748.204 s` respectively.
+
+This is a conditional finite-horizon extension of the accepted short-window
+rate as a stationary HPP, not an observed peak or time-of-day model. It emits
+no steady-state SLA for `rho >= 1`, and it is not a site forecast or staffing
+recommendation. The finite guard is computational, not a physical queue
+capacity. See the
+[`frozen design and execution record`](docs/task3_peak_duration_sensitivity_design.md)
+and
+[`compact analysis package`](results/analysis/peak_duration_sensitivity/README.md).
+
 `OperationalInteractive` provides the reviewer-facing simulation surface:
 four labelled Arrival → Security → Immigration → Exit zones, live queue and
 in-service state, run status, and exactly five genuine pre-run controls
@@ -461,6 +484,26 @@ cross-batch reproduction of the fixed-service reference pass. The
 [`compact package`](results/analysis/service_variability/README.md) records
 cell estimates, paired contrasts, factorial interactions, audit reports, and
 the accepted figures.
+
+Run and validate the selected-cell peak-duration sensitivity:
+
+1. In AnyLogic PLE 8.9.9, run
+   `PeakDurationSensitivity: OperationalCheckpointModel` and wait for
+   `Finished`. The frozen contract is 20 cells x 50 serial replications.
+2. Validate and package the complete result tree:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.analysis.analyse_peak_duration_sensitivity
+.\.venv\Scripts\python.exe -m src.analysis.plot_peak_duration_sensitivity
+```
+
+The analyser fails closed unless all 1,000 runs, frozen inputs, lineage,
+entity-ledger reconstruction, conservation, zero-loss, full drain,
+computational guards, exact same-duration/nested-prefix CRN alignment, and
+T=300 cross-batch reproduction pass. The
+[`compact package`](results/analysis/peak_duration_sensitivity/README.md)
+records the 50-replication cell estimates, paired duration increments,
+queue-growth diagnostics, audit reports, and the two claim-bounded figures.
 
 Run the release gate. It includes a fail-closed check for tracked or embedded
 source pixels, restricted media, identity/appearance fields, and reviewer alias

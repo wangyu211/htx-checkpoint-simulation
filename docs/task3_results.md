@@ -9,7 +9,10 @@ remains exploratory and does not alter the confirmatory claim. A further
 independent service-variability sensitivity completed `9 x 50 = 450/450`
 validated runs with CRN alignment and cross-batch reproducibility `PASS`.
 That study is an exploratory assumption sensitivity, not an enlargement of
-the confirmatory capacity claim.
+the confirmatory capacity claim. The independently frozen peak-duration study
+also completed `20 x 50 = 1000/1000` validated runs, with exact nested-prefix
+CRN and T=300 cross-batch reproduction `PASS`; it remains conditional
+finite-horizon evidence.
 
 **Claim boundary:** a non-calibrated pooled-FCFS assumption sandbox. The
 confirmatory capacity study and capacity response surface retain fixed service
@@ -17,7 +20,9 @@ times. The separate service-variability study replaces those fixed demands
 only with unmeasured, mean-preserving lognormal CV assumptions. All results are
 comparative Monte Carlo evidence conditional on their registered inputs; they
 are not measured HTX performance, a calibrated baseline, a site forecast, a
-staffing answer, an observed roster, or an economic recommendation.
+staffing answer, an observed roster, or an economic recommendation. The
+peak-duration study extends the short-window rate as a stationary HPP; it is
+not an observed peak, time-of-day demand model, or steady-state SLA.
 
 ## Executive finding
 
@@ -337,6 +342,82 @@ Tracked service-variability evidence:
 - [paired contrasts](../results/analysis/service_variability/paired_contrasts_vs_reference.csv)
 - [factorial interactions](../results/analysis/service_variability/factorial_interactions.csv)
 - [analysis manifest](../results/analysis/service_variability/analysis_manifest.json)
+
+## Exploratory peak-duration sensitivity
+
+The 300-second studies start empty and idle. A separately frozen duration
+study therefore asks whether a short terminating window masks accumulation
+when the same Base-rate stationary HPP assumption is sustained. It crosses
+four selected capacity cells with `300`, `900`, `1800`, `3600`, and `7200`
+second arrival cutoffs, then fully drains every admitted cohort:
+
+```text
+4 capacity cells x 5 durations x 50 replications = 1000/1000 accepted runs
+```
+
+Strict validation accepted `3,768,780` traveller rows. Coverage, frozen-input
+hashes, lineage, conservation, zero rejection/drop, full drain, computational
+guard, and entity-ledger reconstruction all returned `PASS`. Exact
+same-duration cross-capacity and nested-duration-prefix CRN gates passed.
+The new T=300 cells also reproduced the prior response-surface cells over
+`200` runs and `82,488` traveller rows with zero behavioural event-ledger or
+metric differences. Prior rows are validation-only and are not mixed into
+the duration estimates.
+
+The primary P95 values below are means of `50` replication-level P95 total
+queue waits, with one replication as the statistical unit:
+
+| Capacity S / I | Maximum offered-work `rho` proxy | P95 at 5 min | P95 at 120 min | Cutoff waiting queue at 120 min | Clear after cutoff at 120 min |
+|---:|---:|---:|---:|---:|---:|
+| `36 / 21` | `0.845` | `3.929 s` | `4.472 s` | `1.40` | `34.864 s` |
+| `30 / 18` | `0.992` | `13.556 s` | `55.910 s` | `52.58` | `72.675 s` |
+| `29 / 17` | `1.043` | `21.394 s` | `307.148 s` | `425.92` | `360.480 s` |
+| `28 / 16` | `1.108` | `35.920 s` | `748.204 s` | `973.46` | `825.773 s` |
+
+![Peak-duration queue sensitivity](../results/analysis/peak_duration_sensitivity/figures/peak_duration_queue_sensitivity.png)
+
+![Peak-duration recovery diagnostics](../results/analysis/peak_duration_sensitivity/figures/peak_duration_recovery_diagnostics.png)
+
+This produces the decision insight that the short empty-start window alone
+could not support. At `36/21`, queue burden remains low across the tested
+horizons. At `30/18`, the maximum offered-work proxy is still below one but
+very close to it; the model exhibits a long stochastic transient, with P95
+wait and cutoff burden increasing materially as exposure lengthens. At
+`29/17` and `28/16`, the proxy exceeds one and the terminating cohorts show
+sustained backlog accumulation. Their 120-minute arrival-window queue-growth
+slopes are `0.0566` travellers/s (95% CI `[0.0503, 0.0630]`) and `0.1336`
+travellers/s (`[0.1272, 0.1399]`) respectively.
+
+Permitted conclusion:
+
+> Duration is a decision variable, not a cosmetic horizon. A five-minute
+> empty-start run can understate exposure near the capacity boundary:
+> `36/21` remains stable in this finite-horizon sandbox, `30/18` exhibits a
+> long near-critical transient, and the `rho >= 1` cells accumulate backlog
+> that grows with sustained demand. This diagnoses where longer field
+> measurement and recovery planning matter; it does not identify a roster or
+> recommend staffing.
+
+The arrival extension is conditional and deliberately labelled
+`LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION`. The supplied 24.9-second clip
+does not show that this rate persists for 15--120 minutes, so these results
+are not an observed peak, time-of-day profile, site forecast, or calibrated
+SLA. No steady-state service-level claim is emitted for `rho >= 1`. The
+finite source/queue guard is only a computational safety bound and was
+non-binding; it is not a physical queue capacity. Confidence intervals
+quantify conditional Monte Carlo error, not input or model-form uncertainty.
+
+Tracked peak-duration evidence:
+
+- [frozen design and execution record](task3_peak_duration_sensitivity_design.md)
+- [compact analysis package](../results/analysis/peak_duration_sensitivity/README.md)
+- [strict validation](../results/analysis/peak_duration_sensitivity/validation.json)
+- [CRN alignment](../results/analysis/peak_duration_sensitivity/crn_alignment.json)
+- [T=300 cross-batch reproducibility](../results/analysis/peak_duration_sensitivity/cross_batch_reproducibility.json)
+- [cell estimates](../results/analysis/peak_duration_sensitivity/cell_estimates.csv)
+- [duration increments](../results/analysis/peak_duration_sensitivity/duration_increments.csv)
+- [queue-growth diagnostics](../results/analysis/peak_duration_sensitivity/growth_diagnostics.csv)
+- [analysis manifest](../results/analysis/peak_duration_sensitivity/analysis_manifest.json)
 
 ## Conditional pooled-versus-separate queue replay
 

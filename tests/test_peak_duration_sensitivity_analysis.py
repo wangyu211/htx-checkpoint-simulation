@@ -8,15 +8,19 @@ from pathlib import Path
 from src.analysis.analyse_peak_duration_sensitivity import (
     ANALYSIS_METRICS,
     CAPACITY_CELLS,
+    CSV_DERIVED_DURATION_TOLERANCE,
     CUTOFF_SECONDS,
     EXPECTED_TARGET_INPUT_SAMPLE_ID,
     GROWTH_WINDOW_FIELDS,
     INCREMENT_METRICS,
     REFERENCE_CAPACITY,
+    _cross_batch_event_signature,
     _expected_run_directories,
+    _require_cross_batch_pass,
     _signature_for_rows,
     _validate_exact_coverage,
     _validate_run_records,
+    _write_json,
     build_crn_alignment_report,
     build_peak_duration_analysis,
     derive_duration_metrics,
@@ -336,6 +340,186 @@ class PeakDurationRunValidationTests(unittest.TestCase):
                     immigration_service_seconds=5.0,
                 )
 
+    def test_csv_duration_quantisation_tolerance_is_absolute_and_narrow(
+        self,
+    ) -> None:
+        manifest, kpi, entities, scenario, seed = self.fixture()
+        entities[0]["security_service_demand_seconds"] = "9.999999999"
+        entities[0][
+            "immigration_conventional_service_demand_seconds"
+        ] = "4.999999999"
+        entities[0][
+            "immigration_primary_service_demand_seconds"
+        ] = "4.999999999"
+        _validate_run_records(
+            manifest,
+            kpi,
+            entities,
+            run_label="synthetic",
+            capacity=(36, 21),
+            cutoff_seconds=300,
+            replication_id=1,
+            scenario_row=scenario,
+            seed_row=seed,
+            study_id="SYNTHETIC",
+            arrival_rate_per_second=1.0,
+            security_service_seconds=10.0,
+            immigration_service_seconds=5.0,
+        )
+
+        manifest, kpi, entities, scenario, seed = self.fixture()
+        entities[0]["security_service_demand_seconds"] = "9.999999"
+        with self.assertRaisesRegex(
+            ValueError,
+            "CV-zero Security demand differs from frozen service",
+        ):
+            _validate_run_records(
+                manifest,
+                kpi,
+                entities,
+                run_label="synthetic",
+                capacity=(36, 21),
+                cutoff_seconds=300,
+                replication_id=1,
+                scenario_row=scenario,
+                seed_row=seed,
+                study_id="SYNTHETIC",
+                arrival_rate_per_second=1.0,
+                security_service_seconds=10.0,
+                immigration_service_seconds=5.0,
+            )
+
+        self.assertEqual(CSV_DERIVED_DURATION_TOLERANCE, 2e-9)
+
+    def test_rejects_fixed_service_and_disabled_routing_tampering(
+        self,
+    ) -> None:
+        cases = (
+            (
+                "security",
+                "CV-zero Security demand differs from frozen service",
+            ),
+            (
+                "immigration_route",
+                "disabled-routing Immigration demand changed",
+            ),
+            (
+                "immigration_frozen",
+                "CV-zero Immigration demand differs from frozen service",
+            ),
+        )
+        for tamper, pattern in cases:
+            with self.subTest(tamper=tamper):
+                manifest, kpi, entities, scenario, seed = self.fixture()
+                if tamper == "security":
+                    # Change the recorded demand and matching event duration;
+                    # queue waits and all aggregate KPIs remain unchanged.
+                    entities[1]["security_service_demand_seconds"] = "11"
+                    entities[1]["security_end_seconds"] = "236"
+                elif tamper == "immigration_route":
+                    # Conventional and applied demand must be identical while
+                    # technology routing is disabled.
+                    entities[0][
+                        "immigration_conventional_service_demand_seconds"
+                    ] = "6"
+                else:
+                    # Change both Immigration demand fields and matching event
+                    # duration so chronology alone cannot detect the drift.
+                    entities[0][
+                        "immigration_conventional_service_demand_seconds"
+                    ] = "6"
+                    entities[0][
+                        "immigration_primary_service_demand_seconds"
+                    ] = "6"
+                    entities[0]["immigration_primary_end_seconds"] = "86"
+                    entities[0]["exit_seconds"] = "86"
+
+                with self.assertRaisesRegex(ValueError, pattern):
+                    _validate_run_records(
+                        manifest,
+                        kpi,
+                        entities,
+                        run_label="synthetic",
+                        capacity=(36, 21),
+                        cutoff_seconds=300,
+                        replication_id=1,
+                        scenario_row=scenario,
+                        seed_row=seed,
+                        study_id="SYNTHETIC",
+                        arrival_rate_per_second=1.0,
+                        security_service_seconds=10.0,
+                        immigration_service_seconds=5.0,
+                    )
+
+
+class PeakDurationCrossBatchSignatureTests(unittest.TestCase):
+    @staticmethod
+    def row(prefix: str = "CURRENT") -> dict[str, str]:
+        return {
+            "schema_version": "1.0",
+            "config_id": f"{prefix}_CONFIG",
+            "config_sha256": prefix.lower(),
+            "model_version": f"{prefix}_MODEL",
+            "scenario_id": f"{prefix}_SCENARIO",
+            "input_sample_id": f"{prefix}_INPUT",
+            "replication_id": "1",
+            "traveller_id": f"{prefix}_R001_T00001",
+            "arrival_seconds": "0.759341374",
+            "security_service_demand_seconds": "21.818181818",
+            "immigration_conventional_service_demand_seconds": "13.000000000",
+            "automation_u": "0.354368053",
+            "additional_check_u": "0.314159265",
+            "lane_tie_u": "0.271828182",
+            "security_queue_join_seconds": "0.759341374",
+            "security_start_seconds": "0.759341374",
+            "security_end_seconds": "22.577523192",
+            "immigration_queue_join_seconds": "22.577523192",
+            "immigration_lane_id": "pooled",
+            "immigration_start_seconds": "22.577523192",
+            "technology_flag": "false",
+            "immigration_primary_service_demand_seconds": "13.000000000",
+            "immigration_primary_end_seconds": "35.577523192",
+            "additional_check_flag": "false",
+            "additional_check_service_demand_seconds": "",
+            "additional_check_end_seconds": "",
+            "exit_seconds": "35.577523192",
+            "security_resource_id": f"{prefix}_SECURITY_RESOURCE",
+            "immigration_resource_id": f"{prefix}_IMMIGRATION_RESOURCE",
+        }
+
+    def test_excludes_lineage_id_prefix_and_resources_but_not_events(
+        self,
+    ) -> None:
+        current = self.row("CURRENT")
+        prior = self.row("PRIOR")
+        self.assertEqual(
+            _cross_batch_event_signature([current], label="current"),
+            _cross_batch_event_signature([prior], label="prior"),
+        )
+
+        prior["security_start_seconds"] = "0.759341375"
+        self.assertNotEqual(
+            _cross_batch_event_signature([current], label="current"),
+            _cross_batch_event_signature([prior], label="prior"),
+        )
+
+    def test_traveller_ordinal_remains_strict(self) -> None:
+        current = self.row("CURRENT")
+        prior = self.row("PRIOR")
+        prior["traveller_id"] = "PRIOR_R001_T00002"
+        self.assertNotEqual(
+            _cross_batch_event_signature([current], label="current"),
+            _cross_batch_event_signature([prior], label="prior"),
+        )
+
+    def test_json_writer_uses_repository_canonical_lf_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "report.json"
+            _write_json(path, {"status": "PASS", "rows": [1, 2]})
+            payload = path.read_bytes()
+        self.assertIn(b"\n", payload)
+        self.assertNotIn(b"\r\n", payload)
+
 
 class PeakDurationCrnTests(unittest.TestCase):
     @staticmethod
@@ -500,6 +684,21 @@ class PeakDurationAnalysisTests(unittest.TestCase):
 
 
 class PeakDurationCoverageAndCliTests(unittest.TestCase):
+    def test_cross_batch_gate_rejects_unavailable_status(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError,
+            r"did not pass \(status=NOT_AVAILABLE\)",
+        ):
+            _require_cross_batch_pass(
+                {
+                    "status": "NOT_AVAILABLE",
+                    "errors": ["prior response-surface root absent"],
+                }
+            )
+
+    def test_cross_batch_gate_accepts_pass(self) -> None:
+        _require_cross_batch_pass({"status": "PASS", "errors": []})
+
     def test_exact_coverage_rejects_unexpected_run(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

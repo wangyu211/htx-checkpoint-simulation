@@ -106,6 +106,40 @@ PEAK_DURATION_EXPERIMENT_NAME = "PeakDurationSensitivity"
 PEAK_DURATION_OUTPUT_COLLECTION = "peak_duration_sensitivity"
 PEAK_DURATION_EXPERIMENT_ID = "1785162980001"
 PEAK_DURATION_TIMER_ID = "1785162980002"
+CANONICAL_EXPERIMENT_ORDER = (
+    "GatePV2x3",
+    "HppArrivalVerification",
+    "OperationalInteractive",
+    "OperationalPilot",
+    "Simulation",
+    "TwoStageDeterministic",
+    "CapacityRobustnessConfirmatory",
+    "CapacityAvailabilityStress",
+    "CapacityResponseSurfaceExploratory",
+    "ServiceVariabilitySensitivity",
+    "PeakDurationSensitivity",
+)
+CANONICAL_EXPERIMENT_TAGS = {
+    "GatePV2x3": "ParamVariationExperiment",
+    "HppArrivalVerification": "SimulationExperiment",
+    "OperationalInteractive": "SimulationExperiment",
+    "OperationalPilot": "ParamVariationExperiment",
+    "Simulation": "SimulationExperiment",
+    "TwoStageDeterministic": "SimulationExperiment",
+    "CapacityRobustnessConfirmatory": "ParamVariationExperiment",
+    "CapacityAvailabilityStress": "ParamVariationExperiment",
+    "CapacityResponseSurfaceExploratory": "ParamVariationExperiment",
+    "ServiceVariabilitySensitivity": "ParamVariationExperiment",
+    "PeakDurationSensitivity": "ParamVariationExperiment",
+}
+CLI_GUI_SUFFIX_TAGS = (
+    "Type",
+    "InitialDate",
+    "InitialTime",
+    "FinalDate",
+    "FinalTime",
+    "Inputs",
+)
 INTERACTIVE_PARAMETER_NAMES = (
     "demand_multiplier",
     "security_capacity",
@@ -3451,6 +3485,223 @@ def _named_top_level_span(
     raise RuntimeError(f"Cannot locate {tag} named {name}")
 
 
+def _strip_operational_traveller_container_links(text: str) -> str:
+    """Remove only AnyLogic's known auto-added parent-model link.
+
+    The operational traveller is instantiated by the process-model Source and
+    has no authored container link.  AnyLogic 8.9 may nevertheless materialise
+    a back-link after a GUI run.  Treat any different ContainerLinks payload as
+    authored/unknown state and fail rather than deleting it.
+    """
+
+    openings = list(re.finditer(r"<ContainerLinks(?:\s[^>]*)?>", text))
+    if not openings:
+        return text
+    if len(openings) != 1:
+        raise RuntimeError(
+            "OperationalTraveller must contain at most one ContainerLinks block"
+        )
+    start, end = _balanced_element_span(
+        text,
+        "ContainerLinks",
+        openings[0].start(),
+    )
+    block = text[start:end]
+    if (
+        len(re.findall(r"<ContainerLink(?:\s[^>]*)?>", block)) != 1
+        or block.count("</ContainerLink>") != 1
+        or block.count(
+            "<Name><![CDATA[operationalCheckpointModel]]></Name>"
+        )
+        != 1
+        or block.count("<PackageName>htx.checkpoint</PackageName>") != 1
+        or block.count(
+            "<ClassName>OperationalCheckpointModel</ClassName>"
+        )
+        != 1
+    ):
+        raise RuntimeError(
+            "OperationalTraveller contains an unexpected ContainerLinks payload"
+        )
+
+    line_start = text.rfind("\n", 0, start) + 1
+    if text[line_start:start].strip():
+        raise RuntimeError(
+            "OperationalTraveller ContainerLinks must begin on its own line"
+        )
+    next_lf = text.find("\n", end)
+    if next_lf < 0:
+        if text[end:].strip():
+            raise RuntimeError(
+                "OperationalTraveller ContainerLinks must end on its own line"
+            )
+        line_end = len(text)
+    else:
+        if text[end:next_lf].strip():
+            raise RuntimeError(
+                "OperationalTraveller ContainerLinks must end on its own line"
+            )
+        line_end = next_lf + 1
+    return text[:line_start] + text[line_end:]
+
+
+def _canonicalize_experiment_order(text: str) -> str:
+    """Reorder only balanced direct experiment children, byte-for-byte.
+
+    AnyLogic alphabetises these top-level blocks after some GUI runs.  The
+    blocks themselves are canonical generator output, so preserve each block
+    exactly and move only the complete direct children.  Unexpected structure
+    is rejected before any rewrite.
+    """
+
+    root_openings = list(re.finditer(r"<Experiments(?:\s[^>]*)?>", text))
+    if len(root_openings) != 1 or text.count("</Experiments>") != 1:
+        raise RuntimeError("split experiment root is not canonical")
+    _root_start, root_end = _balanced_element_span(
+        text,
+        "Experiments",
+        root_openings[0].start(),
+    )
+    if text[root_end:].strip():
+        raise RuntimeError("unexpected content after split experiment root")
+    if text[: root_openings[0].start()].strip() and not re.fullmatch(
+        r"\s*<\?xml[^>]*\?>\s*",
+        text[: root_openings[0].start()],
+    ):
+        raise RuntimeError("unexpected content before split experiment root")
+
+    opening_end = root_openings[0].end()
+    closing_start = text.rfind("</Experiments>", opening_end, root_end)
+    inner = text[opening_end:closing_start]
+    cursor = 0
+    leading_whitespace: list[str] = []
+    blocks: dict[str, str] = {}
+    while cursor < len(inner):
+        whitespace = re.match(r"\s*", inner[cursor:]).group(0)
+        cursor += len(whitespace)
+        if cursor == len(inner):
+            trailing_whitespace = whitespace
+            break
+        leading_whitespace.append(whitespace)
+        tag_match = re.match(
+            r"<(SimulationExperiment|ParamVariationExperiment)(?:\s[^>]*)?>",
+            inner[cursor:],
+        )
+        if not tag_match:
+            raise RuntimeError(
+                "unexpected top-level content in split experiment root"
+            )
+        tag = tag_match.group(1)
+        block_start, block_end = _balanced_element_span(
+            inner,
+            tag,
+            cursor,
+        )
+        if block_start != cursor:
+            raise RuntimeError("experiment block did not begin at the cursor")
+        block = inner[block_start:block_end]
+        header = re.match(
+            rf"<{tag}(?:\s[^>]*)?>\s*"
+            r"<Id>[^<]+</Id>\s*"
+            r"<Name><!\[CDATA\[([^\]]+)\]\]></Name>",
+            block,
+        )
+        if not header:
+            raise RuntimeError(f"{tag} has no canonical direct Name header")
+        name = header.group(1)
+        if name not in CANONICAL_EXPERIMENT_TAGS:
+            raise RuntimeError(f"unexpected top-level experiment {name}")
+        if CANONICAL_EXPERIMENT_TAGS[name] != tag:
+            raise RuntimeError(
+                f"{name} must use {CANONICAL_EXPERIMENT_TAGS[name]}, found {tag}"
+            )
+        if name in blocks:
+            raise RuntimeError(f"duplicate top-level experiment {name}")
+        blocks[name] = block
+        cursor = block_end
+    else:
+        trailing_whitespace = ""
+
+    missing = [
+        name for name in CANONICAL_EXPERIMENT_ORDER if name not in blocks
+    ]
+    if missing:
+        raise RuntimeError(
+            "missing top-level experiments: " + ", ".join(missing)
+        )
+    if not leading_whitespace or not leading_whitespace[0]:
+        raise RuntimeError("first experiment must begin on a separate line")
+    separator = leading_whitespace[0]
+    if any(value != separator for value in leading_whitespace[1:]):
+        raise RuntimeError("top-level experiment separators are not canonical")
+
+    ordered_inner = (
+        separator
+        + separator.join(blocks[name] for name in CANONICAL_EXPERIMENT_ORDER)
+        + trailing_whitespace
+    )
+    return text[:opening_end] + ordered_inner + text[closing_start:]
+
+
+def _canonicalize_cli_markup_line_suffixes(text: str) -> str:
+    """Remove GUI-only suffix whitespace from XML markup lines in the mirror.
+
+    This intentionally skips every line whose start occurs inside a CDATA
+    section and only normalises the small set of tags AnyLogic 8.9 is observed
+    to mutate.  Java/code-body whitespace and legacy XML suffixes therefore
+    remain byte-for-byte unchanged.  AnyLogic may also remove the final LF when
+    it saves the single-file mirror.
+    """
+
+    lines = text.splitlines(keepends=True)
+    output: list[str] = []
+    in_cdata = False
+    for raw_line in lines:
+        if raw_line.endswith("\r\n"):
+            body, line_ending = raw_line[:-2], "\r\n"
+        elif raw_line.endswith("\n") or raw_line.endswith("\r"):
+            body, line_ending = raw_line[:-1], raw_line[-1:]
+        else:
+            body, line_ending = raw_line, ""
+
+        if not in_cdata:
+            without_suffix = body.rstrip(" \t")
+            if (
+                without_suffix != body
+                and without_suffix.lstrip().startswith("<")
+                and without_suffix.endswith(">")
+                and re.search(
+                    rf"</?(?:{'|'.join(CLI_GUI_SUFFIX_TAGS)})>$",
+                    without_suffix,
+                )
+            ):
+                body = without_suffix
+        output.append(body + line_ending)
+
+        scan_from = 0
+        while True:
+            if in_cdata:
+                close_at = raw_line.find("]]>", scan_from)
+                if close_at < 0:
+                    break
+                in_cdata = False
+                scan_from = close_at + 3
+            else:
+                open_at = raw_line.find("<![CDATA[", scan_from)
+                if open_at < 0:
+                    break
+                close_at = raw_line.find("]]>", open_at + 9)
+                if close_at < 0:
+                    in_cdata = True
+                    break
+                scan_from = close_at + 3
+
+    normalized = "".join(output)
+    if not normalized.endswith(("\n", "\r")):
+        normalized += "\n"
+    return normalized
+
+
 def _indent_xml(block: str, prefix: str) -> str:
     return "\n".join(
         prefix + line if line else line
@@ -3567,6 +3818,7 @@ def _sync_single_file(
         + inline_experiments
         + text[experiment_end:]
     )
+    text = _canonicalize_cli_markup_line_suffixes(text)
     _write(SINGLE_ALP, text)
 
 
@@ -3613,7 +3865,10 @@ def generate() -> None:
         events=True,
         embedded_objects=True,
     )
-    _write(traveller_aoc, _decorate_traveller_aoc(_read(traveller_aoc)))
+    traveller_text = _strip_operational_traveller_container_links(
+        _read(traveller_aoc)
+    )
+    _write(traveller_aoc, _decorate_traveller_aoc(traveller_text))
     _write(model_aoc, _decorate_model_aoc(_read(model_aoc)))
 
     _write(
@@ -3713,6 +3968,7 @@ void arrivalCutoff()
         peak_duration_rows,
         peak_duration_seed_rows,
     )
+    experiment_text = _canonicalize_experiment_order(experiment_text)
     _write(EXPERIMENTS, experiment_text)
     _sync_single_file(model_id=op_model_id)
 

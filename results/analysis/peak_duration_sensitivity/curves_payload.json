@@ -1,0 +1,1242 @@
+{
+  "analysis_role": "EXPLORATORY_FINITE_HORIZON_DURATION_CURVES",
+  "input_sample_id": "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION",
+  "line_policy": "Only listed duration points are simulated evidence; connecting lines are visual guides and do not represent intermediate runs.",
+  "schema_version": "1.0",
+  "series": [
+    {
+      "immigration_capacity": 21,
+      "immigration_rho_proxy": 0.8445129933636236,
+      "metrics": {
+        "arrival_window_peak_total_waiting_queue": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 10.749011912950335,
+            "ci_low": 7.890988087049665,
+            "mean": 9.32,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 13.066281958775688,
+            "ci_low": 10.33371804122431,
+            "mean": 11.7,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 14.975200882545302,
+            "ci_low": 12.504799117454699,
+            "mean": 13.74,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 17.493498901171883,
+            "ci_low": 15.186501098828117,
+            "mean": 16.34,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 19.326465867998618,
+            "ci_low": 16.953534132001383,
+            "mean": 18.14,
+            "n_replications": 50
+          }
+        ],
+        "arrival_window_queue_growth_slope_travellers_per_second": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 0.010072058006852524,
+            "ci_low": -0.01167340518173254,
+            "mean": -0.0008006735874400086,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 0.0022177111651995366,
+            "ci_low": -0.0009990130661797821,
+            "mean": 0.0006093490495098771,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 0.00046006488397615784,
+            "ci_low": -0.0006784292222659099,
+            "mean": -0.00010918216914487602,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 0.0003060648435491785,
+            "ci_low": -0.00022061286756310176,
+            "mean": 4.272598799303839e-05,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 7.313288892892863e-05,
+            "ci_low": -6.376230220417705e-05,
+            "mean": 4.685293362375784e-06,
+            "n_replications": 50
+          }
+        ],
+        "arrival_window_time_weighted_mean_total_waiting_queue": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 1.5245702263319922,
+            "ci_low": 0.686420397974141,
+            "mean": 1.1054953121530666,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 1.2986849623247134,
+            "ci_low": 0.894222354983775,
+            "mean": 1.0964536586542442,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 1.2066858948928056,
+            "ci_low": 0.9531034466101496,
+            "mean": 1.0798946707514776,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 1.2138596753089126,
+            "ci_low": 1.057125027994887,
+            "mean": 1.1354923516518998,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 1.2018131844359103,
+            "ci_low": 1.077242673712478,
+            "mean": 1.1395279290741942,
+            "n_replications": 50
+          }
+        ],
+        "cohort_clear_time_after_cutoff_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 35.98386397232063,
+            "ci_low": 34.74532139187938,
+            "mean": 35.3645926821,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 35.946870946421626,
+            "ci_low": 34.41510891705836,
+            "mean": 35.180989931739994,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 35.30689158841835,
+            "ci_low": 34.30461540622166,
+            "mean": 34.805753497320005,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 36.47224421419902,
+            "ci_low": 34.982944435200906,
+            "mean": 35.727594324699965,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 35.44018445926796,
+            "ci_low": 34.288042832531964,
+            "mean": 34.86411364589996,
+            "n_replications": 50
+          }
+        ],
+        "cutoff_backlog": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 52.92093208189702,
+            "ci_low": 48.39906791810297,
+            "mean": 50.66,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 52.09593959624362,
+            "ci_low": 47.50406040375638,
+            "mean": 49.8,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 48.812493095829716,
+            "ci_low": 44.547506904170284,
+            "mean": 46.68,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 52.918169241648286,
+            "ci_low": 47.92183075835172,
+            "mean": 50.42,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 50.996068182470545,
+            "ci_low": 47.04393181752946,
+            "mean": 49.02,
+            "n_replications": 50
+          }
+        ],
+        "late_arrival_total_queue_wait_p95_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 3.5655011701114203,
+            "ci_low": 2.2033276075685846,
+            "mean": 2.8844143888400025,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 4.0325574932893025,
+            "ci_low": 2.776089496710722,
+            "mean": 3.4043234950000123,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 4.182886339151447,
+            "ci_low": 3.235227711128609,
+            "mean": 3.709057025140028,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 5.060566591280406,
+            "ci_low": 3.9582805161195744,
+            "mean": 4.50942355369999,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 4.931647034468635,
+            "ci_low": 4.0097612880513305,
+            "mean": 4.470704161259983,
+            "n_replications": 50
+          }
+        ],
+        "total_queue_wait_p95_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 4.700766428830683,
+            "ci_low": 3.1568183606493188,
+            "mean": 3.9287923947400007,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 4.921625261411942,
+            "ci_low": 3.6470465076280463,
+            "mean": 4.284335884519994,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 4.8146243882938,
+            "ci_low": 3.793814512306159,
+            "mean": 4.304219450299979,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 4.763341440983229,
+            "ci_low": 4.211737199896756,
+            "mean": 4.487539320439993,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 4.669535109638165,
+            "ci_low": 4.2735634886018286,
+            "mean": 4.471549299119997,
+            "n_replications": 50
+          }
+        ],
+        "total_waiting_at_cutoff": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 2.5720347004682003,
+            "ci_low": 0.9879652995318,
+            "mean": 1.78,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 3.0873925884316042,
+            "ci_low": 1.072607411568396,
+            "mean": 2.08,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 1.212541838331214,
+            "ci_low": 0.10745816166878586,
+            "mean": 0.66,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 2.8722251127572846,
+            "ci_low": 0.8877748872427152,
+            "mean": 1.88,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 2.1508173181218404,
+            "ci_low": 0.6491826818781594,
+            "mean": 1.4,
+            "n_replications": 50
+          }
+        ]
+      },
+      "rho_regime": "RHO_LT_ONE_TERMINATING_COHORT",
+      "security_capacity": 36,
+      "security_rho_proxy": 0.8267959375519023,
+      "steady_state_claim_status": "NOT_ESTIMATED_TERMINATING_COHORT"
+    },
+    {
+      "immigration_capacity": 18,
+      "immigration_rho_proxy": 0.9852651589242275,
+      "metrics": {
+        "arrival_window_peak_total_waiting_queue": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 25.334261034079326,
+            "ci_low": 19.625738965920675,
+            "mean": 22.48,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 42.1684616753168,
+            "ci_low": 31.871538324683208,
+            "mean": 37.02,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 56.38989409016748,
+            "ci_low": 44.89010590983252,
+            "mean": 50.64,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 78.62531927101243,
+            "ci_low": 65.37468072898757,
+            "mean": 72.0,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 107.34517649429809,
+            "ci_low": 83.93482350570191,
+            "mean": 95.64,
+            "n_replications": 50
+          }
+        ],
+        "arrival_window_queue_growth_slope_travellers_per_second": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 0.05545499463256462,
+            "ci_low": 0.011279182644706492,
+            "mean": 0.03336708863863556,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 0.02037106277139937,
+            "ci_low": -0.0032925901133183944,
+            "mean": 0.008539236329040488,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 0.016627230939700113,
+            "ci_low": 0.0018251197611170557,
+            "mean": 0.009226175350408584,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 0.008879100929550155,
+            "ci_low": -0.0029839987188251256,
+            "mean": 0.002947551105362515,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 0.006518007905837001,
+            "ci_low": -0.001191212004055764,
+            "mean": 0.0026633979508906185,
+            "n_replications": 50
+          }
+        ],
+        "arrival_window_time_weighted_mean_total_waiting_queue": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 9.51799331808168,
+            "ci_low": 6.121615460858186,
+            "mean": 7.819804389469933,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 16.882523140659206,
+            "ci_low": 10.594011642620792,
+            "mean": 13.738267391639999,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 23.020141629952317,
+            "ci_low": 15.169869117285398,
+            "mean": 19.095005373618857,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 30.936983386534745,
+            "ci_low": 22.385220684914533,
+            "mean": 26.66110203572464,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 40.109316274434114,
+            "ci_low": 28.952976300989313,
+            "mean": 34.531146287711714,
+            "n_replications": 50
+          }
+        ],
+        "cohort_clear_time_after_cutoff_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 47.3587824360507,
+            "ci_low": 42.5404736318293,
+            "mean": 44.94962803394,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 54.22909780779194,
+            "ci_low": 45.04989928808806,
+            "mean": 49.63949854794,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 58.862454702575356,
+            "ci_low": 49.63846009554464,
+            "mean": 54.25045739906,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 68.0036296205353,
+            "ci_low": 55.67142745198466,
+            "mean": 61.83752853625999,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 83.52275550847047,
+            "ci_low": 61.826269242169516,
+            "mean": 72.67451237531999,
+            "n_replications": 50
+          }
+        ],
+        "cutoff_backlog": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 64.83703345254398,
+            "ci_low": 57.162966547456016,
+            "mean": 61.0,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 74.26598733534864,
+            "ci_low": 61.17401266465135,
+            "mean": 67.72,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 81.04367886963082,
+            "ci_low": 67.83632113036917,
+            "mean": 74.44,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 93.64490411774172,
+            "ci_low": 76.07509588225828,
+            "mean": 84.86,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 114.89318615646349,
+            "ci_low": 84.62681384353652,
+            "mean": 99.76,
+            "n_replications": 50
+          }
+        ],
+        "late_arrival_total_queue_wait_p95_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 15.25860523159669,
+            "ci_low": 10.8376001860433,
+            "mean": 13.048102708819995,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 24.640086656449288,
+            "ci_low": 16.502582443230718,
+            "mean": 20.571334549840003,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 32.68478577662878,
+            "ci_low": 23.41649039437123,
+            "mean": 28.050638085500005,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 44.008913157854224,
+            "ci_low": 32.669921913625856,
+            "mean": 38.33941753574004,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 58.93619787176094,
+            "ci_low": 39.246010638758875,
+            "mean": 49.09110425525991,
+            "n_replications": 50
+          }
+        ],
+        "total_queue_wait_p95_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 15.561112439207905,
+            "ci_low": 11.551171835432088,
+            "mean": 13.556142137319997,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 25.52000634231689,
+            "ci_low": 18.628243136123082,
+            "mean": 22.074124739219986,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 33.823904826310645,
+            "ci_low": 25.61857970024938,
+            "mean": 29.721242263280015,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 47.21556359978233,
+            "ci_low": 37.74729014637764,
+            "mean": 42.48142687307998,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 63.64860274753372,
+            "ci_low": 48.17166922538629,
+            "mean": 55.910135986460006,
+            "n_replications": 50
+          }
+        ],
+        "total_waiting_at_cutoff": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 17.635636571055727,
+            "ci_low": 11.084363428944272,
+            "mean": 14.36,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 27.22111370093875,
+            "ci_low": 14.73888629906125,
+            "mean": 20.98,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 33.443925315312306,
+            "ci_low": 20.67607468468769,
+            "mean": 27.06,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 46.09656315254899,
+            "ci_low": 29.023436847451016,
+            "mean": 37.56,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 67.48662585279413,
+            "ci_low": 37.67337414720586,
+            "mean": 52.58,
+            "n_replications": 50
+          }
+        ]
+      },
+      "rho_regime": "RHO_LT_ONE_TERMINATING_COHORT",
+      "security_capacity": 30,
+      "security_rho_proxy": 0.9921551250622828,
+      "steady_state_claim_status": "NOT_ESTIMATED_TERMINATING_COHORT"
+    },
+    {
+      "immigration_capacity": 17,
+      "immigration_rho_proxy": 1.043221932978594,
+      "metrics": {
+        "arrival_window_peak_total_waiting_queue": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 35.84648989242066,
+            "ci_low": 28.193510107579346,
+            "mean": 32.02,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 77.94837053672164,
+            "ci_low": 60.731629463278374,
+            "mean": 69.34,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 132.57464550638724,
+            "ci_low": 109.30535449361274,
+            "mean": 120.94,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 242.54571516950125,
+            "ci_low": 209.97428483049873,
+            "mean": 226.26,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 466.69191144496455,
+            "ci_low": 405.70808855503543,
+            "mean": 436.2,
+            "n_replications": 50
+          }
+        ],
+        "arrival_window_queue_growth_slope_travellers_per_second": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 0.10105518223950688,
+            "ci_low": 0.049039594978350864,
+            "mean": 0.07504738860892887,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 0.06611221382752581,
+            "ci_low": 0.03470135280421792,
+            "mean": 0.05040678331587187,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 0.0692478058673573,
+            "ci_low": 0.047283180125206145,
+            "mean": 0.058265492996281726,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 0.06531180297298664,
+            "ci_low": 0.049575911327083604,
+            "mean": 0.057443857150035124,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 0.06299460552200926,
+            "ci_low": 0.050278989516138996,
+            "mean": 0.05663679751907413,
+            "n_replications": 50
+          }
+        ],
+        "arrival_window_time_weighted_mean_total_waiting_queue": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 15.350097897901806,
+            "ci_low": 10.821010503624327,
+            "mean": 13.085554200763067,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 36.69628011895867,
+            "ci_low": 27.16550166247968,
+            "mean": 31.930890890719173,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 64.87584781785633,
+            "ci_low": 50.63286556698138,
+            "mean": 57.75435669241885,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 120.13450726063226,
+            "ci_low": 100.6400550715104,
+            "mean": 110.38728116607133,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 228.72211021113174,
+            "ci_low": 199.47884619978845,
+            "mean": 214.1004782054601,
+            "n_replications": 50
+          }
+        ],
+        "cohort_clear_time_after_cutoff_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 57.68135506590526,
+            "ci_low": 50.881679051054725,
+            "mean": 54.28151705847999,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 86.23086993696013,
+            "ci_low": 71.42907473747987,
+            "mean": 78.82997233722,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 127.11080320328338,
+            "ci_low": 107.77996258751665,
+            "mean": 117.44538289540002,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 212.58009715807952,
+            "ci_low": 185.80792196164043,
+            "mean": 199.19400955985998,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 384.3806001527795,
+            "ci_low": 336.57969557578053,
+            "mean": 360.48014786428,
+            "n_replications": 50
+          }
+        ],
+        "cutoff_backlog": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 76.06370186984134,
+            "ci_low": 66.89629813015867,
+            "mean": 71.48,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 113.24626322130771,
+            "ci_low": 93.47373677869228,
+            "mean": 103.36,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 166.75511508240695,
+            "ci_low": 141.44488491759304,
+            "mean": 154.1,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 278.40205619937274,
+            "ci_low": 243.39794380062722,
+            "mean": 260.9,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 503.19224193984815,
+            "ci_low": 440.6477580601519,
+            "mean": 471.92,
+            "n_replications": 50
+          }
+        ],
+        "late_arrival_total_queue_wait_p95_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 25.447315140882598,
+            "ci_low": 19.192030392877403,
+            "mean": 22.31967276688,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 55.595464660599575,
+            "ci_low": 42.08311050596045,
+            "mean": 48.83928758328001,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 97.25636736344183,
+            "ci_low": 79.05936288695818,
+            "mean": 88.1578651252,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 180.22708615289594,
+            "ci_low": 155.23918557654417,
+            "mean": 167.73313586472005,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 348.2401624295569,
+            "ci_low": 302.4195506606028,
+            "mean": 325.32985654507985,
+            "n_replications": 50
+          }
+        ],
+        "total_queue_wait_p95_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 24.209170217251366,
+            "ci_low": 18.578469769028633,
+            "mean": 21.39381999314,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 53.162431193447695,
+            "ci_low": 40.84839200719228,
+            "mean": 47.00541160031999,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 92.52792270751327,
+            "ci_low": 75.12641937952664,
+            "mean": 83.82717104351995,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 170.57805269510172,
+            "ci_low": 146.46480042217829,
+            "mean": 158.52142655864,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 328.7174408258848,
+            "ci_low": 285.5778156539155,
+            "mean": 307.14762823990014,
+            "n_replications": 50
+          }
+        ],
+        "total_waiting_at_cutoff": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 30.31493726713862,
+            "ci_low": 21.60506273286138,
+            "mean": 25.96,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 67.4136329034919,
+            "ci_low": 47.90636709650809,
+            "mean": 57.66,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 120.8291921026687,
+            "ci_low": 95.69080789733131,
+            "mean": 108.26,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 232.40205619937277,
+            "ci_low": 197.39794380062725,
+            "mean": 214.9,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 457.19224193984815,
+            "ci_low": 394.6477580601519,
+            "mean": 425.92,
+            "n_replications": 50
+          }
+        ]
+      },
+      "rho_regime": "RHO_GTE_ONE_FINITE_HORIZON_ONLY",
+      "security_capacity": 29,
+      "security_rho_proxy": 1.0263673707540857,
+      "steady_state_claim_status": "PROHIBITED_RHO_GTE_ONE"
+    },
+    {
+      "immigration_capacity": 16,
+      "immigration_rho_proxy": 1.108423303789756,
+      "metrics": {
+        "arrival_window_peak_total_waiting_queue": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 53.15018395121821,
+            "ci_low": 43.68981604878179,
+            "mean": 48.42,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 136.30584440206516,
+            "ci_low": 115.53415559793484,
+            "mean": 125.92,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 259.710399053545,
+            "ci_low": 232.92960094645494,
+            "mean": 246.32,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 506.78343622530133,
+            "ci_low": 472.0165637746986,
+            "mean": 489.4,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 1008.808364625139,
+            "ci_low": 946.911635374861,
+            "mean": 977.86,
+            "n_replications": 50
+          }
+        ],
+        "arrival_window_queue_growth_slope_travellers_per_second": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 0.17114621574829983,
+            "ci_low": 0.11618375814936235,
+            "mean": 0.1436649869488311,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 0.14131151977104056,
+            "ci_low": 0.10734100329244439,
+            "mean": 0.12432626153174248,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 0.1461296825125989,
+            "ci_low": 0.1241431773347519,
+            "mean": 0.1351364299236754,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 0.14224908965876673,
+            "ci_low": 0.12651540005080472,
+            "mean": 0.13438224485478573,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 0.13991982278665843,
+            "ci_low": 0.12720443312416946,
+            "mean": 0.13356212795541395,
+            "n_replications": 50
+          }
+        ],
+        "arrival_window_time_weighted_mean_total_waiting_queue": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 23.928249632513815,
+            "ci_low": 18.465836402957787,
+            "mean": 21.1970430177358,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 67.06354821888854,
+            "ci_low": 55.98052293008992,
+            "mean": 61.52203557448923,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 129.24768679202018,
+            "ci_low": 112.90890351525013,
+            "mean": 121.07829515363515,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 253.0818886365851,
+            "ci_low": 231.92293247479236,
+            "mean": 242.50241055568873,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 499.27752946560753,
+            "ci_low": 469.6417132413872,
+            "mean": 484.45962135349737,
+            "n_replications": 50
+          }
+        ],
+        "cohort_clear_time_after_cutoff_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 74.954749619397,
+            "ci_low": 66.621532866163,
+            "mean": 70.78814124278,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 141.83091699661452,
+            "ci_low": 124.07956349426547,
+            "mean": 132.95524024544,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 241.26668275940338,
+            "ci_low": 219.0650249422366,
+            "mean": 230.16585385081999,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 443.75153331471495,
+            "ci_low": 415.24059021000517,
+            "mean": 429.49606176236006,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 850.95099631533,
+            "ci_low": 800.5943654939101,
+            "mean": 825.7726809046201,
+            "n_replications": 50
+          }
+        ],
+        "cutoff_backlog": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 92.84423356815806,
+            "ci_low": 82.47576643184193,
+            "mean": 87.66,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 174.87147427455713,
+            "ci_low": 152.96852572544284,
+            "mean": 163.92,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 297.2522554480968,
+            "ci_low": 270.0677445519033,
+            "mean": 283.66,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 546.6801595375091,
+            "ci_low": 511.4798404624909,
+            "mean": 529.08,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 1048.4833815796653,
+            "ci_low": 986.4366184203349,
+            "mean": 1017.46,
+            "n_replications": 50
+          }
+        ],
+        "late_arrival_total_queue_wait_p95_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 42.03403287949237,
+            "ci_low": 34.15642961674763,
+            "mean": 38.09523124812,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 108.46077716976137,
+            "ci_low": 91.62305964787862,
+            "mean": 100.04191840882,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 207.37650928596665,
+            "ci_low": 185.84232651315332,
+            "mean": 196.60941789956,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 405.20573505370623,
+            "ci_low": 377.2590964310539,
+            "mean": 391.23241574238006,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 808.4117033000547,
+            "ci_low": 758.9698579742256,
+            "mean": 783.6907806371402,
+            "n_replications": 50
+          }
+        ],
+        "total_queue_wait_p95_seconds": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 39.622316202195826,
+            "ci_low": 32.21779604220418,
+            "mean": 35.9200561222,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 103.0744084745474,
+            "ci_low": 87.22075054421259,
+            "mean": 95.14757950938,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 198.95447608102697,
+            "ci_low": 177.60452485341298,
+            "mean": 188.27950046721998,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 388.3627105385462,
+            "ci_low": 361.71370509477384,
+            "mean": 375.03820781666,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 771.0740819218535,
+            "ci_low": 725.3329527971463,
+            "mean": 748.2035173594999,
+            "n_replications": 50
+          }
+        ],
+        "total_waiting_at_cutoff": [
+          {
+            "arrival_cutoff_seconds": 300,
+            "ci_high": 48.88434693640953,
+            "ci_low": 38.675653063590474,
+            "mean": 43.78,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 900,
+            "ci_high": 130.87147427455713,
+            "ci_low": 108.96852572544287,
+            "mean": 119.92,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 1800,
+            "ci_high": 253.25225544809678,
+            "ci_low": 226.06774455190322,
+            "mean": 239.66,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 3600,
+            "ci_high": 502.6801595375091,
+            "ci_low": 467.47984046249087,
+            "mean": 485.08,
+            "n_replications": 50
+          },
+          {
+            "arrival_cutoff_seconds": 7200,
+            "ci_high": 1004.4833815796652,
+            "ci_low": 942.4366184203349,
+            "mean": 973.46,
+            "n_replications": 50
+          }
+        ]
+      },
+      "rho_regime": "RHO_GTE_ONE_FINITE_HORIZON_ONLY",
+      "security_capacity": 28,
+      "security_rho_proxy": 1.0630233482810172,
+      "steady_state_claim_status": "PROHIBITED_RHO_GTE_ONE"
+    }
+  ],
+  "simulated_duration_seconds": [
+    300,
+    900,
+    1800,
+    3600,
+    7200
+  ],
+  "status": "COMPLETE",
+  "steady_state_policy": "No steady-state KPI is reported. For rho>=1, interpretation is restricted to finite-horizon accumulation and recovery.",
+  "study_id": "TASK3_PEAK_DURATION_SENSITIVITY_EXPLORATORY_V1"
+}

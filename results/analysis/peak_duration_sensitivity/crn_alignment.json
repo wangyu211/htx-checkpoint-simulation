@@ -1,0 +1,29 @@
+{
+  "canonical_draw_fields": [
+    "arrival_seconds",
+    "security_service_demand_seconds",
+    "immigration_conventional_service_demand_seconds",
+    "automation_u",
+    "additional_check_u",
+    "lane_tie_u"
+  ],
+  "comparison_strategy": "Canonical numeric SHA-256 over traveller_id and all branch-invariant exogenous draws. Same-duration runs must match across capacities; every longer run filtered to arrival<Tshort must exactly match the corresponding shorter run.",
+  "coverage_pass": true,
+  "cross_capacity_compared_traveller_pairs": 2826585,
+  "cross_capacity_comparison_count": 750,
+  "cross_duration_nested_arrival_prefix_pass": true,
+  "error_count": 0,
+  "errors": [],
+  "expected_cross_capacity_comparison_count": 750,
+  "expected_nested_prefix_comparison_count": 2000,
+  "input_sample_id": "LOCAL_WINDOW_HPP_BASE_STATIONARY_EXTENSION",
+  "nested_prefix_compared_traveller_pairs": 3031380,
+  "nested_prefix_comparison_count": 2000,
+  "paired_analysis_gate": "Duration increments are emitted only after both exact CRN gates pass.",
+  "same_duration_cross_capacity_exogenous_crn_pass": true,
+  "schema_version": "1.0",
+  "seed_alignment_pass": true,
+  "status": "PASS",
+  "study_id": "TASK3_PEAK_DURATION_SENSITIVITY_EXPLORATORY_V1",
+  "validation": "PEAK_DURATION_SENSITIVITY_CRN_ALIGNMENT_V1"
+}
