@@ -16,8 +16,12 @@ Every slide contains speaker notes and a repository-relative `[Sources]` block.
 
 > Evidence-Driven Checkpoint Simulation
 
-- A 24.9-second observation supplies a human-adjudicated directional corridor
-  anchor, not a long-run site-demand estimate.
+- **Problem Statement:** a 24.9-second corridor video supplies a defensible
+  arrival snapshot, but it does not measure time-of-day demand, stage-service
+  behaviour, or observed staffing.
+- **Objective:** build an auditable traveller-level DES that combines measured
+  arrivals with editable service assumptions to stress-test queues, delays,
+  and bottleneck shifts.
 - `34` accepted right-to-left crossings and `1.364/s` are presented with that
   boundary visible.
 - A synthetic AnyLogic screenshot replaces all source-video-derived pixels.
