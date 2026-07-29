@@ -111,7 +111,9 @@
     "b50c6d0eea9b73cbceb794738bf8064b7689b85a47c08682c8d2e7316e71bce7": "Capacity-response SVG heatmap with embedded rasters generated solely from aggregate simulation results",
     "b383501d083e6cab8840a14b2c6ac11bb847e447a6f6478ec81b4372ed04e8b8": "AnyLogic operational dashboard screenshot containing synthetic state only",
     "d8085c2766444455fb1d80c8a6d3334dea04ce426682cdb82fa42920c66f4b5e": "AnyLogic completed-run screenshot containing synthetic state only",
-    "fcd249529b882e55d6e4b76ae873714c4247f3028cba7c0e2c078e6ba4abe68e": "Capacity-response curves generated from aggregate simulation results"
+    "fcd249529b882e55d6e4b76ae873714c4247f3028cba7c0e2c078e6ba4abe68e": "Capacity-response curves generated from aggregate simulation results",
+    "97fae32e77a7413e3b28de5a64d5f37b9f5068413272bc16448b76eefeb0cf3c": "Service-variability queue heatmap and paired-contrast forest generated solely from aggregate simulation results",
+    "a24324ab53cea7b074c29a8b28417b8e768442a0700429bfee56a28693c63b63": "Service-variability tail and recovery contrast chart generated solely from aggregate simulation results"
   },
   "restricted_content_sha256": {
     "4e2adef6a7c11ff4bac604a034229a08dfd53747360862cc53d0098f53bc7a2c": "Supplied TestVidTask.mov source video",

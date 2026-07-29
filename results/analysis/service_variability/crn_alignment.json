@@ -1,0 +1,31 @@
+{
+  "arrival_routing_tie_exact_pass": true,
+  "branch_invariant_draws_pass": true,
+  "cell_count": 9,
+  "compared_immigration_latent_pairs": 103110,
+  "compared_invariant_draw_values": 659904,
+  "compared_invariant_traveller_pairs": 164976,
+  "compared_security_latent_pairs": 103110,
+  "coverage_pass": true,
+  "errors": [],
+  "fixed_service_demand_pass": true,
+  "immigration_positive_cv_latent_alignment_pass": true,
+  "invariant_comparison": "EXACT_CANONICAL_IEEE754",
+  "invariant_draw_fields": [
+    "arrival_seconds",
+    "automation_u",
+    "additional_check_u",
+    "lane_tie_u"
+  ],
+  "latent_comparison_numeric_tolerance": 1e-08,
+  "paired_analysis_gate": "Paired contrasts and factorial interactions are emitted only when this report returns PASS.",
+  "positive_service_demand_pass": true,
+  "replication_count": 50,
+  "schema_version": "1.0",
+  "security_positive_cv_latent_alignment_pass": true,
+  "seed_alignment_pass": true,
+  "status": "PASS",
+  "study_id": "TASK3_SERVICE_VARIABILITY_SENSITIVITY_V1",
+  "traveller_level_alignment_pass": true,
+  "validation": "TASK3_SERVICE_VARIABILITY_CRN_ALIGNMENT_V1"
+}

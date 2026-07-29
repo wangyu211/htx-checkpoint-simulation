@@ -1,0 +1,25 @@
+{
+  "artifact_hashes": {
+    "design_sha256": "e46a9849088ec2f322ae95857449589cc099de04fd5b462cef332836c9018b76",
+    "scenarios_sha256": "b6513fcedec6fb57bc92ad05ad236e7801797eb6c616cb00e2edfc421376e292",
+    "schema_registry_sha256": "c26bbe0006f45b8b8f10c184ed5339920ffb73e7987471473a20ffcfd1911b05",
+    "seed_manifest_sha256": "9a8424b1135bc831a9ab410a30ebe4fbcce496fca9771c724e58bf1662682b6f"
+  },
+  "audit": "TASK3_SERVICE_VARIABILITY_RAW_AUDIT_V1",
+  "configuration_hash_algorithm": "SHA256_CANONICAL_EXTENDED_SERVICE_SCENARIO_ROW",
+  "entity_logs_copied_to_analysis_package": false,
+  "entity_row_count": 185598,
+  "guard_semantics": {
+    "arrival": "arrivals strictly below arrival_guard",
+    "immigration_queue": "reconstructed full-drain peak strictly below queue capacity",
+    "security_queue": "reconstructed full-drain peak strictly below queue capacity"
+  },
+  "model_version": "TASK3_OPERATIONAL_POOLED_SERVICE_VARIABILITY_V1",
+  "raw_file_count": 1350,
+  "raw_results_root": "results/raw/service_variability",
+  "raw_tree_sha256": "1cc7fe308962135ee6e06bf1e5bddf3f10828fe076b89177edc3312373036561",
+  "run_count": 450,
+  "schema_version": "1.0",
+  "status": "PASS",
+  "study_id": "TASK3_SERVICE_VARIABILITY_SENSITIVITY_V1"
+}

@@ -587,7 +587,11 @@ def _validate_entity_chronology(
     cutoff_seconds: float,
     drain_end_seconds: float,
     label: str,
+    numeric_tolerance: float = DEFAULT_NUMERIC_TOLERANCE,
+    duration_tolerance: float | None = None,
 ) -> None:
+    if duration_tolerance is None:
+        duration_tolerance = numeric_tolerance
     ordered_fields = (
         "arrival_seconds",
         "security_queue_join_seconds",
@@ -605,7 +609,7 @@ def _validate_entity_chronology(
         raise ValueError(f"{label}: illegal event timestamp order")
     if times[0] >= cutoff_seconds:
         raise ValueError(f"{label}: arrival is outside [0, cutoff)")
-    if times[-1] > drain_end_seconds + DEFAULT_NUMERIC_TOLERANCE:
+    if times[-1] > drain_end_seconds + numeric_tolerance:
         raise ValueError(f"{label}: exit occurs after the recorded drain end")
 
     security_demand = _float(
@@ -616,9 +620,19 @@ def _validate_entity_chronology(
         row["immigration_primary_service_demand_seconds"],
         f"{label}:immigration_primary_service_demand_seconds",
     )
-    if not _same_number(times[3] - times[2], security_demand):
+    if not math.isclose(
+        times[3] - times[2],
+        security_demand,
+        rel_tol=0.0,
+        abs_tol=duration_tolerance,
+    ):
         raise ValueError(f"{label}: Security service duration is inconsistent")
-    if not _same_number(times[6] - times[5], immigration_demand):
+    if not math.isclose(
+        times[6] - times[5],
+        immigration_demand,
+        rel_tol=0.0,
+        abs_tol=duration_tolerance,
+    ):
         raise ValueError(
             f"{label}: Immigration service duration is inconsistent"
         )
@@ -1949,10 +1963,12 @@ def _write_csv(
 def _write_json(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+    with temporary.open(
+        "w",
         encoding="utf-8",
-    )
+        newline="\n",
+    ) as stream:
+        stream.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     temporary.replace(path)
 
 

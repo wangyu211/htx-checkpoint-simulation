@@ -10,6 +10,7 @@ from src.analysis.analyse_service_variability import (
     ANALYSIS_METRICS,
     INVARIANT_DRAW_FIELDS,
     REFERENCE_CELL,
+    _cross_batch_event_signature,
     _expected_run_paths,
     _service_latents,
     _validate_exact_coverage,
@@ -17,6 +18,10 @@ from src.analysis.analyse_service_variability import (
     build_service_variability_analysis,
     implied_standard_normal,
     main,
+)
+from src.analysis.analyse_capacity_response_surface import (
+    _validate_entity_chronology,
+    _write_json,
 )
 
 
@@ -209,6 +214,101 @@ class ServiceLatentContractTests(unittest.TestCase):
                 mean_seconds=self.SECURITY_MEAN,
                 cv=1.0,
             )
+
+    def test_chronology_tolerance_accounts_for_nine_decimal_csv_rounding(
+        self,
+    ) -> None:
+        row = {
+            "arrival_seconds": "0.000000000",
+            "security_queue_join_seconds": "0.000000000",
+            "security_start_seconds": "0.000000000",
+            "security_end_seconds": "1.000000000",
+            "immigration_queue_join_seconds": "1.000000000",
+            "immigration_start_seconds": "172.235724382",
+            "immigration_primary_end_seconds": "172.932797406",
+            "exit_seconds": "172.932797406",
+            "security_service_demand_seconds": "1.000000000",
+            "immigration_primary_service_demand_seconds": "0.697073025",
+            "automation_u": "0.5",
+            "additional_check_u": "0.5",
+            "lane_tie_u": "0.5",
+            "technology_flag": "false",
+            "additional_check_flag": "false",
+            "additional_check_service_demand_seconds": "",
+            "additional_check_end_seconds": "",
+        }
+
+        _validate_entity_chronology(
+            row,
+            cutoff_seconds=300.0,
+            drain_end_seconds=200.0,
+            label="nine-decimal-rounding",
+            duration_tolerance=2e-9,
+        )
+
+        materially_inconsistent = dict(row)
+        materially_inconsistent["immigration_primary_end_seconds"] = (
+            "172.932798406"
+        )
+        materially_inconsistent["exit_seconds"] = "172.932798406"
+        with self.assertRaisesRegex(
+            ValueError,
+            "Immigration service duration is inconsistent",
+        ):
+            _validate_entity_chronology(
+                materially_inconsistent,
+                cutoff_seconds=300.0,
+                drain_end_seconds=200.0,
+                label="material-duration-error",
+                duration_tolerance=2e-9,
+            )
+
+    def test_cross_batch_signature_excludes_lineage_but_not_events(self) -> None:
+        row = {
+            "traveller_id": "T1",
+            "arrival_seconds": "1.000000000",
+            "security_service_demand_seconds": "2.000000000",
+            "immigration_conventional_service_demand_seconds": "3.000000000",
+            "automation_u": "0.1",
+            "additional_check_u": "0.2",
+            "lane_tie_u": "0.3",
+            "security_queue_join_seconds": "1.000000000",
+            "security_start_seconds": "1.000000000",
+            "security_end_seconds": "3.000000000",
+            "immigration_queue_join_seconds": "3.000000000",
+            "immigration_lane_id": "IMMIGRATION_POOLED",
+            "immigration_start_seconds": "3.000000000",
+            "technology_flag": "false",
+            "immigration_primary_service_demand_seconds": "3.000000000",
+            "immigration_primary_end_seconds": "6.000000000",
+            "additional_check_flag": "false",
+            "additional_check_service_demand_seconds": "",
+            "additional_check_end_seconds": "",
+            "exit_seconds": "6.000000000",
+            "config_id": "CURRENT",
+            "security_resource_id": "SECURITY_CURRENT",
+        }
+        prior = dict(row)
+        prior["config_id"] = "PRIOR"
+        prior["security_resource_id"] = "SECURITY_PRIOR"
+        self.assertEqual(
+            _cross_batch_event_signature([row], label="current"),
+            _cross_batch_event_signature([prior], label="prior"),
+        )
+
+        prior["exit_seconds"] = "6.000000001"
+        self.assertNotEqual(
+            _cross_batch_event_signature([row], label="current"),
+            _cross_batch_event_signature([prior], label="prior"),
+        )
+
+    def test_json_writer_uses_repository_canonical_lf_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "report.json"
+            _write_json(path, {"status": "PASS", "rows": [1, 2]})
+            payload = path.read_bytes()
+        self.assertIn(b"\n", payload)
+        self.assertNotIn(b"\r\n", payload)
 
 
 class ServiceVariabilityCrnGateTests(unittest.TestCase):

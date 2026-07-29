@@ -2,7 +2,8 @@
 
 **Status:** pooled-FCFS operational v1 executed in AnyLogic; the 15 × 10 pilot,
 the 600-run capacity-expansion study, the 600-run capacity-availability study,
-and the 2,700-run Base-demand response surface passed their declared gates
+the 2,700-run Base-demand response surface, and the 9 × 50 mean-preserving
+service-variability sensitivity passed their declared gates
 
 **Version:** 0.7, 2026-07-29
 
@@ -81,7 +82,7 @@ has an invalid event sequence.
 | Counter-held additional work | `IMPLEMENTED_PROXY` | pessimistic risk boundary |
 | Separate per-counter queues at both stages (offline entity-ledger replay) | `EVIDENCE_ACCEPTED_CONDITIONAL_REPLAY` | paired mechanism contrast at two frozen scales; not an AnyLogic UI/site-policy claim |
 | Time-of-day demand | `BLOCKED_INPUT` | the short clip cannot identify a daily profile |
-| Mean-preserving stochastic-service sensitivity | `IMPLEMENTED_NOT_EXECUTED` | lognormal CV grid is an uncalibrated assumption sensitivity; no result is released until all 450 runs pass |
+| Mean-preserving stochastic-service sensitivity | `EVIDENCE_ACCEPTED_EXPLORATORY_ASSUMPTION_SENSITIVITY` | all 450 runs, traveller-level CRN alignment, and cross-batch reference reproduction passed; the lognormal CV grid remains uncalibrated |
 | Separate secondary queue/resources | `BLOCKED_INPUT` | require routing, capacity, and service evidence |
 | Calibrated walking and physical congestion | `OUT_OF_SCOPE_V1` | no spatial-performance claim |
 
@@ -226,12 +227,13 @@ offsets `+1` to `+4`. Arrival consumes its stream, while fixed v1 service does
 not consume `service_seed`. The reserved tie draw has no routing effect in the
 pooled model. Within these fixed-service batches, recording a seed or draw is
 not evidence that stochastic service, CRN alignment, or separate lanes are
-implemented. The independent service-CV study is implemented but has no
-accepted run output, and the separate-lane evidence comes only from the
-exact-gated offline replay above. The pilot's CRN status therefore remains
-`NOT_TESTED`. The confirmatory study uses a separate frozen seed manifest and
-permits paired inference only because its traveller-level alignment gate
-returned `PASS`.
+implemented in those batches. The independent 9 × 50 service-CV study has now
+executed and passed its traveller-level CRN and cross-batch reference gates;
+its results are accepted only as an uncalibrated mean-preserving assumption
+sensitivity. Separate-lane evidence still comes only from the exact-gated
+offline replay above. The pilot's CRN status therefore remains `NOT_TESTED`.
+The confirmatory study uses a separate frozen seed manifest and permits paired
+inference only because its traveller-level alignment gate returned `PASS`.
 
 Part 2 keeps that 600-run expansion study immutable and tests the complementary
 availability question. It executes Security `32/21`, Immigration `36/18`,

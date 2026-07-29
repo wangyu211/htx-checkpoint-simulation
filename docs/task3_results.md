@@ -5,12 +5,19 @@ runs, 253,756 entity rows, strict result validation `PASS`, CRN alignment
 `PASS`, and primary precision target met. The earlier 150-run pilot remains
 valid exploratory and engineering evidence. The separate post-outcome
 capacity response surface also completed `2,700/2,700` validated runs; it
-remains exploratory and does not alter the confirmatory claim.
+remains exploratory and does not alter the confirmatory claim. A further
+independent service-variability sensitivity completed `9 x 50 = 450/450`
+validated runs with CRN alignment and cross-batch reproducibility `PASS`.
+That study is an exploratory assumption sensitivity, not an enlargement of
+the confirmatory capacity claim.
 
-**Claim boundary:** a non-calibrated, fixed-service-time pooled-FCFS
-assumption sandbox. Results are comparative Monte Carlo evidence conditional
-on the registered inputs; they are not measured HTX performance, a calibrated
-baseline, a site forecast, a staffing answer, or an economic recommendation.
+**Claim boundary:** a non-calibrated pooled-FCFS assumption sandbox. The
+confirmatory capacity study and capacity response surface retain fixed service
+times. The separate service-variability study replaces those fixed demands
+only with unmeasured, mean-preserving lognormal CV assumptions. All results are
+comparative Monte Carlo evidence conditional on their registered inputs; they
+are not measured HTX performance, a calibrated baseline, a site forecast, a
+staffing answer, an observed roster, or an economic recommendation.
 
 ## Executive finding
 
@@ -250,6 +257,87 @@ Tracked response-surface evidence:
 - [bottleneck map](../results/analysis/capacity_response_surface/stage_bottleneck_map.csv)
 - [deterministic ideal comparator](../results/analysis/capacity_response_surface/ideal_case_comparator.csv)
 
+## Exploratory service-variability sensitivity
+
+A separate pre-frozen sensitivity asks whether the fixed-service assumption
+materially masks queue, traveller-tail, or post-cutoff recovery risk. It holds
+the HPP arrival input, mean service demands, pooled-FCFS mechanism, empty
+start, full drain, and model reference capacities constant while crossing:
+
+```text
+Security service CV    = {0, 0.5, 1.0}
+Immigration service CV = {0, 0.5, 1.0}
+```
+
+This is a `3 x 3` grid with 50 replications per cell, or `450/450` accepted
+AnyLogic runs. Strict validation, registered coverage, lineage, conservation,
+full drain, service-demand guards, and CRN alignment all returned `PASS`.
+The CV-zero cell also reproduced the prior response-surface `36/21` reference
+batch exactly: 50 runs, 20,622 traveller rows and 750 metric values matched,
+with maximum absolute metric difference `0.0`.
+
+The `36 Security / 21 Immigration` capacities remain the
+target-utilisation-derived **model reference**. They are not an observed
+resource schedule, current roster, or staffing recommendation. For CV above
+zero, service time is sampled from a strictly positive, mean-preserving
+lognormal family. CV `0.5` and `1.0` are transparent assumptions that were not
+measured in the supplied video or at an HTX checkpoint. In particular, CV
+`1.0` is not an exponential-service or M/M/c claim.
+
+The primary descriptive estimand is the mean across 50 replication-level P95
+total queue waits. Paired Student-t intervals are permitted because the
+registered arrival, routing and tie streams align exactly across cells, while
+stage-local latent service draws align across the applicable positive-CV
+comparisons.
+
+| Mean-preserving CV contrast versus `0/0` | Paired P95 queue-wait difference | Paired 95% CI |
+|---|---:|---:|
+| Security CV `1`, Immigration CV `0` | `+0.042 s` | `[-0.410, 0.494]` |
+| Security CV `0`, Immigration CV `1` | `+1.660 s` | `[0.698, 2.623]` |
+| Security CV `1`, Immigration CV `1` | `+1.668 s` | `[0.677, 2.660]` |
+
+Within this tested reference cell, the P95 queue-wait response is therefore
+more sensitive to Immigration-side service variability than to
+Security-side variability. The Security-only estimate is close to zero and
+its interval spans zero; that does not prove that real Security service
+variability has no effect. The CV `1 x 1` factorial interaction is
+`-0.033 s` with 95% CI `[-0.618, 0.551]`. It remains unresolved, so the study
+does not support a synergistic or antagonistic interaction claim for this
+metric.
+
+Queue wait alone understates the consequences of variable service duration.
+At joint CV `1/1` versus fixed service, modelled system-time P95 increases by
+`43.471 s` (95% CI `[41.565, 45.376]`) and post-cutoff cohort-clear time by
+`95.993 s` (`[81.162, 110.823]`). These are paired Monte Carlo differences
+inside the registered lognormal sandbox, not forecasts of traveller
+experience or operational recovery time.
+
+![Service-variability queue sensitivity](../results/analysis/service_variability/figures/service_variability_queue_sensitivity.png)
+
+![Service-variability traveller-tail and recovery contrasts](../results/analysis/service_variability/figures/service_variability_tail_contrasts.png)
+
+Permitted conclusion:
+
+> Fixed service time is decision-relevant: under mean-preserving positive
+> lognormal CV assumptions, tail and recovery metrics increase even when mean
+> demand and capacity do not change. At the `36/21` model reference, the
+> queue-wait signal is concentrated on the Immigration side, while the
+> Security-only queue contrast and joint factorial interaction remain
+> unresolved. Measure stage-specific service distributions before using the
+> model for site calibration; do not infer roster requirements from this
+> sensitivity.
+
+Tracked service-variability evidence:
+
+- [frozen design and claim boundary](task3_service_variability_design.md)
+- [strict validation](../results/analysis/service_variability/validation.json)
+- [CRN alignment](../results/analysis/service_variability/crn_alignment.json)
+- [cross-batch reproducibility](../results/analysis/service_variability/cross_batch_reproducibility.json)
+- [cell estimates](../results/analysis/service_variability/cell_estimates.csv)
+- [paired contrasts](../results/analysis/service_variability/paired_contrasts_vs_reference.csv)
+- [factorial interactions](../results/analysis/service_variability/factorial_interactions.csv)
+- [analysis manifest](../results/analysis/service_variability/analysis_manifest.json)
+
 ## Conditional pooled-versus-separate queue replay
 
 A separate fail-closed counterfactual replays the immutable confirmatory
@@ -430,8 +518,10 @@ ICA operations.
 - The executable AnyLogic model and interactive UI remain pooled FCFS.
   A separate layout exists only as the exact-gated offline entity-ledger
   counterfactual above; it does not identify the current site queue policy.
-- Fixed service times, homogeneous resources, HPP arrivals, and empty/idle
-  starts suppress important real-world variability.
+- The confirmatory study and capacity response surface use fixed service
+  times. The independent service-variability sensitivity relaxes only that
+  assumption at unmeasured CV `0.5/1.0`; homogeneous resources, HPP arrivals,
+  and empty/idle starts still suppress important real-world variability.
 - The directional corridor rate is conditionally routed into one pooled model;
   processing-unit allocation, within-site routing, and sharing/overflow are
   unobserved.

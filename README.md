@@ -117,6 +117,23 @@ observed roster, causal staffing effect, or staffing recommendation. See the
 [`exploratory design and execution record`](docs/task3_capacity_response_surface_design.md)
 and [`compact analysis package`](results/analysis/capacity_response_surface/README.md).
 
+The independent mean-preserving service-variability sensitivity has also
+completed: `3 × 3` Security/Immigration CV assumptions with 50 paired
+replications per cell produced 450/450 valid AnyLogic runs and 185,598
+traveller rows. Coverage, conservation, full drain, traveller-level
+common-random-number alignment, and exact cross-batch reproduction of the
+fixed-service `36 / 21` reference all returned `PASS`. Relative to CV `0 / 0`,
+joint CV `1 / 1` increased mean replication-level total queue-wait P95 by
+`1.668 s` (paired 95% CI `[0.677, 2.660]`), system-time P95 by `43.471 s`
+(`[41.565, 45.376]`), and post-cutoff clearance by `95.993 s`
+(`[81.162, 110.823]`). The queue effect came primarily from the Immigration
+CV assumption at this reference cell; the CV `1 × 1` queue-wait interaction
+was unresolved. These CVs are transparent mean-preserving lognormal
+assumptions, not measured service distributions. The study is exploratory,
+uncalibrated, and not a site forecast or staffing recommendation. See the
+[`frozen design and execution record`](docs/task3_service_variability_design.md)
+and [`compact analysis package`](results/analysis/service_variability/README.md).
+
 Across the 54 cell estimates, mean replication-level total-wait P95 spans
 `3.929–35.920 s` under a 300-second empty-start cohort; this is not a maximum
 individual wait. The registered illustrative `600 / 900 / 1200 s` exceedance
@@ -424,6 +441,26 @@ the estimates. The checked-in
 [`compact package`](results/analysis/capacity_response_surface/README.md)
 records the response slices, paired finite differences, interaction surface,
 bottleneck map, and deterministic ideal comparator.
+
+Run and validate the mean-preserving service-variability sensitivity:
+
+1. In AnyLogic PLE 8.9.9, run
+   `ServiceVariabilitySensitivity: OperationalCheckpointModel` and wait for
+   `Finished`. The frozen contract is 9 CV cells × 50 serial replications.
+2. Validate and package the complete result tree, then generate the two
+   claim-bounded figures:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.analysis.analyse_service_variability
+.\.venv\Scripts\python.exe -m src.analysis.plot_service_variability_sensitivity
+```
+
+The analyser fails closed unless all 450 runs, frozen inputs, service-demand
+contracts, conservation, full drain, traveller-level CRN alignment, and
+cross-batch reproduction of the fixed-service reference pass. The
+[`compact package`](results/analysis/service_variability/README.md) records
+cell estimates, paired contrasts, factorial interactions, audit reports, and
+the accepted figures.
 
 Run the release gate. It includes a fail-closed check for tracked or embedded
 source pixels, restricted media, identity/appearance fields, and reviewer alias

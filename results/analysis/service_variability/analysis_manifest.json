@@ -1,0 +1,112 @@
+{
+  "analysis": "TASK3_SERVICE_VARIABILITY_ANALYSIS_V1",
+  "analysis_role": "EXPLORATORY_ASSUMPTION_SENSITIVITY_NOT_CALIBRATION",
+  "claim_boundary": "CONDITIONAL_SERVICE_VARIABILITY_SENSITIVITY_ONLY",
+  "coverage": {
+    "cell_count": 9,
+    "replications_per_cell": 50,
+    "run_count": 450
+  },
+  "model_version": "TASK3_OPERATIONAL_POOLED_SERVICE_VARIABILITY_V1",
+  "outputs": {
+    "analysis_payload.json": {
+      "path": "results/analysis/service_variability/analysis_payload.json",
+      "row_count": 1,
+      "sha256": "82e136fe7e45d87342eb859b84e0b5c1e1c37e6e738e5299a1adc2c293dd94a8"
+    },
+    "balanced_joint_slice.csv": {
+      "path": "results/analysis/service_variability/balanced_joint_slice.csv",
+      "row_count": 3,
+      "sha256": "bfc3623ca8fd6740753f637763e34ed62a080997503272063b1225934f428a78"
+    },
+    "cell_estimates.csv": {
+      "path": "results/analysis/service_variability/cell_estimates.csv",
+      "row_count": 135,
+      "sha256": "346e1a508858feb2be61820a249e76d84f311d09a17ddb1a28f2bad1698b6115"
+    },
+    "crn_alignment.json": {
+      "path": "results/analysis/service_variability/crn_alignment.json",
+      "row_count": 1,
+      "sha256": "3075f28863566d139076dd6f768631830e9fdeaa0a2984a3f9ad2000448ef657"
+    },
+    "cross_batch_reproducibility.json": {
+      "path": "results/analysis/service_variability/cross_batch_reproducibility.json",
+      "row_count": 1,
+      "sha256": "eb3e3a33b32293913b8d1bc70152f074e46a517e03870bcf815f68792f42bbc3"
+    },
+    "factorial_interactions.csv": {
+      "path": "results/analysis/service_variability/factorial_interactions.csv",
+      "row_count": 60,
+      "sha256": "51e85a8135261bcd6d8acf893d1f4172ae2a3f794909d2127782f44f85b3d982"
+    },
+    "heatmap.csv": {
+      "path": "results/analysis/service_variability/heatmap.csv",
+      "row_count": 9,
+      "sha256": "507ff36b97b791c8b130ae09dc2bf7fc0eee98e269e5353192702648bd83fc54"
+    },
+    "immigration_only_slice.csv": {
+      "path": "results/analysis/service_variability/immigration_only_slice.csv",
+      "row_count": 3,
+      "sha256": "a9a20131b126ef80968f29bcde852debbdb520f78b0103e59cc396b75132cc5c"
+    },
+    "paired_contrasts_vs_reference.csv": {
+      "path": "results/analysis/service_variability/paired_contrasts_vs_reference.csv",
+      "row_count": 120,
+      "sha256": "7825a4196d7acc92438d301440b02509ce0c4e21b45cbc8e9bf5aabfc9cbe59e"
+    },
+    "raw_audit_manifest.json": {
+      "path": "results/analysis/service_variability/raw_audit_manifest.json",
+      "row_count": 1,
+      "sha256": "da471d03ba90cc4b7bc478e841b107dd2066b8bcbdcf5ca638e1a2912d4543ac"
+    },
+    "security_only_slice.csv": {
+      "path": "results/analysis/service_variability/security_only_slice.csv",
+      "row_count": 3,
+      "sha256": "fe60d971ceb05da09fed91989b1537a9cae8ca8d513f270a713caeeec1297c9b"
+    },
+    "service_variability_by_replication.csv": {
+      "path": "results/analysis/service_variability/service_variability_by_replication.csv",
+      "row_count": 450,
+      "sha256": "d2f0678943b731d7566e15f8ab55046e1ebcf9847819ac3d2104e494568ad5b7"
+    },
+    "validation.json": {
+      "path": "results/analysis/service_variability/validation.json",
+      "row_count": 1,
+      "sha256": "7f358edff097c43f78d9fd1496b90f21585de2963edf767427cc69dfcd3cad9b"
+    }
+  },
+  "paired_analysis_gate": {
+    "comparison_method": "PAIRED_STUDENT_T",
+    "crn_alignment_status": "PASS"
+  },
+  "queue_reconstruction": {
+    "interval_semantics": "[queue_join,service_start), end events before starts on ties",
+    "peak_window": "FULL_DRAIN",
+    "time_weighted_mean_window": "[0,300)"
+  },
+  "reproducibility_gate": {
+    "cross_batch_status": "PASS",
+    "prior_rows_in_estimates": 0,
+    "prior_scenario_id": "CAPACITY_RESPONSE_S36_I21"
+  },
+  "schema_version": "1.0",
+  "source": {
+    "artifact_hashes": {
+      "design_sha256": "e46a9849088ec2f322ae95857449589cc099de04fd5b462cef332836c9018b76",
+      "scenarios_sha256": "b6513fcedec6fb57bc92ad05ad236e7801797eb6c616cb00e2edfc421376e292",
+      "schema_registry_sha256": "c26bbe0006f45b8b8f10c184ed5339920ffb73e7987471473a20ffcfd1911b05",
+      "seed_manifest_sha256": "9a8424b1135bc831a9ab410a30ebe4fbcce496fca9771c724e58bf1662682b6f"
+    },
+    "entity_logs_copied_to_analysis_package": false,
+    "entity_row_count": 185598,
+    "raw_file_count": 1350,
+    "raw_results_root": "results/raw/service_variability",
+    "raw_tree_sha256": "1cc7fe308962135ee6e06bf1e5bddf3f10828fe076b89177edc3312373036561"
+  },
+  "status": "PASS",
+  "study_id": "TASK3_SERVICE_VARIABILITY_SENSITIVITY_V1",
+  "tail_metrics": {
+    "system_time_p99_and_max_reconstructed_from_entity_ledger": true,
+    "within_replication_method": "NEAREST_RANK"
+  }
+}

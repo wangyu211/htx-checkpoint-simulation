@@ -1,11 +1,9 @@
 """Validate and analyse the frozen service-variability sensitivity study.
 
-This module is an analysis contract for a future 9-by-50 AnyLogic batch.  It
-does not imply that the runtime sampler has been implemented or that the
-batch has been run.  When raw results become available, the package step
-fails closed unless all 450 registered runs are present exactly once and
-their schemas, lineage, extended configuration hashes, model version, seeds,
-full-drain identities, service-demand contracts, and guard/drop checks pass.
+The package step fails closed unless all 450 registered AnyLogic runs are
+present exactly once and their schemas, lineage, extended configuration
+hashes, model version, seeds, full-drain identities, service-demand contracts,
+guard/drop checks, and fixed-service cross-batch reproducibility gate pass.
 
 Common-random-number (CRN) validation is stricter than checking seed labels:
 
@@ -85,16 +83,26 @@ DEFAULT_RESULTS_ROOT = (
 DEFAULT_OUTPUT_DIR = (
     PROJECT_ROOT / "results" / "analysis" / "service_variability"
 )
+DEFAULT_RESPONSE_SURFACE_RESULTS_ROOT = (
+    PROJECT_ROOT / "results" / "raw" / "capacity_response_surface"
+)
 
 SCHEMA_VERSION = "1.0"
 ANALYSIS_ID = "TASK3_SERVICE_VARIABILITY_ANALYSIS_V1"
 VALIDATION_ID = "TASK3_SERVICE_VARIABILITY_INPUT_VALIDATION_V1"
 CRN_VALIDATION_ID = "TASK3_SERVICE_VARIABILITY_CRN_ALIGNMENT_V1"
+REPRODUCIBILITY_ID = "TASK3_SERVICE_VARIABILITY_CROSS_BATCH_V1"
 RAW_AUDIT_ID = "TASK3_SERVICE_VARIABILITY_RAW_AUDIT_V1"
 DEFAULT_CI_LEVEL = 0.95
 DEFAULT_NUMERIC_TOLERANCE = 1e-9
+# The AnyLogic CSV contract serialises timestamps and service demands to
+# nine decimal places. Reconstructing a duration from two independently
+# rounded timestamps and comparing it with an independently rounded demand
+# can therefore accumulate up to 1.5 ns of decimal quantisation error.
+CSV_DERIVED_DURATION_TOLERANCE = 2e-9
 DEFAULT_LATENT_TOLERANCE = 1e-8
 REFERENCE_CELL = (0.0, 0.0)
+PRIOR_REFERENCE_SCENARIO_ID = "CAPACITY_RESPONSE_S36_I21"
 
 Cell = tuple[float, float]
 RunKey = tuple[Cell, int]
@@ -127,6 +135,28 @@ INVARIANT_DRAW_FIELDS = (
     "automation_u",
     "additional_check_u",
     "lane_tie_u",
+)
+CROSS_BATCH_EVENT_FIELDS = (
+    "traveller_id",
+    "arrival_seconds",
+    "security_service_demand_seconds",
+    "immigration_conventional_service_demand_seconds",
+    "automation_u",
+    "additional_check_u",
+    "lane_tie_u",
+    "security_queue_join_seconds",
+    "security_start_seconds",
+    "security_end_seconds",
+    "immigration_queue_join_seconds",
+    "immigration_lane_id",
+    "immigration_start_seconds",
+    "technology_flag",
+    "immigration_primary_service_demand_seconds",
+    "immigration_primary_end_seconds",
+    "additional_check_flag",
+    "additional_check_service_demand_seconds",
+    "additional_check_end_seconds",
+    "exit_seconds",
 )
 
 ANALYSIS_METRICS = (
@@ -370,6 +400,40 @@ def _invariant_draw_signature(
         signatures.append(
             json.dumps(
                 [traveller_id, *values],
+                ensure_ascii=True,
+                separators=(",", ":"),
+            )
+        )
+    digest = hashlib.sha256(
+        ("\n".join(sorted(signatures)) + "\n").encode("utf-8")
+    ).hexdigest()
+    return len(signatures), digest
+
+
+def _cross_batch_event_signature(
+    entity_rows: Sequence[Mapping[str, str]],
+    *,
+    label: str,
+) -> tuple[int, str]:
+    """Hash behavioural event fields while excluding run lineage/resource IDs."""
+
+    signatures: list[str] = []
+    traveller_ids: set[str] = set()
+    for row_index, row in enumerate(entity_rows, start=1):
+        traveller_id = str(row.get("traveller_id", "")).strip()
+        if not traveller_id:
+            raise ValueError(f"{label}: entity {row_index} has no traveller_id")
+        if traveller_id in traveller_ids:
+            raise ValueError(
+                f"{label}: duplicate traveller_id {traveller_id!r}"
+            )
+        traveller_ids.add(traveller_id)
+        signatures.append(
+            json.dumps(
+                [
+                    str(row.get(field, "")).strip()
+                    for field in CROSS_BATCH_EVENT_FIELDS
+                ],
                 ensure_ascii=True,
                 separators=(",", ":"),
             )
@@ -791,13 +855,18 @@ def _validate_one_run(
             cutoff_seconds=cutoff_seconds,
             drain_end_seconds=drain_end_seconds,
             label=f"{run_dir}/entity_log.csv:{row_index}",
+            numeric_tolerance=numeric_tolerance,
+            duration_tolerance=CSV_DERIVED_DURATION_TOLERANCE,
         )
 
     ledger_metrics = _replication_metrics(
         entities,
         kpi,
         cutoff_seconds=cutoff_seconds,
-        numeric_tolerance=numeric_tolerance,
+        numeric_tolerance=max(
+            numeric_tolerance,
+            CSV_DERIVED_DURATION_TOLERANCE,
+        ),
         label=str(run_dir),
     )
     security_queue_guard = _integer(
@@ -1035,6 +1104,236 @@ def build_crn_alignment_report(
         "paired_analysis_gate": (
             "Paired contrasts and factorial interactions are emitted only "
             "when this report returns PASS."
+        ),
+    }
+
+
+def build_cross_batch_reproducibility_report(
+    replication_rows: Sequence[Mapping[str, object]],
+    *,
+    current_results_root: Path,
+    prior_response_surface_root: Path,
+    schemas: Mapping[str, Sequence[Mapping[str, str]]],
+    replication_ids: Sequence[int],
+    cutoff_seconds: float,
+    numeric_tolerance: float,
+) -> dict[str, object]:
+    """Verify that the CV-zero cell reproduces the prior 36/21 batch."""
+
+    current_by_replication = {
+        _integer(row["replication_id"], "replication_id"): row
+        for row in replication_rows
+        if (
+            _float(row["security_service_cv"], "security_service_cv"),
+            _float(row["immigration_service_cv"], "immigration_service_cv"),
+        )
+        == REFERENCE_CELL
+    }
+    expected_replications = tuple(replication_ids)
+    errors: list[str] = []
+    if set(current_by_replication) != set(expected_replications):
+        errors.append("current CV-zero reference coverage is incomplete")
+
+    current_sample_root = (
+        current_results_root
+        / REFERENCE_SCENARIO_ID
+        / INPUT_SAMPLE_ID
+    )
+    prior_sample_root = (
+        prior_response_surface_root
+        / PRIOR_REFERENCE_SCENARIO_ID
+        / INPUT_SAMPLE_ID
+    )
+    for label, path in (
+        ("current reference", current_sample_root),
+        ("prior response-surface reference", prior_sample_root),
+    ):
+        if not path.is_dir():
+            errors.append(f"{label} results are absent: {path}")
+    if errors:
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "validation": REPRODUCIBILITY_ID,
+            "study_id": STUDY_ID,
+            "status": "FAIL",
+            "current_scenario_id": REFERENCE_SCENARIO_ID,
+            "prior_scenario_id": PRIOR_REFERENCE_SCENARIO_ID,
+            "compared_run_count": 0,
+            "expected_run_count": len(expected_replications),
+            "compared_entity_rows": 0,
+            "compared_metric_values": 0,
+            "event_ledger_exact_match": False,
+            "seed_tuple_exact_match": False,
+            "max_absolute_metric_difference": None,
+            "numeric_tolerance": numeric_tolerance,
+            "errors": errors,
+            "analysis_inclusion_rule": (
+                "The prior batch is validation-only and contributes zero "
+                "rows to the service-variability estimates."
+            ),
+        }
+
+    compared_runs = 0
+    compared_entity_rows = 0
+    compared_metric_values = 0
+    maximum_difference = 0.0
+    event_ledger_exact_match = True
+    seed_tuple_exact_match = True
+    for replication_id in expected_replications:
+        current_dir = (
+            current_sample_root / f"replication_{replication_id:03d}"
+        )
+        prior_dir = prior_sample_root / f"replication_{replication_id:03d}"
+        try:
+            current_manifest = _require_one(
+                _load_table(
+                    current_dir / RESULT_FILES["run_manifest"],
+                    "run_manifest",
+                    schemas["run_manifest"],
+                ),
+                current_dir / RESULT_FILES["run_manifest"],
+            )
+            prior_manifest = _require_one(
+                _load_table(
+                    prior_dir / RESULT_FILES["run_manifest"],
+                    "run_manifest",
+                    schemas["run_manifest"],
+                ),
+                prior_dir / RESULT_FILES["run_manifest"],
+            )
+            current_entities = _load_table(
+                current_dir / RESULT_FILES["entity_log"],
+                "entity_log",
+                schemas["entity_log"],
+            )
+            prior_entities = _load_table(
+                prior_dir / RESULT_FILES["entity_log"],
+                "entity_log",
+                schemas["entity_log"],
+            )
+            prior_kpi = _require_one(
+                _load_table(
+                    prior_dir / RESULT_FILES["replication_kpis"],
+                    "replication_kpis",
+                    schemas["replication_kpis"],
+                ),
+                prior_dir / RESULT_FILES["replication_kpis"],
+            )
+            compared_runs += 1
+
+            for field in ("master_seed", *STREAM_SEED_FIELDS):
+                if current_manifest[field] != prior_manifest[field]:
+                    seed_tuple_exact_match = False
+                    errors.append(
+                        f"replication {replication_id}: {field} differs"
+                    )
+
+            current_signature = _cross_batch_event_signature(
+                current_entities,
+                label=f"{current_dir}/entity_log.csv",
+            )
+            prior_signature = _cross_batch_event_signature(
+                prior_entities,
+                label=f"{prior_dir}/entity_log.csv",
+            )
+            compared_entity_rows += current_signature[0]
+            if current_signature != prior_signature:
+                event_ledger_exact_match = False
+                errors.append(
+                    f"replication {replication_id}: behavioural event "
+                    "ledger differs"
+                )
+
+            current_row = current_by_replication[replication_id]
+            for count_field in (
+                "arrivals",
+                "completed_after_drain",
+                "rejected_or_dropped_count",
+            ):
+                if _integer(
+                    current_row[count_field],
+                    f"current:{replication_id}:{count_field}",
+                ) != _integer(
+                    prior_kpi[count_field],
+                    f"prior:{replication_id}:{count_field}",
+                ):
+                    errors.append(
+                        f"replication {replication_id}: {count_field} differs"
+                    )
+
+            prior_metrics = _replication_metrics(
+                prior_entities,
+                prior_kpi,
+                cutoff_seconds=cutoff_seconds,
+                numeric_tolerance=max(
+                    numeric_tolerance,
+                    CSV_DERIVED_DURATION_TOLERANCE,
+                ),
+                label=str(prior_dir),
+            )
+            prior_metrics["cutoff_backlog"] = _integer(
+                prior_kpi["cutoff_backlog"],
+                f"{prior_dir}:cutoff_backlog",
+            )
+            prior_metrics["cohort_clear_time_after_cutoff_seconds"] = _float(
+                prior_kpi["cohort_clear_time_after_cutoff_seconds"],
+                f"{prior_dir}:cohort_clear_time_after_cutoff_seconds",
+            )
+            for metric in ANALYSIS_METRICS:
+                difference = abs(
+                    _float(
+                        current_row[metric],
+                        f"current:{replication_id}:{metric}",
+                    )
+                    - _float(
+                        prior_metrics[metric],
+                        f"prior:{replication_id}:{metric}",
+                    )
+                )
+                compared_metric_values += 1
+                maximum_difference = max(maximum_difference, difference)
+                if difference > max(
+                    numeric_tolerance,
+                    CSV_DERIVED_DURATION_TOLERANCE,
+                ):
+                    errors.append(
+                        f"replication {replication_id}: {metric} differs "
+                        f"by {difference:.12g}"
+                    )
+        except (FileNotFoundError, KeyError, TypeError, ValueError) as error:
+            errors.append(f"replication {replication_id}: {error}")
+
+    passed = (
+        compared_runs == len(expected_replications)
+        and event_ledger_exact_match
+        and seed_tuple_exact_match
+        and not errors
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "validation": REPRODUCIBILITY_ID,
+        "study_id": STUDY_ID,
+        "status": "PASS" if passed else "FAIL",
+        "current_scenario_id": REFERENCE_SCENARIO_ID,
+        "prior_scenario_id": PRIOR_REFERENCE_SCENARIO_ID,
+        "compared_run_count": compared_runs,
+        "expected_run_count": len(expected_replications),
+        "compared_entity_rows": compared_entity_rows,
+        "compared_event_fields_per_entity": len(CROSS_BATCH_EVENT_FIELDS),
+        "compared_metric_values": compared_metric_values,
+        "metrics": list(ANALYSIS_METRICS),
+        "event_ledger_fields": list(CROSS_BATCH_EVENT_FIELDS),
+        "event_ledger_exact_match": event_ledger_exact_match,
+        "seed_tuple_exact_match": seed_tuple_exact_match,
+        "max_absolute_metric_difference": maximum_difference,
+        "numeric_tolerance": numeric_tolerance,
+        "csv_derived_duration_tolerance_seconds": (
+            CSV_DERIVED_DURATION_TOLERANCE
+        ),
+        "errors": errors[:100],
+        "analysis_inclusion_rule": (
+            "The prior batch is validation-only and contributes zero rows "
+            "to the service-variability estimates."
         ),
     }
 
@@ -1343,11 +1642,14 @@ def package_service_variability_analysis(
     scenarios_path: Path = DEFAULT_SCENARIOS,
     seed_manifest_path: Path = DEFAULT_SEED_MANIFEST,
     schema_registry_path: Path = DEFAULT_SCHEMA_REGISTRY,
+    prior_response_surface_root: Path = (
+        DEFAULT_RESPONSE_SURFACE_RESULTS_ROOT
+    ),
     ci_level: float = DEFAULT_CI_LEVEL,
     numeric_tolerance: float = DEFAULT_NUMERIC_TOLERANCE,
     latent_tolerance: float = DEFAULT_LATENT_TOLERANCE,
 ) -> dict[str, object]:
-    """Validate the future raw batch and write compact auditable outputs."""
+    """Validate the raw batch and write compact auditable outputs."""
 
     results_root = results_root.resolve()
     output_dir = output_dir.resolve()
@@ -1355,6 +1657,7 @@ def package_service_variability_analysis(
     scenarios_path = scenarios_path.resolve()
     seed_manifest_path = seed_manifest_path.resolve()
     schema_registry_path = schema_registry_path.resolve()
+    prior_response_surface_root = prior_response_surface_root.resolve()
     if not 0 < ci_level < 1:
         raise ValueError("ci_level must be between 0 and 1")
     if numeric_tolerance < 0 or not math.isfinite(numeric_tolerance):
@@ -1454,6 +1757,23 @@ def package_service_variability_analysis(
             "service-variability CRN alignment failed: "
             + "; ".join(map(str, crn["errors"][:5]))
         )
+    cross_batch = build_cross_batch_reproducibility_report(
+        replication_rows,
+        current_results_root=results_root,
+        prior_response_surface_root=prior_response_surface_root,
+        schemas=schemas,
+        replication_ids=REPLICATION_IDS,
+        cutoff_seconds=_float(
+            design["fixed_inputs"]["arrival_cutoff_seconds"],
+            "arrival_cutoff_seconds",
+        ),
+        numeric_tolerance=numeric_tolerance,
+    )
+    if cross_batch["status"] != "PASS":
+        raise ValueError(
+            "service-variability cross-batch reproducibility failed: "
+            + "; ".join(map(str, cross_batch["errors"][:5]))
+        )
 
     analysis = build_service_variability_analysis(
         replication_rows,
@@ -1485,7 +1805,12 @@ def package_service_variability_analysis(
         "arrival_and_queue_guard_status": "PASS",
         "drop_and_rejection_status": "PASS",
         "service_demand_contract_status": "PASS",
+        "numeric_tolerance": numeric_tolerance,
+        "csv_derived_duration_tolerance_seconds": (
+            CSV_DERIVED_DURATION_TOLERANCE
+        ),
         "crn_alignment_status": crn["status"],
+        "cross_batch_reproducibility_status": cross_batch["status"],
         "scenario_count": len(cells),
         "replications_per_cell": len(REPLICATION_IDS),
         "expected_run_count": 450,
@@ -1564,6 +1889,10 @@ def package_service_variability_analysis(
         _write_csv(output_dir / filename, rows, fields)
     _write_json(output_dir / "validation.json", validation)
     _write_json(output_dir / "crn_alignment.json", crn)
+    _write_json(
+        output_dir / "cross_batch_reproducibility.json",
+        cross_batch,
+    )
     _write_json(output_dir / "raw_audit_manifest.json", raw_audit)
     _write_json(output_dir / "analysis_payload.json", analysis["view_payload"])
 
@@ -1572,6 +1901,7 @@ def package_service_variability_analysis(
     ] + [
         output_dir / "validation.json",
         output_dir / "crn_alignment.json",
+        output_dir / "cross_batch_reproducibility.json",
         output_dir / "raw_audit_manifest.json",
         output_dir / "analysis_payload.json",
     ]
@@ -1591,6 +1921,11 @@ def package_service_variability_analysis(
         "paired_analysis_gate": {
             "crn_alignment_status": crn["status"],
             "comparison_method": "PAIRED_STUDENT_T",
+        },
+        "reproducibility_gate": {
+            "cross_batch_status": cross_batch["status"],
+            "prior_scenario_id": PRIOR_REFERENCE_SCENARIO_ID,
+            "prior_rows_in_estimates": 0,
         },
         "queue_reconstruction": {
             "peak_window": "FULL_DRAIN",
@@ -1644,6 +1979,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--schema-registry", type=Path, default=DEFAULT_SCHEMA_REGISTRY
     )
+    parser.add_argument(
+        "--prior-response-surface-root",
+        type=Path,
+        default=DEFAULT_RESPONSE_SURFACE_RESULTS_ROOT,
+    )
     parser.add_argument("--ci-level", type=float, default=DEFAULT_CI_LEVEL)
     parser.add_argument(
         "--numeric-tolerance",
@@ -1672,6 +2012,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             scenarios_path=args.scenarios,
             seed_manifest_path=args.seed_manifest,
             schema_registry_path=args.schema_registry,
+            prior_response_surface_root=args.prior_response_surface_root,
             ci_level=args.ci_level,
             numeric_tolerance=args.numeric_tolerance,
             latent_tolerance=args.latent_tolerance,

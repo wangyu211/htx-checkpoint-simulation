@@ -1,4 +1,4 @@
-# Task 3 service-variability sensitivity — frozen design
+# Task 3 service-variability sensitivity — frozen design and execution record
 
 ## Status and purpose
 
@@ -6,15 +6,18 @@ Study ID: `TASK3_SERVICE_VARIABILITY_SENSITIVITY_V1`
 
 Model version: `TASK3_OPERATIONAL_POOLED_SERVICE_VARIABILITY_V1`
 
-Design status: `FROZEN_PRE_RUN`
+Design status: `FROZEN_EXECUTED`
 Analysis role: `EXPLORATORY_ASSUMPTION_SENSITIVITY_NOT_CALIBRATION`
-Implementation status: `IMPLEMENTED_NOT_EXECUTED`
+Execution status: `EXECUTED_AND_VALIDATED`
+Execution date: `2026-07-29`
 
 The `ServiceVariabilitySensitivity` AnyLogic experiment, the independent
-stage-local service RNGs, and the fail-closed Python analysis layer are now
-implemented and contract-tested. No real batch output has yet been accepted:
-`0/450` registered runs have been validated, so this document contains no
-service-variability result or directional claim.
+stage-local service RNGs, and the fail-closed Python analysis layer were
+executed without changing the frozen factorial. All `9 × 50 = 450` registered
+runs and `185,598` traveller entity rows passed exact coverage, schema,
+lineage, extended configuration-hash, registered-seed, conservation,
+full-drain, guard, drop/rejection, service-demand, CRN-alignment, and
+cross-batch reproducibility gates.
 
 The registered 300-second capacity studies use fixed Security and Immigration
 service demands. Fixed service is a low-variability modelling assumption; it
@@ -165,12 +168,46 @@ All uncertainty is calculated across independent replications. Results use
 95% Student-t intervals. No confirmatory p-value, calibrated distribution
 claim, or staffing recommendation is permitted.
 
+## Accepted descriptive result
+
+The pre-specified joint `CV=1.0` minus joint `CV=0` comparison uses 50 paired
+replication-level differences:
+
+| Metric | Joint CV zero | Joint CV 1.0 | Paired difference, 95% CI |
+|---|---:|---:|---:|
+| Total queue-wait P95 | `3.929 s` | `5.597 s` | `+1.668 s` `[0.677, 2.660]` |
+| System-time P95 | `38.747 s` | `82.218 s` | `+43.471 s` `[41.565, 45.376]` |
+| Peak total waiting queue | `9.34` | `12.08` | `+2.74` `[1.21, 4.27]` |
+| Cohort clear after cutoff | `35.365 s` | `131.357 s` | `+95.993 s` `[81.162, 110.823]` |
+| Cutoff backlog | `50.66` | `51.56` | `+0.90` `[-0.93, 2.73]` |
+
+The model-conditional insight is that mean-preserving service-time
+variability has a much larger effect on end-to-end tail time and post-cutoff
+recovery than on the primary queue-wait P95. The unresolved cutoff-backlog
+interval also shows that a count at one instant is not a substitute for a
+full-drain recovery metric.
+
+At `CV=1.0`, Immigration-only variability increases total queue-wait P95 by
+`1.660 s` (95% CI `[0.698, 2.623]`), whereas the Security-only queue-wait
+contrast is unresolved at `+0.042 s` (`[-0.410, 0.494]`). Security-only
+variability nevertheless increases system-time P95 by `35.181 s`
+(`[33.614, 36.748]`). Queueing tail and end-to-end service tail therefore
+represent different risks in this sandbox.
+
+The joint `CV=1.0` total-queue-P95 factorial interaction is `-0.033 s`
+(`[-0.618, 0.551]`). No resolved synergy, amplification, or general
+nonlinearity claim is made from this interaction.
+
 ## Cross-batch check
 
-The new `(CV Security=0, CV Immigration=0)` cell must reproduce the existing
-Base `36/21` response-surface cell under the same seed tuples. The comparison
-is a numerical reproducibility gate only. Old results are not copied into the
-new estimates and are never overwritten.
+The new `(CV Security=0, CV Immigration=0)` cell reproduced the existing Base
+`36/21` response-surface cell under the same seed tuples. The gate passed all
+50 matched runs: seed tuples matched exactly, all `20,622 × 20` compared
+entity-event values matched exactly, and 750 compared metric values had
+maximum absolute difference `0.0`.
+
+This is a numerical reproducibility gate only. The prior batch contributes
+zero rows to the new estimates and was not overwritten.
 
 ## Runtime acceptance criteria
 
@@ -185,6 +222,11 @@ Before any result is interpreted:
 - the cross-batch fixed-service check must pass;
 - the applicable CRN alignment report must explicitly return `PASS`.
 
-This document freezes the design and records an implemented-but-unexecuted
-study. Implementation is not evidence: no estimate may be released until all
-450 runs and every runtime acceptance gate above pass.
+All criteria above returned `PASS` on 2026-07-29. The accepted evidence remains
+an exploratory, non-calibrated assumption sensitivity. The `36/21` capacities
+are a target-utilisation-derived model reference, not an observed roster or
+staffing recommendation. The positive CVs are transparent mean-preserving
+lognormal assumptions, not service distributions measured from the supplied
+video or an HTX checkpoint. Confidence intervals quantify Monte Carlo error
+conditional on the frozen inputs; they do not include input uncertainty or
+model-form error.
