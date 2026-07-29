@@ -90,18 +90,20 @@ Raster images fail closed: every publishable chart or synthetic screenshot must
 first be visually reviewed and registered by SHA-256 as non-pixel media. A hash
 allow-list records classification, not a licence grant.
 
-## Current release blocker (audit 2026-07-29)
+## Media blocker resolution (audit 2026-07-29)
 
-The tracked canonical Task 4 deck currently embeds the same 1280x720
-source-video-derived frame twice: `ppt/media/image.jpeg` on slide 1 and
-`ppt/media/image2.jpeg` on slide 2.
+The two copies of the 1280x720 source-video-derived frame formerly embedded in
+the canonical Task 4 deck were removed. Slide 1 now uses a reviewed AnyLogic
+completed-run screenshot containing synthetic state only; slide 2 uses
+editable, non-pixel measurement graphics.
 
-`c6996d8d9afff105757b6e42fb4fd4957128aeafa57322b0e518ea1842f0b797`
+The fail-closed public-media audit was rerun after the replacement and returned
+zero findings. The synthetic screenshot's re-encoded embedded hash is
+classified in `config/public_release_data_policy.json`.
 
-It may be used only inside the intended assessment workflow if the assessment
-terms permit that use. It blocks a **public repository release** until both
-embedded copies are replaced with a non-pixel schematic (or other explicitly
-approved media) and the new media hashes pass the release audit.
+This resolves the identified media blocker. It does not authorize remote
+publication, replace the clean-clone gate, or change the retention rule for
+the restricted source video and private review artifacts.
 
 During this audit, three clothing/appearance descriptions in
 `candidate_false_negative_sweep_x640.csv` were replaced with

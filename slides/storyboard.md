@@ -1,113 +1,146 @@
-# Task 4 — final five-slide operational-insights storyboard
+# Task 4 final presentation storyboard
 
-**Status:** implemented and visually verified in the canonical submission deck,
-[`HTX_Task4_Operational_Insights.pptx`](HTX_Task4_Operational_Insights.pptx).
-A byte-identical local v4 copy is retained as the versioned review artifact;
-the canonical deck is the repository deliverable.
+**Status:** implemented and visually verified.
 
-The deck is limited to five slides. Visible copy is reviewer-facing; every
-slide has a talk track and a repository-relative `[Sources]` block in speaker
-notes. The presentation keeps measurement, model assumptions, confirmatory
-inference, exploratory sensitivity, and deployment evidence visibly separate.
+- Canonical five-slide submission:
+  [`HTX_Task4_Operational_Insights.pptx`](HTX_Task4_Operational_Insights.pptx)
+- Separate local three-slide interview backup:
+  `HTX_Task4_Technical_Backup.pptx`
 
-## Slide 1 — Problem and evidence boundary
+The canonical deck complies with the brief's maximum of five content slides.
+The backup is not part of the canonical Task 4 submission and is intentionally
+not tracked because the release contract permits exactly one Task 4 PPTX.
+Every slide contains speaker notes and a repository-relative `[Sources]` block.
 
-> From 24.9 seconds of video to an auditable checkpoint what-if model
+## Canonical slide 1 — evidence boundary
 
-- Accepted local aggregate: 12 left-to-right and 34 right-to-left.
-- The 34 accepted right-to-left corridor crossings anchor a conditional model;
-  they establish neither long-run site demand nor allocation into a processing
-  unit.
-- Two studies test different questions:
-  - 600 confirmatory runs test a frozen capacity mechanism.
-  - 2,700 exploratory runs map its conditional operating boundary.
+> Evidence-Driven Checkpoint Simulation
 
-## Slide 2 — Measurement, model and inference
+- A 24.9-second observation supplies a human-adjudicated directional corridor
+  anchor, not a long-run site-demand estimate.
+- `34` accepted right-to-left crossings and `1.364/s` are presented with that
+  boundary visible.
+- A synthetic AnyLogic screenshot replaces all source-video-derived pixels.
+- The executed evidence chain now comprises `4,750` validated AnyLogic runs:
+  `600` confirmatory, `2,700` capacity-surface, `450` service-variability, and
+  `1,000` peak-duration runs.
+- The queue-layout result is described separately as an exact-gated conditional
+  replay.
 
-> Measurement, model and inference stay separate—and visible
+## Canonical slide 2 — auditable evidence architecture
 
-- **Measure:** human-adjudicated directional corridor count and a bounded HPP
-  arrival-rate interval.
-- **Model:** executable two-stage traveller-level DES; pooled FCFS, finite
-  resources, fixed service-time assumptions, a 300-second arrival window, and
-  full drain.
-- **Confirm:** four alternatives × three registered arrival rates × 50
-  replications = 600 frozen runs.
-- **Explore:** nine Security capacities × six Immigration capacities × 50
-  replications = 2,700 Base-demand runs.
-- CRN alignment and validation pass in both studies. The five repeated cells
-  validate cross-batch reproducibility only and do not enter the response
-  surface twice.
+> Measurement, mechanism and inference stay separate—and auditable
 
-## Slide 3 — Stochastic response versus deterministic ideal
+- **Measure:** `34` accepted right-to-left crossings and `12` opposite-direction
+  crossings; computer vision assists, while a human accepts the aggregate.
+- **Deployable reference:** YOLOX-S + ByteTrack. YOLO26m + BoT-SORT remains a
+  technical-assessment demonstration with an explicit licence boundary.
+- **Model:** executable two-stage DES, pooled FCFS, finite resources, full
+  drain, and a derived `36/21` model reference.
+- **Inference:** four executed AnyLogic studies, CRN and strict validation
+  gates, plus a separate exact-gated queue replay.
+- The visible claim boundary rules out staffing, SLA, site-forecast, and
+  deployment-approval claims.
 
-> Variability creates delay before deterministic saturation
+## Canonical slide 3 — capacity surface and bottleneck migration
 
-- At the derived 36/21 reference, deterministic-ideal P95 queue wait is
+> Queueing starts early—and the active bottleneck shifts
+
+- At the derived `36/21` reference, deterministic-ideal P95 queue wait is
   `0 s`, while stochastic HPP mean replication-level P95 total wait is
   `3.93 s`.
-- With Immigration fixed at 21, Security capacity 36→28 increases P95 total
-  wait from `3.93 s` to `24.43 s`.
-- With Security fixed at 36, Immigration capacity 21→16 increases it from
-  `3.93 s` to `35.61 s`.
-- The one-position penalty accelerates near `ρ ≈ 1`:
-  - Security: `0.29 s` initially versus `6.98 s` near the boundary.
-  - Immigration: `1.31 s` initially versus `14.68 s` near the boundary.
-- The deterministic comparator uses regular arrivals and fixed service. It is
-  an explanatory control, not a site forecast. Only integer capacities were
-  simulated; connecting lines are visual guides.
-- Across the full surface, cell-mean P95 is `3.93–35.92 s` under this
-  300-second empty-start cohort; no local SLA was supplied.
+- The full `9 × 6` capacity heatmap contains all 54 Base-demand cells with 50
+  replications per cell.
+- At Immigration capacity 16, Security changes are masked; at Security
+  capacity 28, Immigration changes are masked.
+- Near `ρ ≈ 1`, one lost modelled service position creates a much larger delay
+  penalty.
+- All `2,700` runs passed coverage, lineage, conservation, full-drain, CRN, and
+  cross-batch checks. The surface is conditional mechanism evidence, not a
+  roster or site forecast.
 
-## Slide 4 — Capacity surface and bottleneck migration
+## Canonical slide 4 — duration exposes the operating regime
 
-> The bottleneck shifts—but waits stay sub-minute at this model scale
+> Duration exposes the operating regime around ρ ≈ 1
 
-- The full 9 × 6 heatmap contains all 54 simulated capacity cells at fixed
-  Base demand, with 50 replications per cell.
-- **Immigration-dominant region:** at Immigration 16, Security 36→31 leaves
-  total-wait P95 at approximately `35.61 s`; upstream relief is masked.
-- **Security-dominant region:** at Security 28, Immigration 21→17 moves
-  total-wait P95 only from `24.43 s` to `25.38 s`; downstream relief is
-  masked.
-- **Upstream metering:** for Security 30→29 with Immigration 18→17, the local
-  difference-in-differences is `−4.02 s` (`95% CI [−4.72, −3.32]`).
-  The negative interaction means serial-flow sub-additivity; it does not mean
-  that removing capacity is beneficial.
-- The response surface is conditional exploratory evidence for this
-  300-second cohort—not a steady-state forecast or staffing recommendation.
+At 120 minutes of stationary-HPP exposure:
 
-## Slide 5 — Bounded decision and next evidence
+- `36/21`, `ρ=.845`: mean P95 queue wait `4.47 s`;
+- `30/18`, `ρ=.992`: `55.91 s`;
+- `29/17`, `ρ=1.043`: `307 s`; and
+- `28/16`, `ρ=1.108`: `748 s`.
 
-> Calibrate the site, locate the bottleneck, then pilot relief
+The slide distinguishes stable, near-critical, and accumulating finite-horizon
+regimes. It also points to two separately accepted robustness findings:
+
+- joint service CV `0→1` adds `95.99 s` to post-cutoff clearance; and
+- separate queues add `7.58 s` to P95 total queue wait relative to pooled FCFS.
+
+Only 5, 15, 30, 60, and 120 minutes were simulated. The input is a
+stationary-HPP extension of a short clip, not an observed time-of-day profile,
+steady-state SLA, staffing rule, or site forecast.
+
+## Canonical slide 5 — bounded decision sequence
+
+> Calibrate the site, locate the regime, then pilot the right lever
 
 1. **Calibrate:** measure time-of-day arrivals, corridor-to-processing-unit
    allocation, stage-service distributions, open-resource schedules,
    exceptions, and downtime.
-2. **Locate:** place the observed site on the capacity response surface.
-3. **Pilot:** relieve Security, Immigration, or both according to the active
-   bottleneck.
-4. **Validate:** test queue impact, cost, layout, and operating constraints.
+2. **Locate:** identify `ρ`, duration regime, and the active bottleneck.
+3. **Pilot:** test the evidence-supported lever—capacity margin, queue pooling,
+   or service-variability relief.
+4. **Validate:** assess queue tail, recovery, cost, physical layout, security,
+   and operating constraints.
 
-The immediate decision is to advance the validated mechanism to site
-calibration—not to approve a roster. A field pilot additionally needs:
+The immediate recommendation is to advance the validated mechanism to site
+calibration, not to approve `36/21` or any other roster.
 
-- a signed time-of-day event ledger and processing-unit allocation;
-- stage service, exception, and downtime distributions;
-- observed per-unit routing shares, queues, open positions, and rosters;
-- a costed bottleneck-aware intervention; and
-- production computer-vision licensing and security controls.
+## Technical backup B1 — deterministic oracle
 
-## Audit and claim boundary
+> Random arrivals create delay before deterministic saturation
 
-- `54 × 50 = 2,700` response-surface runs are complete.
-- `1,113,588` traveller rows were audited.
-- Configuration lineage, conservation, full drain, CRN alignment, and
-  cross-batch reproducibility pass.
-- `36/21` is a derived reference capacity—not observed staffing.
-- `1.364213/s` is a corridor aggregate conditionally mapped into one pooled
-  abstraction; the physical processing-unit allocation is unobserved.
-- Results are conditional mechanism and sensitivity evidence under a
-  non-calibrated, fixed-service-time pooled-FCFS sandbox—not measured HTX
-  performance, a site forecast, a staffing answer, an economic optimum, or
-  deployment approval.
+The deterministic comparator uses regular arrivals and fixed service to isolate
+the queueing effect of random arrivals and congestion. It is an explanatory
+control, not the forecast.
+
+## Technical backup B2 — service variability
+
+> Service variability is a recovery risk before it is a queue risk
+
+For joint CV `0→1`:
+
+- queue-wait P95 increases by `1.668 s` (`95% CI [0.677, 2.660]`);
+- system-time P95 increases by `43.471 s`
+  (`[41.565, 45.376]`); and
+- post-cutoff clearance increases by `95.993 s`
+  (`[81.162, 110.823]`).
+
+These are uncalibrated mean-preserving lognormal sensitivities.
+
+## Technical backup B3 — queue pooling
+
+> Pooling absorbs randomness; separate queues fragment idle capacity
+
+At the `36/21` model reference:
+
+- pooled P95 total wait is `3.929 s`;
+- separate JSQ/no-jockeying P95 is `11.509 s`;
+- the paired penalty is `+7.580 s` (`95% CI [6.969, 8.192]`); and
+- separate queues exhibit a `28.9%` idle-capacity-fragmentation fraction.
+
+This is an offline deterministic replay of the synthetic AnyLogic event ledger.
+The executable AnyLogic model and UI remain pooled FCFS, and the observed site
+queue policy is unknown.
+
+## Final claim boundary
+
+- `36/21` is a derived pooled model reference, not observed staffing.
+- `1.364213/s` is a short-window directional corridor aggregate, not long-run
+  site demand.
+- Peak duration is a stationary-HPP sensitivity, not observed time of day.
+- Service CV and queue policy are conditional sensitivities.
+- The queue-layout result is an offline exact-gated replay, not an AnyLogic UI
+  policy or field observation.
+- No slide claims a staffing recommendation, SLA, site forecast, economic
+  optimum, production licence, or deployment approval.

@@ -558,11 +558,11 @@ trajectory/counting-line schematics that do not reproduce the source video.
 The complete retention, reviewer-alias, no-re-identification, and release policy
 is [`docs/privacy_and_data_governance.md`](docs/privacy_and_data_governance.md).
 
-As recorded by the 2026-07-29 audit, the current canonical Task 4 deck still
-contains two embedded copies of a source-video-derived frame. The deck may be
-used only within the intended assessment workflow if the assessment terms
-permit; it blocks a public repository release until those images are replaced
-and the fail-closed media audit passes.
+The two source-video-derived frames previously embedded in the canonical Task 4
+deck were removed on 2026-07-29. They were replaced by a reviewed synthetic
+AnyLogic screenshot and editable non-pixel measurement graphics. The
+fail-closed public-media audit was rerun and returned zero findings. Remote
+publication still requires final authorization and the clean-clone gate.
 
 ## Repository map
 

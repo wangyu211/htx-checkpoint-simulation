@@ -174,6 +174,10 @@ Evidence:
 
 - [`HTX_Task4_Operational_Insights.pptx`](../slides/HTX_Task4_Operational_Insights.pptx)
 
+A separate local technical backup may be generated for interview use. It is not
+part of the canonical five-slide Task 4 submission and is intentionally not
+tracked because the release contract permits exactly one Task 4 PPTX.
+
 ## Public repository
 
 - [x] Separate public-delivery directory from private working material.
@@ -184,9 +188,11 @@ Evidence:
 - [x] Task 2 requirements/design.
 - [x] Task 3 simulation logic and key outputs/metrics.
 - [x] Task 4 slides.
-- [ ] Current release passes the clean-clone precheck, including the complete
-  test suite, local-link audit, compact-evidence hash contracts, and privacy
-  gate. As of the 2026-07-29 audit, two copies of a source-video-derived frame
-  embedded in the canonical deck block public release; see
+- [x] The 2026-07-29 in-worktree precheck and privacy gate pass after removing
+  both source-video-derived frames from the canonical deck.
+- [x] The 2026-07-29 true clean-clone gate passed after the final intended
+  release files were committed, including all 328 tests, the privacy audit,
+  local-link and portability checks, and the two-pass byte-identical generator
+  check; see
   [`privacy_and_data_governance.md`](privacy_and_data_governance.md).
 - [ ] Repository URL ready for submission by email.
