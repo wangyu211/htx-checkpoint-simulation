@@ -7,12 +7,26 @@ immigration checkpoint:
 Arrival -> Security -> Immigration -> Exit
 ```
 
-The project is structured around four assessment deliverables:
+## Deliverables
 
-1. video-based data collection and audit;
-2. system design and documented assumptions;
-3. an executable interactive simulation;
-4. a five-slide operational-insights presentation.
+| Assessment item | Reviewer entry point |
+|---|---|
+| **Task 1** — video measurement and audit | [`docs/task1_measurement.md`](docs/task1_measurement.md) |
+| **Task 2** — system design and assumptions | [`docs/task2_system_design.md`](docs/task2_system_design.md) |
+| **Task 3** — implementation and results | [`docs/task3_results.md`](docs/task3_results.md) |
+| **Task 4** — five-slide presentation | [`slides/HTX_Task4_Operational_Insights.pptx`](slides/HTX_Task4_Operational_Insights.pptx) |
+| Requirements traceability | [`docs/requirements_traceability.md`](docs/requirements_traceability.md) |
+
+**Run the interactive model:** open
+[`simulation/anylogic/HTXCheckpointSimulationCLI/HTXCheckpointSimulationCLI.alp`](simulation/anylogic/HTXCheckpointSimulationCLI/HTXCheckpointSimulationCLI.alp)
+in AnyLogic PLE 8.9.9, keep its adjacent `_alp/` directory intact, and run
+`OperationalInteractive`. See [Run instructions](#run-instructions).
+
+**Headline finding:** The registered 36/21 reference configuration has nominal
+capacity headroom, while delay rises nonlinearly as either stage approaches
+saturation. In the registered finite-buffer experiment, restricted interstage
+space relocates congestion upstream without changing system-time P95 under the
+no-loss, single-path, full-drain assumptions.
 
 ## Project status
 
