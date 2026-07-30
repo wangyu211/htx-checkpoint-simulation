@@ -5,6 +5,14 @@
 **Engine:** AnyLogic Personal Learning Edition 8.9.9
 (`8.9.9.202607020720`)
 
+**Evidence snapshot:** frozen `GatePV2x3` verification state recorded on
+2026-07-27, identified by the output hashes below. This byte-comparison evidence
+predates and does not cover the 2026-07-30 operational-model or finite-buffer
+spillback extensions. Its source was first tracked in commit `b4e5a52`; the
+split-project agent and `GatePV2x3` experiment definitions are unchanged through
+model snapshot `0e36a4d`. Later additions regenerated the aggregate single-file
+ALP, which was not rerun for this evidence note.
+
 ## Purpose and scope
 
 This gate verifies that the selected engine can execute native Process
@@ -73,7 +81,7 @@ though both now reach `Finished` without a Play click.
 ## Reproducibility hashes
 
 The first GUI run, second GUI run, and single-file ALP run produced the same
-SHA-256 for every output:
+SHA-256 for every output in that frozen verification snapshot:
 
 | Output | SHA-256 |
 |---|---|

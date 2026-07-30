@@ -5,6 +5,15 @@
 **Engine:** AnyLogic PLE 8.9.9.202607020720  
 **Experiment:** `TwoStageDeterministic: CheckpointModel`
 
+**Evidence snapshot:** frozen `TwoStageDeterministic` verification state
+recorded on 2026-07-27, identified by the output hashes below. This recorded
+split/single-file byte comparison predates and does not cover the 2026-07-30
+operational-model or finite-buffer spillback extensions. Its source was first
+tracked in commit `b4e5a52`; the split-project agent and
+`TwoStageDeterministic` experiment definitions are unchanged through model
+snapshot `0e36a4d`. Later additions regenerated the aggregate single-file ALP,
+which was not rerun for this evidence note.
+
 > Post-refactor note, 2026-07-27: the verified literal oracle inputs were
 > externalised as explicit model/experiment parameters in the split ALPX and
 > single-file ALP sources. Static XML, contract-alignment, and exact-arrival
@@ -114,7 +123,8 @@ to `Finished`; this is not a headless or standalone execution claim.
 ## Output hashes
 
 Hashes below are SHA-256 for both the successful source-ALPX GUI run and the
-single-file ALP `-r` run. All three files were byte-identical:
+single-file ALP `-r` run in that frozen verification snapshot. All three files
+were byte-identical:
 
 | File | SHA-256 |
 |---|---|

@@ -6,6 +6,15 @@
 **Engine:** AnyLogic PLE 8.9.9, build `8.9.9.202607020720`  
 **Verified:** 2026-07-27
 
+**Evidence snapshot:** frozen `HppArrivalVerification` state recorded on
+2026-07-27, identified by the output hashes below. This recorded
+split/single-file byte comparison predates and does not cover the 2026-07-30
+operational-model or finite-buffer spillback extensions. Its source was first
+tracked in commit `b4e5a52`; the split-project `HppArrivalModel` agent and
+`HppArrivalVerification` experiment definitions are unchanged through model
+snapshot `0e36a4d`. Later additions regenerated the aggregate single-file ALP,
+which was not rerun for this evidence note.
+
 ## Claim boundary
 
 `HppArrivalVerification` verifies that the accepted Task 1 aggregate can drive

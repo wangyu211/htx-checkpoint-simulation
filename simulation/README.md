@@ -78,13 +78,22 @@ all three CSV files remained byte-identical to the reference run.
 This local gate verifies experiment orchestration, CSV export, seed lineage,
 distinct replications, and recorded byte-identical reruns under AnyLogic PLE
 8.9.9 build `8.9.9.202607020720`. It does not establish cross-version or
-cross-platform byte stability. The separate deterministic experiment verifies
-the basic Security-to-Immigration flow. The operational model adds
-registered capacity, demand, service-context, technology-multiplier, and
-counter-held risk-proxy scenarios, a four-zone interactive view, a post-run
-dashboard, and a frozen confirmatory capacity study. Genuinely separate lane
-queues and site calibration remain outside v1. Pilot CRN alignment remains
-untested; the later confirmatory study has its own verified CRN gate.
+cross-platform byte stability. The byte-comparison evidence is pinned to the
+`GatePV2x3`, `TwoStageDeterministic`, and `HppArrivalVerification` verification
+states recorded on 2026-07-27; it was not rerun after the 2026-07-30
+operational-model and finite-buffer spillback extensions. Current generated
+source synchronization/idempotence is a separate static build check, not a new
+GUI execution result. The three verification source snapshots were first
+tracked in commit `b4e5a52`; their split-project agent and experiment
+definitions remain unchanged through model snapshot `0e36a4d`, although later
+additions regenerated the aggregate single-file ALP. The separate deterministic
+experiment verifies the basic Security-to-Immigration flow. The operational
+model adds registered capacity, demand, service-context,
+technology-multiplier, and counter-held risk-proxy scenarios, a four-zone
+interactive view, a post-run dashboard, and a frozen confirmatory capacity
+study. Genuinely separate lane queues and site calibration remain outside v1.
+Pilot CRN alignment remains untested; the later confirmatory study has its own
+verified CRN gate.
 
 ## Deterministic two-stage mechanism — PASS
 
@@ -337,7 +346,9 @@ Run the experiment again, then compare every output byte:
 
 The expected result is `status: PASS`, no errors, and
 `reproducibility.byte_identical: true`. The tracked evidence and recorded
-hashes are in `../docs/anylogic_gate_verification.md`.
+hashes are in `../docs/anylogic_gate_verification.md`. Repeating this procedure
+against the current source would create new evidence; the tracked hashes remain
+the explicitly version-bounded 2026-07-27 snapshot.
 
 ## Open-source fallback
 

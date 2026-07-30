@@ -49,6 +49,22 @@ drain, per-traveller timestamps, and recorded same-build byte-identical
 split/single-file outputs. Both remain synthetic verification evidence rather
 than operational results.
 
+**Verification snapshot boundary.** Those byte-identical GUI comparisons refer
+only to the frozen `GatePV2x3`, `TwoStageDeterministic`, and
+`HppArrivalVerification` verification states recorded on 2026-07-27 with the
+output hashes in the linked evidence notes. They were not rerun after the
+2026-07-30 operational-model and finite-buffer spillback extensions. The later
+extensions have separate schema, conservation, CRN, and finite-buffer
+validators; generated-source synchronization and idempotence are checked
+separately by `tools/precheck.py --check-generator`. Neither check is presented
+as a new GUI byte-identical execution result. The three verification source
+snapshots were first tracked in commit `b4e5a52`; a source audit through model
+snapshot `0e36a4d` found their split-project agent and experiment definitions
+unchanged. Later work added separate experiments and regenerated the aggregate
+single-file ALP, so the recorded hashes remain scoped evidence for those
+verification submodels—not a fresh execution of the complete 2026-07-30
+aggregate model.
+
 The Task 3 `OperationalPilot` has also completed: 15 registered assumption
 scenarios × 10 independent replications produced 150/150 valid runs and
 61,218 traveller rows. The implementation is a pooled-FCFS, two-stage DES
@@ -280,7 +296,9 @@ The primary engine is
 [AnyLogic PLE 8.9.9 for Windows x64](https://www.anylogic.com/files/anylogic-ple-8.9.9.x86_64.exe).
 The local installation identifies itself as
 `8.9.9.202607020720`. The GUI execution/export/seed/reproducibility gate and
-the documented single-file ALP `-r` launch path passed locally on 2026-07-27.
+the documented single-file ALP `-r` launch path passed locally for the frozen
+verification snapshot on 2026-07-27. Later operational/spillback extensions
+are outside that recorded GUI byte-comparison boundary.
 
 Built with AnyLogic PLE solely as a personal, non-production skills
 demonstration. PLE remains subject to AnyLogic's use restrictions; no
@@ -294,7 +312,8 @@ operational, commercial, or research reuse is asserted or granted.
 - YOLOX-S ONNX: official YOLOX `0.1.1rc0` release asset; SHA-256 is recorded by
   the download workflow.
 - Simulation engine: AnyLogic PLE 8.9.9 (`8.9.9.202607020720`); local
-  GUI and single-file ALP launch gates passed on 2026-07-27.
+  GUI and single-file ALP launch gates passed for the frozen verification
+  snapshot on 2026-07-27.
 
 ## Architecture
 

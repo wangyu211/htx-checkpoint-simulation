@@ -65,7 +65,9 @@ layout or spatial digital twin.
 - [x] GUI experiment executes two input samples × three replications.
 - [x] Fixed-schema manifest, entity, and summary CSV export.
 - [x] Explicit seed lineage and distinct replication fingerprints.
-- [x] Byte-identical GUI rerun.
+- [x] Byte-identical GUI rerun for the frozen 2026-07-27 verification snapshot;
+  later 2026-07-30 operational/spillback extensions are not covered by this
+  claim.
 - [x] Single-file ALP `-r` visible-GUI launch path: `GatePV2x3` uses a tested
   one-shot timer adapter; `TwoStageDeterministic` uses its native Simulation
   experiment bypass; both auto-execute to `Finished`.
@@ -75,15 +77,17 @@ layout or spatial digital twin.
 - [x] Machine-readable model-run configuration contract with fail-fast
   readiness validation and no hidden operational defaults.
 - [x] Deterministic-oracle inputs externalised as explicit parameters in both
-  AnyLogic source formats; both post-refactor GUI runs are byte-identical.
+  AnyLogic source formats; both recorded 2026-07-27 post-refactor GUI runs are
+  byte-identical within the frozen verification snapshot.
 - [x] Split-model HPP arrival-only demand mechanism at 1.364213/s with a live
   24.922788889-second cutoff, explicit `[0,T)` boundary, and 49000-arrival PLE
   guard.
 - [x] Fixed-seed (`2026072710`) HPP run with 32 arrivals conserved across the
   ledger, manifest, Source, Sink, and summary.
 - [x] Two split HPP runs plus the synchronized single-file ALP run with three
-  byte-identical CSV outputs and independent validator `PASS` under the
-  explicit `ARRIVAL_ONLY` readiness scope.
+  byte-identical CSV outputs in the frozen 2026-07-27 verification snapshot and
+  independent validator `PASS` under the explicit `ARRIVAL_ONLY` readiness
+  scope.
 - [ ] Headless or standalone execution; not claimed by the current evidence.
 - [x] Executable pooled-FCFS two-stage Task 3 mechanism with HPP arrivals,
   finite resources, a live 300-second cutoff, and full drain.
