@@ -89,12 +89,13 @@ Run the validator from the repository root:
 .\.venv\Scripts\python.exe -m src.analysis.validate_anylogic_two_stage
 ```
 
-Recorded result:
+The single-run validation returns `status = PASS` and `errors = []`. Byte
+identity is not evaluated unless `--reference-dir` is supplied.
 
 ```text
 status = PASS
 errors = []
-reproducibility.byte_identical = true
+reproducibility.byte_identical = null
 ```
 
 The split/single-file comparison is run with:
@@ -103,6 +104,9 @@ The split/single-file comparison is run with:
 .\.venv\Scripts\python.exe -m src.analysis.validate_anylogic_two_stage `
   --reference-dir results\intermediate\anylogic_two_stage_verification\reference_split_run
 ```
+
+The recorded same-build reference comparison returned
+`reproducibility.byte_identical = true`.
 
 The tested single-file `-r` path opened a visible PLE window and auto-executed
 to `Finished`; this is not a headless or standalone execution claim.

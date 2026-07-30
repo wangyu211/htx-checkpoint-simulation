@@ -5,8 +5,8 @@ Run date: 2026-07-27
 
 ## Purpose
 
-This run checks whether the licence-friendlier YOLOX-S detector plus the
-MIT-licensed Supervision ByteTrack implementation can reproduce the manually
+This run checks how closely the licence-friendlier YOLOX-S detector plus the
+MIT-licensed Supervision ByteTrack implementation agrees with the manually
 reviewed corridor count. It is a controlled cross-check, not a replacement for
 manual reconciliation.
 
@@ -99,9 +99,11 @@ right-to-left burst around `19.2–21.2 s`.
 
 ## Decision
 
-Use YOLOX-S + Supervision ByteTrack as the reproducible, licence-friendlier
-baseline and conservative cross-check. Its reviewed `7/24` candidate set is
-not a statistical lower bound and does not overturn the accepted human
+Use YOLOX-S + Supervision ByteTrack as the scripted, licence-friendlier
+reference path and conservative cross-check. It can be rerun when the
+identical private video, verified model asset, and pinned environment are
+supplied. Its reviewed `7/24` candidate set is not a statistical lower bound
+and does not overturn the accepted human
 aggregate of `12/34`. The gap is evidence of detector/association sensitivity on
 small, occluded pedestrians and should be shown explicitly in the assessment.
 

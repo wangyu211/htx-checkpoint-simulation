@@ -89,11 +89,11 @@ WINDOWS_RESERVED_NAMES = {
     *(f"lpt{index}" for index in range(1, 10)),
 }
 README_REQUIRED_COMMANDS = {
-    "primary environment creation": "python -m venv .venv",
+    "primary environment creation": "py -3.12 -m venv .venv",
     "primary dependency installation": (
         r".\.venv\Scripts\python.exe -m pip install -r requirements.txt"
     ),
-    "fallback environment creation": "python -m venv .venv-bytetrack",
+    "fallback environment creation": "py -3.12 -m venv .venv-bytetrack",
     "fallback dependency installation": (
         r".\.venv-bytetrack\Scripts\python.exe -m pip install "
         "-r requirements-bytetrack.txt"
@@ -758,10 +758,10 @@ def check_generator_determinism(
 ) -> tuple[list[str], dict[str, object]]:
     """Run the generator twice in a tracked-only temporary snapshot.
 
-    The first comparison proves that committed/generated artifacts are current.
-    The second comparison proves byte-level idempotence. Ignored video, review
-    material, raw outputs, model weights, and virtual environments are never
-    copied into the snapshot.
+    The first comparison checks that committed/generated artifacts are current.
+    The second checks byte-level idempotence within the invoking interpreter
+    and environment. Ignored video, review material, raw outputs, model
+    weights, and virtual environments are never copied into the snapshot.
     """
 
     errors: list[str] = []
@@ -773,7 +773,7 @@ def check_generator_determinism(
     }
     if generator_relative not in tracked:
         return [
-            f"deterministic generator is not tracked: {generator_relative}"
+            f"source generator is not tracked: {generator_relative}"
         ], details
 
     with tempfile.TemporaryDirectory(prefix="htx-generator-audit-") as raw:

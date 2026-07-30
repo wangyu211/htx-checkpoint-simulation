@@ -163,7 +163,7 @@ There is no `expected_total=46` acceptance test.
 
 Raw video, crops, pages, and evidence packets remain under ignored `_work/`.
 The public repository may contain the protocol, hashes, accepted-only non-pixel
-ledger, sign-off, validation report, and reproducible scripts. Review-item
+ledger, sign-off, validation report, and versioned rerun scripts. Review-item
 history, reviewer notes, and the private reviewer-alias mapping remain local.
 It must not publish appearance descriptions, embeddings, cross-camera
 identities, or permanent person IDs.

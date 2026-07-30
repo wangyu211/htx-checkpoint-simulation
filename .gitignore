@@ -16,6 +16,8 @@ data/derived/frames/
 data/derived/contact_sheets/
 data/derived/evidence_packets/
 data/derived/review_*
+# Case-specific local adjudication helper; outputs contain source-video pixels.
+src/cv/make_counting_review_pack.py
 **/*face_crop*
 **/*identity_embedding*
 **/*reid_embedding*

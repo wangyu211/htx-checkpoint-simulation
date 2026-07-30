@@ -20,7 +20,8 @@ The broad local AnyLogic ledger was reduced to only replication, immutable
 service inputs, and the six pooled event timestamps needed for replay and
 validation.
 
-From a clean clone, the queue-layout study can use these inputs by default:
+After installing the pinned Python environment, a clean Git clone can replay
+these tracked inputs by supplying only a new output directory:
 
 ```powershell
 python -m src.analysis.analyse_queue_layout_replay `

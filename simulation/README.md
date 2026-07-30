@@ -56,7 +56,7 @@ Source -> Queue -> Delay -> Sink
 | Two input samples × three stochastic replications | 6 manifest and summary rows | PASS |
 | Explicit scenario/input/replication/seed lineage | validator checks every exported row | PASS |
 | Fixed-schema entity and replication CSV output | 72 entity rows plus two run tables | PASS |
-| Same manifest reproduces identical output | second GUI run is byte-identical | PASS |
+| Same-build fixed model/configuration/seed replay | recorded rerun produced byte-identical CSVs | PASS |
 | Different replication IDs change stochastic draws | three distinct fingerprints per input sample | PASS |
 | Serial export is race-free | parallel evaluations disabled; no duplicate rows or headers | PASS |
 | GUI source-model path | `.alpx` `GatePV2x3` auto-start; 6 runs / 72 entities | PASS |
@@ -75,9 +75,11 @@ Parameter Variation skip-screen support. The adapter did not alter simulation
 outputs: the gate validator returned `PASS` for all 6 runs and 72 entities, and
 all three CSV files remained byte-identical to the reference run.
 
-This gate proves experiment orchestration, CSV export, seed lineage, distinct
-replications, and deterministic reruns. The separate deterministic experiment
-verifies the basic Security-to-Immigration flow. The operational model adds
+This local gate verifies experiment orchestration, CSV export, seed lineage,
+distinct replications, and recorded byte-identical reruns under AnyLogic PLE
+8.9.9 build `8.9.9.202607020720`. It does not establish cross-version or
+cross-platform byte stability. The separate deterministic experiment verifies
+the basic Security-to-Immigration flow. The operational model adds
 registered capacity, demand, service-context, technology-multiplier, and
 counter-held risk-proxy scenarios, a four-zone interactive view, a post-run
 dashboard, and a frozen confirmatory capacity study. Genuinely separate lane

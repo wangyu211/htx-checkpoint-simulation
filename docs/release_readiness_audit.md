@@ -1,8 +1,9 @@
 # Release-readiness audit
 
-This gate tests whether the committed public repository is portable,
-self-consistent, and reproducible without copying restricted working material.
-It does not push, publish, download dependencies, or run AnyLogic.
+This gate checks whether one committed revision is self-consistent and passes
+the repository release checks from a local Git clone without copying
+restricted worktree material. It does not install dependencies, run AnyLogic,
+reproduce private-video CV work, or establish cross-platform portability.
 
 ## In-worktree diagnostic
 
@@ -41,7 +42,7 @@ The release gate also fails on:
   environments, or review-work paths in the tracked tree; and
 - privacy-policy findings from the dedicated public-release scanner.
 
-## True clean-clone gate
+## Local Git clean-clone gate
 
 Run this only after every intended release file has been committed:
 
@@ -60,9 +61,11 @@ content; it does not copy ignored worktree files such as:
 - `results/raw/` and `results/intermediate/`; or
 - local virtual environments.
 
-Inside that clone, the tool runs the release gate with `--require-clean`,
-the complete test suite, and the two-pass generator check. The temporary clone
-is deleted after the report. Use `--clone-dir <empty-directory>` only when a
+The clone reuses the invoking Python interpreter and its installed packages;
+this is a clean Git-content check, not a clean-environment installation test.
+Inside that clone, the tool runs the release gate with `--require-clean`, the
+complete test suite, and the two-pass generator check. The temporary clone is
+deleted after the report. Use `--clone-dir <empty-directory>` only when a
 persistent clone is needed for manual inspection.
 
 Diagnostic-only switches `--allow-dirty-source`, `--skip-tests`, and

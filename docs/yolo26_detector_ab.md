@@ -77,7 +77,7 @@ candidates.
 
 ## Decision
 
-1. Keep YOLOX-S as the reproducible, Apache-2.0 baseline.
+1. Keep YOLOX-S as the scripted, licence-friendlier reference path.
 2. Retain YOLO26m as an experimental candidate generator.
 3. Keep the frozen human aggregate independent of detector/tracker selection;
    aggregate equality is not model validation.

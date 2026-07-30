@@ -37,8 +37,9 @@ Using this ledger avoids drawing a second population for the alternative
 layout. Every traveller therefore has exactly the same arrival and service
 requirements in both arms. Only queue topology and routing change.
 
-For clean-clone reproducibility, the replay defaults to the minimum curated
-package in
+For tracked-input replay from a clean Git clone, after the pinned Python
+environment is installed, the command defaults to the minimum curated package
+in
 [`data/derived/queue_layout_replay_source/`](../data/derived/queue_layout_replay_source/).
 It contains 20,622 simulated AnyLogic entity rows and 50 registered P95
 values. A strict field allowlist removes resource IDs, branch uniforms,
@@ -185,8 +186,8 @@ compared across scales.
 ## Run contract
 
 The public curated source tables and their privacy/hash manifest are the CLI
-defaults. A clean clone therefore needs only an explicitly new output
-directory:
+defaults. After installing the pinned Python environment, a clean Git clone
+therefore needs only an explicitly new output directory:
 
 ```powershell
 .\.venv\Scripts\python.exe -m src.analysis.analyse_queue_layout_replay `

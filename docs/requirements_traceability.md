@@ -178,7 +178,7 @@ A separate local technical backup may be generated for interview use. It is not
 part of the canonical five-slide Task 4 submission and is intentionally not
 tracked because the release contract permits exactly one Task 4 PPTX.
 
-## Public repository
+## Repository delivery state
 
 - [x] Separate public-delivery directory from private working material.
 - [x] README: setup, engine version, run/build instructions, parameter changes.
@@ -188,11 +188,17 @@ tracked because the release contract permits exactly one Task 4 PPTX.
 - [x] Task 2 requirements/design.
 - [x] Task 3 simulation logic and key outputs/metrics.
 - [x] Task 4 slides.
-- [x] The 2026-07-29 in-worktree precheck and privacy gate pass after removing
-  both source-video-derived frames from the canonical deck.
-- [x] The 2026-07-29 true clean-clone gate passed after the final intended
-  release files were committed, including all 328 tests, the privacy audit,
-  local-link and portability checks, and the two-pass byte-identical generator
-  check; see
+- [x] A public-safe revision passed the 2026-07-29 in-worktree privacy gate and
+  local Git clean-clone gate after source-video-derived frames were removed.
+  That historical pass included the then-current tests, local-link and
+  filesystem checks, and the two-pass generator check; see
   [`privacy_and_data_governance.md`](privacy_and_data_governance.md).
+- [ ] The current `submission-final-private` branch intentionally contains
+  three registered source-video-derived illustrations for direct private
+  assessment delivery. Its public-media audit therefore fails closed by
+  design, and the branch must not be published.
+- [ ] Create and commit a final public-safe revision, replace the three
+  restricted illustrations, then rerun the current full test suite,
+  `precheck.py --run-tests --check-generator`, and the local Git clean-clone
+  gate without diagnostic switches.
 - [ ] Repository URL ready for submission by email.

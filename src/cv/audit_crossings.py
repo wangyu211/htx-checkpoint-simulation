@@ -1122,7 +1122,7 @@ def parse_args() -> argparse.Namespace:
         choices=("yolox", "yolo26"),
         default="yolox",
         help=(
-            "ONNX detector family. Defaults to the reproducible YOLOX baseline; "
+            "ONNX detector family. Defaults to the scripted YOLOX reference; "
             "YOLO26 models carry the Ultralytics licence boundary."
         ),
     )

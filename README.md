@@ -31,19 +31,23 @@ Supervision ByteTrack; its reviewed distinct candidate set is 7
 left-to-right and 24 right-to-left. Candidate outputs from either path are not
 treated as ground truth.
 
-On 2026-07-27, the synthetic AnyLogic execution/export/seed gate passed in PLE
-8.9.9. `GatePV2x3` runs a native `Source -> Queue -> Delay -> Sink` flow for
-two input samples and three replications each, exporting six run records and
-72 traveller records. A second GUI execution and the exported single-file ALP
-launch produced byte-identical CSV outputs, and the independent validator
-returned `PASS`. The visible Parameter Variation window now starts
+On 2026-07-27, the synthetic AnyLogic execution/export/seed gate passed under
+PLE 8.9.9 build `8.9.9.202607020720` with the recorded model, configuration,
+and seeds. `GatePV2x3` runs a native
+`Source -> Queue -> Delay -> Sink` flow for two input samples and three
+replications each, exporting six run records and 72 traveller records. A
+second same-build GUI execution and the exported single-file ALP launch
+produced byte-identical CSV outputs, and the independent validator returned
+`PASS`. This is recorded local evidence, not a cross-version or cross-platform
+byte-stability guarantee. The visible Parameter Variation window now starts
 automatically through a pinned, one-shot GUI adapter; this does not imply
 native skip-screen or headless support.
 
-The separate `TwoStageDeterministic` experiment now also passes an exact
+The separate `TwoStageDeterministic` experiment also passed an exact
 Security-to-Immigration finite-resource oracle, including a live cutoff, full
-drain, per-traveller timestamps, and byte-identical split/single-file outputs.
-Both remain synthetic verification evidence rather than operational results.
+drain, per-traveller timestamps, and recorded same-build byte-identical
+split/single-file outputs. Both remain synthetic verification evidence rather
+than operational results.
 
 The Task 3 `OperationalPilot` has also completed: 15 registered assumption
 scenarios × 10 independent replications produced 150/150 valid runs and
@@ -230,22 +234,27 @@ statement, not legal advice.
 
 Requirements: Windows x64 and Python 3.12.
 
+Confirm that Python 3.12 is installed, then create the environment with that
+interpreter explicitly:
+
 ```powershell
-python -m venv .venv
+py -3.12 --version
+py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m pip check
 ```
 
 This base environment provides the licence-friendlier YOLOX-S reference path
 with `opencv-python-headless` and the transparent Hungarian candidate tracker.
-It is a reproducible public baseline, not the primary local candidate path used
-for the accepted aggregate.
+It is a scripted reference path that can be rerun when the identical private
+video, verified YOLOX-S model asset, and pinned environment are supplied. It is
+not the primary local candidate path used for the accepted aggregate.
 
 For the YOLOX-S plus Supervision ByteTrack fallback, use a separate
 environment:
 
 ```powershell
-python -m venv .venv-bytetrack
+py -3.12 -m venv .venv-bytetrack
 .\.venv-bytetrack\Scripts\python.exe -m pip install -r requirements-bytetrack.txt
 .\.venv-bytetrack\Scripts\python.exe -m pip check
 ```
@@ -298,7 +307,7 @@ operational, commercial, or research reuse is asserted or granted.
 
 ## Run instructions
 
-Extract deterministic metadata and a local contact sheet:
+Extract source metadata and a fixed-sample local contact sheet:
 
 ```powershell
 .\.venv\Scripts\python.exe -m src.cv.extract_contact_sheet `
@@ -349,7 +358,7 @@ After removing one visually confirmed right-to-left handover duplicate, this
 fallback has 7 reviewed left-to-right and 24 reviewed right-to-left distinct
 candidates. It is a conservative cross-check, not a statistical lower bound.
 
-Run deterministic offline regression tests:
+Run offline regression and contract tests:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
@@ -599,7 +608,8 @@ frames in the canonical Task 4 deck to demonstrate the executed AI inference
 and human-audit workflow to the assessment reviewers. This is a private
 assessment artifact and must not be published. Before any public release,
 replace those frames with the reviewed non-pixel measurement graphics, rerun
-`tools/precheck.py --run-tests`, and pass the clean-clone history gate. The
+`tools/precheck.py --run-tests --check-generator`, and pass the local Git
+clean-clone gate. The
 public-media audit is expected to fail closed while the private deck is
 tracked.
 
@@ -611,8 +621,8 @@ data/         local input instructions and generated tabular evidence
 docs/         Task 1-3 reports and result-blind analysis plan
 simulation/   selected simulation-engine project
 src/          CV, input modelling, experiment, and analysis code
-tests/        deterministic verification checks
-results/      reproducible pilot and confirmatory evidence packages
+tests/        offline verification, contract and byte-stability checks
+results/      auditable compact pilot and confirmatory analysis packages
 slides/       Task 4 presentation
 ```
 

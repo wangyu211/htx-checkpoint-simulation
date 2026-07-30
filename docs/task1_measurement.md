@@ -13,8 +13,10 @@ crossings over 24.922788889 seconds
 **Assessment entrance mapping:** `right_to_left` is the simulated arrival
 direction, giving `34 / 24.922788889 = 1.364213` travellers/second
 
-This report preserves the reproducible computer-vision candidate work and the
-subsequent full-video human aggregate adjudication. The accepted deliverable is
+This report preserves the versioned computer-vision candidate work and the
+subsequent full-video human aggregate adjudication. The candidate paths can be
+rerun locally when the identical private video, verified model asset, and
+pinned environment are supplied. The accepted deliverable is
 an **aggregate freeze**, not a signed person-by-person event-time ledger. No
 event IDs or timestamps have been reconstructed after the fact.
 
@@ -88,7 +90,7 @@ making the count line coincide with an inference-tile boundary.
 A narrower entrance crop was tested and rejected as the main counting geometry:
 local clustering and vertical motion near the entrance made it unsuitable for
 estimating total bidirectional corridor flow. The central corridor line is the
-current reproducible reference geometry.
+current versioned reference geometry.
 
 ## 4. Detection, tracking, and reconciliation pipeline
 
@@ -341,7 +343,7 @@ model inputs.
 
 Completed for the assessment submission:
 
-1. Reproducible detector/tracker candidate generation and sensitivity checks.
+1. Versioned detector/tracker candidate generation and sensitivity checks.
 2. Sequential full-video visual review, including direction-specific manual
    counting.
 3. Project-owner aggregate decision: 12 L→R and 34 R→L on 2026-07-27.

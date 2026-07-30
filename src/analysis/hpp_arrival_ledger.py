@@ -273,7 +273,7 @@ def validate_hpp_ledger(ledger: object) -> dict[str, object]:
             )
             if canonical_ledger_bytes(ledger) != canonical_ledger_bytes(expected):
                 errors.append(
-                    "ledger is not byte-identical to its declared seeded replay"
+                    "canonical ledger content does not match its declared seeded replay"
                 )
         except HPPEventLimitError as exc:
             errors.append(str(exc))

@@ -82,10 +82,11 @@ reference:
 | `run_manifest.csv` | `d3215ccd4e989051457996ba3367dbfe09e7d877e7fe1d61a797ef33b8e01dae` |
 | `run_summary.csv` | `086ec4be69587686dd48a3fdc3d92658ccca823d430b48edb405996a4da61cdc` |
 
-These hashes demonstrate deterministic replay of this fixed-seed AnyLogic
-experiment. They do not show that 32 is the true or expected traveller count,
-nor that a Python generator with the same integer seed will produce the same
-ledger.
+These hashes record byte-identical output across the documented local runs
+under the same engine build, model, configuration, and seed. They do not
+establish cross-version or cross-platform byte stability, show that 32 is the
+true or expected traveller count, or imply that a Python generator with the
+same integer seed will produce the same ledger.
 
 ## Run and validate
 

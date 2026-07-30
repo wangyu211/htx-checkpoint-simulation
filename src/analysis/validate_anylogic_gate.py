@@ -1,8 +1,9 @@
 """Validate the AnyLogic 2-input-sample by 3-replication smoke gate.
 
 The gate is intentionally synthetic. It verifies experiment orchestration,
-seed lineage, event ordering, output schemas, and reproducibility before the
-assessment's unfrozen operational inputs are introduced.
+seed lineage, event ordering, and output schemas before the assessment's
+unfrozen operational inputs are introduced. When ``--reference-dir`` is
+supplied, it also checks byte identity against that same-contract reference.
 """
 
 from __future__ import annotations
@@ -459,7 +460,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--reference-dir",
         type=Path,
-        help="Optional prior run directory for byte-identical comparison.",
+        help=(
+            "Optional same-contract reference directory for byte-identical "
+            "comparison."
+        ),
     )
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     return parser

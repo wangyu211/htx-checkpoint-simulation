@@ -10,8 +10,9 @@ This repository does not currently contain a top-level open-source `LICENSE`.
 Accordingly, it makes no blanket MIT, Apache-2.0, or AGPL-3.0 grant over the
 whole repository.
 
-The default reproducible pipeline is intentionally separated from the
-Ultralytics experiment:
+The default scripted reference pipeline is intentionally separated from the
+Ultralytics experiment. A local rerun still requires the identical private
+video and the verified YOLOX-S model asset:
 
 - default `requirements.txt` does not install `ultralytics`;
 - YOLO26 `.pt` and `.onnx` files are Git-ignored and are not redistributed;
