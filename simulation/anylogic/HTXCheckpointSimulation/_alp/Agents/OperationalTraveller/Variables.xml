@@ -230,13 +230,13 @@
 	</Variable>
 	<Variable Class="PlainVariable">
 		<Id>1785163200121</Id>
-		<Name><![CDATA[immigration_queue_join]]></Name>
+		<Name><![CDATA[security_processing_end]]></Name>
 		<X>300</X>
 		<Y>160</Y>
 		<Label><X>10</X><Y>0</Y></Label>
 		<PublicFlag>false</PublicFlag>
-		<PresentationFlag>true</PresentationFlag>
-		<ShowLabel>true</ShowLabel>
+		<PresentationFlag>false</PresentationFlag>
+		<ShowLabel>false</ShowLabel>
 		<Properties SaveInSnapshot="true"
               Constant="false"
               AccessType="public"
@@ -249,32 +249,32 @@
 	</Variable>
 	<Variable Class="PlainVariable">
 		<Id>1785163200131</Id>
-		<Name><![CDATA[immigration_lane_id]]></Name>
+		<Name><![CDATA[interstage_block_start]]></Name>
 		<X>300</X>
 		<Y>190</Y>
 		<Label><X>10</X><Y>0</Y></Label>
 		<PublicFlag>false</PublicFlag>
-		<PresentationFlag>true</PresentationFlag>
-		<ShowLabel>true</ShowLabel>
+		<PresentationFlag>false</PresentationFlag>
+		<ShowLabel>false</ShowLabel>
 		<Properties SaveInSnapshot="true"
               Constant="false"
               AccessType="public"
               StaticVariable="false">
-			<Type><![CDATA[String]]></Type>
+			<Type><![CDATA[double]]></Type>
 			<InitialValue Class="CodeValue">
-				<Code><![CDATA[""]]></Code>
+				<Code><![CDATA[Double.NaN]]></Code>
 			</InitialValue>
 		</Properties>
 	</Variable>
 	<Variable Class="PlainVariable">
 		<Id>1785163200141</Id>
-		<Name><![CDATA[immigration_start]]></Name>
+		<Name><![CDATA[interstage_admitted]]></Name>
 		<X>300</X>
 		<Y>220</Y>
 		<Label><X>10</X><Y>0</Y></Label>
 		<PublicFlag>false</PublicFlag>
-		<PresentationFlag>true</PresentationFlag>
-		<ShowLabel>true</ShowLabel>
+		<PresentationFlag>false</PresentationFlag>
+		<ShowLabel>false</ShowLabel>
 		<Properties SaveInSnapshot="true"
               Constant="false"
               AccessType="public"
@@ -287,13 +287,32 @@
 	</Variable>
 	<Variable Class="PlainVariable">
 		<Id>1785163200151</Id>
-		<Name><![CDATA[technology_flag]]></Name>
+		<Name><![CDATA[interstage_block_seconds]]></Name>
 		<X>300</X>
 		<Y>250</Y>
 		<Label><X>10</X><Y>0</Y></Label>
 		<PublicFlag>false</PublicFlag>
-		<PresentationFlag>true</PresentationFlag>
-		<ShowLabel>true</ShowLabel>
+		<PresentationFlag>false</PresentationFlag>
+		<ShowLabel>false</ShowLabel>
+		<Properties SaveInSnapshot="true"
+              Constant="false"
+              AccessType="public"
+              StaticVariable="false">
+			<Type><![CDATA[double]]></Type>
+			<InitialValue Class="CodeValue">
+				<Code><![CDATA[0.0]]></Code>
+			</InitialValue>
+		</Properties>
+	</Variable>
+	<Variable Class="PlainVariable">
+		<Id>1785163200161</Id>
+		<Name><![CDATA[interstage_waiting_flag]]></Name>
+		<X>300</X>
+		<Y>280</Y>
+		<Label><X>10</X><Y>0</Y></Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>false</PresentationFlag>
+		<ShowLabel>false</ShowLabel>
 		<Properties SaveInSnapshot="true"
               Constant="false"
               AccessType="public"
@@ -305,27 +324,8 @@
 		</Properties>
 	</Variable>
 	<Variable Class="PlainVariable">
-		<Id>1785163200161</Id>
-		<Name><![CDATA[immigration_primary_service_demand]]></Name>
-		<X>300</X>
-		<Y>280</Y>
-		<Label><X>10</X><Y>0</Y></Label>
-		<PublicFlag>false</PublicFlag>
-		<PresentationFlag>true</PresentationFlag>
-		<ShowLabel>true</ShowLabel>
-		<Properties SaveInSnapshot="true"
-              Constant="false"
-              AccessType="public"
-              StaticVariable="false">
-			<Type><![CDATA[double]]></Type>
-			<InitialValue Class="CodeValue">
-				<Code><![CDATA[Double.NaN]]></Code>
-			</InitialValue>
-		</Properties>
-	</Variable>
-	<Variable Class="PlainVariable">
 		<Id>1785163200171</Id>
-		<Name><![CDATA[immigration_primary_end]]></Name>
+		<Name><![CDATA[immigration_queue_join]]></Name>
 		<X>300</X>
 		<Y>310</Y>
 		<Label><X>10</X><Y>0</Y></Label>
@@ -344,7 +344,7 @@
 	</Variable>
 	<Variable Class="PlainVariable">
 		<Id>1785163200181</Id>
-		<Name><![CDATA[additional_check_flag]]></Name>
+		<Name><![CDATA[immigration_lane_id]]></Name>
 		<X>300</X>
 		<Y>340</Y>
 		<Label><X>10</X><Y>0</Y></Label>
@@ -355,36 +355,17 @@
               Constant="false"
               AccessType="public"
               StaticVariable="false">
-			<Type><![CDATA[boolean]]></Type>
+			<Type><![CDATA[String]]></Type>
 			<InitialValue Class="CodeValue">
-				<Code><![CDATA[false]]></Code>
+				<Code><![CDATA[""]]></Code>
 			</InitialValue>
 		</Properties>
 	</Variable>
 	<Variable Class="PlainVariable">
 		<Id>1785163200191</Id>
-		<Name><![CDATA[additional_check_service_demand]]></Name>
+		<Name><![CDATA[immigration_start]]></Name>
 		<X>300</X>
 		<Y>370</Y>
-		<Label><X>10</X><Y>0</Y></Label>
-		<PublicFlag>false</PublicFlag>
-		<PresentationFlag>true</PresentationFlag>
-		<ShowLabel>true</ShowLabel>
-		<Properties SaveInSnapshot="true"
-              Constant="false"
-              AccessType="public"
-              StaticVariable="false">
-			<Type><![CDATA[double]]></Type>
-			<InitialValue Class="CodeValue">
-				<Code><![CDATA[0.0]]></Code>
-			</InitialValue>
-		</Properties>
-	</Variable>
-	<Variable Class="PlainVariable">
-		<Id>1785163200201</Id>
-		<Name><![CDATA[additional_check_end]]></Name>
-		<X>300</X>
-		<Y>400</Y>
 		<Label><X>10</X><Y>0</Y></Label>
 		<PublicFlag>false</PublicFlag>
 		<PresentationFlag>true</PresentationFlag>
@@ -400,8 +381,27 @@
 		</Properties>
 	</Variable>
 	<Variable Class="PlainVariable">
+		<Id>1785163200201</Id>
+		<Name><![CDATA[technology_flag]]></Name>
+		<X>300</X>
+		<Y>400</Y>
+		<Label><X>10</X><Y>0</Y></Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<Properties SaveInSnapshot="true"
+              Constant="false"
+              AccessType="public"
+              StaticVariable="false">
+			<Type><![CDATA[boolean]]></Type>
+			<InitialValue Class="CodeValue">
+				<Code><![CDATA[false]]></Code>
+			</InitialValue>
+		</Properties>
+	</Variable>
+	<Variable Class="PlainVariable">
 		<Id>1785163200211</Id>
-		<Name><![CDATA[exit]]></Name>
+		<Name><![CDATA[immigration_primary_service_demand]]></Name>
 		<X>300</X>
 		<Y>430</Y>
 		<Label><X>10</X><Y>0</Y></Label>
@@ -420,9 +420,104 @@
 	</Variable>
 	<Variable Class="PlainVariable">
 		<Id>1785163200221</Id>
-		<Name><![CDATA[security_resource_id]]></Name>
+		<Name><![CDATA[immigration_primary_end]]></Name>
 		<X>300</X>
 		<Y>460</Y>
+		<Label><X>10</X><Y>0</Y></Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<Properties SaveInSnapshot="true"
+              Constant="false"
+              AccessType="public"
+              StaticVariable="false">
+			<Type><![CDATA[double]]></Type>
+			<InitialValue Class="CodeValue">
+				<Code><![CDATA[Double.NaN]]></Code>
+			</InitialValue>
+		</Properties>
+	</Variable>
+	<Variable Class="PlainVariable">
+		<Id>1785163200231</Id>
+		<Name><![CDATA[additional_check_flag]]></Name>
+		<X>300</X>
+		<Y>490</Y>
+		<Label><X>10</X><Y>0</Y></Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<Properties SaveInSnapshot="true"
+              Constant="false"
+              AccessType="public"
+              StaticVariable="false">
+			<Type><![CDATA[boolean]]></Type>
+			<InitialValue Class="CodeValue">
+				<Code><![CDATA[false]]></Code>
+			</InitialValue>
+		</Properties>
+	</Variable>
+	<Variable Class="PlainVariable">
+		<Id>1785163200241</Id>
+		<Name><![CDATA[additional_check_service_demand]]></Name>
+		<X>560</X>
+		<Y>160</Y>
+		<Label><X>10</X><Y>0</Y></Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<Properties SaveInSnapshot="true"
+              Constant="false"
+              AccessType="public"
+              StaticVariable="false">
+			<Type><![CDATA[double]]></Type>
+			<InitialValue Class="CodeValue">
+				<Code><![CDATA[0.0]]></Code>
+			</InitialValue>
+		</Properties>
+	</Variable>
+	<Variable Class="PlainVariable">
+		<Id>1785163200251</Id>
+		<Name><![CDATA[additional_check_end]]></Name>
+		<X>560</X>
+		<Y>190</Y>
+		<Label><X>10</X><Y>0</Y></Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<Properties SaveInSnapshot="true"
+              Constant="false"
+              AccessType="public"
+              StaticVariable="false">
+			<Type><![CDATA[double]]></Type>
+			<InitialValue Class="CodeValue">
+				<Code><![CDATA[Double.NaN]]></Code>
+			</InitialValue>
+		</Properties>
+	</Variable>
+	<Variable Class="PlainVariable">
+		<Id>1785163200261</Id>
+		<Name><![CDATA[exit]]></Name>
+		<X>560</X>
+		<Y>220</Y>
+		<Label><X>10</X><Y>0</Y></Label>
+		<PublicFlag>false</PublicFlag>
+		<PresentationFlag>true</PresentationFlag>
+		<ShowLabel>true</ShowLabel>
+		<Properties SaveInSnapshot="true"
+              Constant="false"
+              AccessType="public"
+              StaticVariable="false">
+			<Type><![CDATA[double]]></Type>
+			<InitialValue Class="CodeValue">
+				<Code><![CDATA[Double.NaN]]></Code>
+			</InitialValue>
+		</Properties>
+	</Variable>
+	<Variable Class="PlainVariable">
+		<Id>1785163200271</Id>
+		<Name><![CDATA[security_resource_id]]></Name>
+		<X>560</X>
+		<Y>250</Y>
 		<Label><X>10</X><Y>0</Y></Label>
 		<PublicFlag>false</PublicFlag>
 		<PresentationFlag>true</PresentationFlag>
@@ -438,10 +533,10 @@
 		</Properties>
 	</Variable>
 	<Variable Class="PlainVariable">
-		<Id>1785163200231</Id>
+		<Id>1785163200281</Id>
 		<Name><![CDATA[immigration_resource_id]]></Name>
-		<X>300</X>
-		<Y>490</Y>
+		<X>560</X>
+		<Y>280</Y>
 		<Label><X>10</X><Y>0</Y></Label>
 		<PublicFlag>false</PublicFlag>
 		<PresentationFlag>true</PresentationFlag>

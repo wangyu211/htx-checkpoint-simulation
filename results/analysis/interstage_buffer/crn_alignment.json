@@ -1,0 +1,319 @@
+{
+  "errors": [],
+  "input_draw_digest_field": "input_draws_sha256",
+  "paired_cells_per_replication": 8,
+  "replication_count": 50,
+  "replications": [
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 1,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 2,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 3,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 4,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 5,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 6,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 7,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 8,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 9,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 10,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 11,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 12,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 13,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 14,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 15,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 16,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 17,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 18,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 19,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 20,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 21,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 22,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 23,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 24,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 25,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 26,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 27,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 28,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 29,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 30,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 31,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 32,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 33,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 34,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 35,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 36,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 37,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 38,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 39,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 40,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 41,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 42,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 43,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 44,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 45,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 46,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 47,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 48,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 49,
+      "seed_alignment_status": "PASS"
+    },
+    {
+      "input_draw_alignment_status": "PASS",
+      "paired_cell_count": 8,
+      "replication_id": 50,
+      "seed_alignment_status": "PASS"
+    }
+  ],
+  "schema_version": "1.0",
+  "seed_fields": [
+    "master_seed",
+    "arrival_seed",
+    "service_seed",
+    "routing_seed",
+    "tie_seed"
+  ],
+  "status": "PASS",
+  "study_id": "TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1",
+  "validation_id": "TASK3_INTERSTAGE_BUFFER_CRN_ALIGNMENT_V1"
+}

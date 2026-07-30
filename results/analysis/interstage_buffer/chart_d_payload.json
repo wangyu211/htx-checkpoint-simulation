@@ -1,0 +1,159 @@
+{
+  "buffer_levels": [
+    25,
+    50,
+    100,
+    5000
+  ],
+  "chart_id": "CHART_D_INTERSTAGE_BUFFER_BAS_V1",
+  "claim_boundary": "CONDITIONAL_FINITE_BUFFER_SENSITIVITY_NOT_SITE_FORECAST",
+  "schema_version": "1.0",
+  "series": [
+    {
+      "immigration_capacity": 16,
+      "metric": "system_time_p95_seconds",
+      "points": [
+        {
+          "buffer_label": "25",
+          "ci_high": 74.11939600532838,
+          "ci_low": 66.73542610395162,
+          "interstage_buffer_capacity": 25,
+          "mean": 70.42741105464
+        },
+        {
+          "buffer_label": "50",
+          "ci_high": 74.11939600532838,
+          "ci_low": 66.73542610395162,
+          "interstage_buffer_capacity": 50,
+          "mean": 70.42741105464
+        },
+        {
+          "buffer_label": "100",
+          "ci_high": 74.11939600532838,
+          "ci_low": 66.73542610395162,
+          "interstage_buffer_capacity": 100,
+          "mean": 70.42741105464
+        },
+        {
+          "buffer_label": "NONBINDING_5000",
+          "ci_high": 74.11939600532838,
+          "ci_low": 66.73542610395162,
+          "interstage_buffer_capacity": 5000,
+          "mean": 70.42741105464
+        }
+      ],
+      "regime": "IMMIGRATION_BOTTLENECK_POSITIVE",
+      "security_capacity": 36
+    },
+    {
+      "immigration_capacity": 16,
+      "metric": "security_blocked_resource_fraction",
+      "points": [
+        {
+          "buffer_label": "25",
+          "ci_high": 0.08050947330147537,
+          "ci_low": 0.05264235353852461,
+          "interstage_buffer_capacity": 25,
+          "mean": 0.06657591342
+        },
+        {
+          "buffer_label": "50",
+          "ci_high": 0.016522112407522247,
+          "ci_low": 0.0036150999124777523,
+          "interstage_buffer_capacity": 50,
+          "mean": 0.01006860616
+        },
+        {
+          "buffer_label": "100",
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "interstage_buffer_capacity": 100,
+          "mean": 0.0
+        },
+        {
+          "buffer_label": "NONBINDING_5000",
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "interstage_buffer_capacity": 5000,
+          "mean": 0.0
+        }
+      ],
+      "regime": "IMMIGRATION_BOTTLENECK_POSITIVE",
+      "security_capacity": 36
+    },
+    {
+      "immigration_capacity": 21,
+      "metric": "system_time_p95_seconds",
+      "points": [
+        {
+          "buffer_label": "25",
+          "ci_high": 49.408623380859694,
+          "ci_low": 45.4503177775003,
+          "interstage_buffer_capacity": 25,
+          "mean": 47.42947057918
+        },
+        {
+          "buffer_label": "50",
+          "ci_high": 49.408623380859694,
+          "ci_low": 45.4503177775003,
+          "interstage_buffer_capacity": 50,
+          "mean": 47.42947057918
+        },
+        {
+          "buffer_label": "100",
+          "ci_high": 49.408623380859694,
+          "ci_low": 45.4503177775003,
+          "interstage_buffer_capacity": 100,
+          "mean": 47.42947057918
+        },
+        {
+          "buffer_label": "NONBINDING_5000",
+          "ci_high": 49.408623380859694,
+          "ci_low": 45.4503177775003,
+          "interstage_buffer_capacity": 5000,
+          "mean": 47.42947057918
+        }
+      ],
+      "regime": "SECURITY_BOTTLENECK_NEGATIVE_CONTROL",
+      "security_capacity": 30
+    },
+    {
+      "immigration_capacity": 21,
+      "metric": "security_blocked_resource_fraction",
+      "points": [
+        {
+          "buffer_label": "25",
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "interstage_buffer_capacity": 25,
+          "mean": 0.0
+        },
+        {
+          "buffer_label": "50",
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "interstage_buffer_capacity": 50,
+          "mean": 0.0
+        },
+        {
+          "buffer_label": "100",
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "interstage_buffer_capacity": 100,
+          "mean": 0.0
+        },
+        {
+          "buffer_label": "NONBINDING_5000",
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "interstage_buffer_capacity": 5000,
+          "mean": 0.0
+        }
+      ],
+      "regime": "SECURITY_BOTTLENECK_NEGATIVE_CONTROL",
+      "security_capacity": 30
+    }
+  ],
+  "study_id": "TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1",
+  "title": "Finite interstage space creates spillback only under downstream pressure"
+}

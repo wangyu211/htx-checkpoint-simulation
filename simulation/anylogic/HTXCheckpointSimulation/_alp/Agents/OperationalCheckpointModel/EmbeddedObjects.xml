@@ -1372,9 +1372,7 @@ entity_log_rows.add(
 			traveller.additional_check_flag
 				? String.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_end )
 				: "",
-			String.format( java.util.Locale.ROOT, "%.9f", traveller.exit ),
-			traveller.security_resource_id,
-			traveller.immigration_resource_id
+			String.format( java.util.Locale.ROOT, "%.9f", traveller.exit )
 		}
 	)
 );

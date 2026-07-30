@@ -180,6 +180,23 @@ capacity. See the
 and
 [`compact analysis package`](results/analysis/peak_duration_sensitivity/README.md).
 
+The finite interstage-buffer sensitivity has also completed:
+`2` selected capacity regimes x `4` buffer levels x `50` replications
+produced `400/400` valid AnyLogic runs. Registered-contract, import,
+traveller-level CRN, exact-replay, negative-control, conservation, zero-loss,
+and full-drain gates all returned `PASS`. Under the downstream-constrained
+`36/16` case, mean Security resource-time blocked after service completion
+falls from `6.6576%` at `B=25` to `1.0069%` at `B=50` and `0%` at
+`B=100/5000`. The mean of replication-level system-time P95s remains
+`70.4274 s` at every buffer level. Under the current no-loss, single-path,
+work-conserving full-drain assumptions, finite space therefore relocates
+congestion upstream and locks capacity without changing the reported
+system-time P95. The `30/21` negative control records `0%` blocked
+resource-time at every buffer level. Buffer capacity is not site-measured;
+this is conditional mechanism evidence, not a layout, staffing, or SLA
+recommendation. See the
+[`compact finite-buffer package`](results/analysis/interstage_buffer/README.md).
+
 `OperationalInteractive` provides the reviewer-facing simulation surface:
 four labelled Arrival → Security → Immigration → Exit zones, live queue and
 in-service state, run status, and exactly five genuine pre-run controls
@@ -505,6 +522,25 @@ T=300 cross-batch reproduction pass. The
 records the 50-replication cell estimates, paired duration increments,
 queue-growth diagnostics, audit reports, and the two claim-bounded figures.
 
+Run and validate the finite interstage-buffer sensitivity:
+
+1. In AnyLogic PLE 8.9.9, run
+   `InterstageBufferSpillbackSensitivity: SpillbackCheckpointModel` and wait
+   for `Finished`. The frozen contract is 8 cells x 50 serial replications.
+2. Consolidate, validate, analyse, and render the claim-bounded chart:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.analysis.consolidate_interstage_buffer_results
+.\.venv\Scripts\python.exe -m src.analysis.analyse_interstage_buffer
+.\.venv\Scripts\python.exe -m src.analysis.plot_interstage_buffer
+```
+
+The analyser fails closed unless all 400 runs, frozen configuration and seed
+contracts, conservation, zero loss, full drain, traveller-level CRN,
+non-binding exact replay, and negative-control invariance pass. The
+[`compact package`](results/analysis/interstage_buffer/README.md) records the
+replication KPIs, cell estimates, gate reports, lineage, and Chart D payload.
+
 Run the release gate. It includes a fail-closed check for tracked or embedded
 source pixels, restricted media, identity/appearance fields, and reviewer alias
 rules:
@@ -558,11 +594,14 @@ trajectory/counting-line schematics that do not reproduce the source video.
 The complete retention, reviewer-alias, no-re-identification, and release policy
 is [`docs/privacy_and_data_governance.md`](docs/privacy_and_data_governance.md).
 
-The two source-video-derived frames previously embedded in the canonical Task 4
-deck were removed on 2026-07-29. They were replaced by a reviewed synthetic
-AnyLogic screenshot and editable non-pixel measurement graphics. The
-fail-closed public-media audit was rerun and returned zero findings. Remote
-publication still requires final authorization and the clean-clone gate.
+The `submission-final-private` branch intentionally restores supplied-video
+frames in the canonical Task 4 deck to demonstrate the executed AI inference
+and human-audit workflow to the assessment reviewers. This is a private
+assessment artifact and must not be published. Before any public release,
+replace those frames with the reviewed non-pixel measurement graphics, rerun
+`tools/precheck.py --run-tests`, and pass the clean-clone history gate. The
+public-media audit is expected to fail closed while the private deck is
+tracked.
 
 ## Repository map
 

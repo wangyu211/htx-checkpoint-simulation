@@ -1,0 +1,11 @@
+{
+  "errors": [],
+  "model_version": "TASK3_OPERATIONAL_POOLED_INTERSTAGE_BAS_V1",
+  "registered_scenario_count": 8,
+  "registered_seed_group_count": 50,
+  "schema_version": "1.0",
+  "status": "PASS",
+  "study_id": "TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1",
+  "validated_run_count": 400,
+  "validation_id": "TASK3_INTERSTAGE_BUFFER_REGISTERED_CONTRACT_V1"
+}

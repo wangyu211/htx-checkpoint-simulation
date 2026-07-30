@@ -1,0 +1,63 @@
+{
+  "actual_run_count": 400,
+  "analysis_id": "TASK3_INTERSTAGE_BUFFER_BAS_ANALYSIS_V1",
+  "cell_count": 8,
+  "ci_level": 0.95,
+  "claim_boundary": "CONDITIONAL_FINITE_BUFFER_SENSITIVITY_NOT_SITE_FORECAST",
+  "expected_run_count": 400,
+  "gates": {
+    "crn_alignment": "PASS",
+    "exact_replay": "PASS",
+    "import_validation": "PASS",
+    "negative_control_invariance": "PASS",
+    "registered_contract": "PASS"
+  },
+  "input_csv": "results/raw/interstage_buffer_sensitivity_consolidated/interstage_buffer_by_replication.csv",
+  "input_sha256": "98c40f6009ce4130a3ff64aa6205d35ed8cfa245038250537cba2ccc5b944991",
+  "mechanism_metric": "security_blocked_resource_fraction",
+  "mechanism_metric_formula": "security_blocked_resource_seconds / (security_capacity * last_exit_seconds)",
+  "occupied_time_diagnostic": "security_blocked_share_of_occupied",
+  "outputs": [
+    {
+      "path": "results/analysis/interstage_buffer/validation.json",
+      "sha256": "faa6dfe90722b928848cbfc751bad40794c171a82fb7d5e81aff5c36b66151cc"
+    },
+    {
+      "path": "results/analysis/interstage_buffer/registered_contract.json",
+      "sha256": "60b98f46480b2ca827b1b6ab5f7e8ec16049062aa202f69c877c81dd265285f2"
+    },
+    {
+      "path": "results/analysis/interstage_buffer/crn_alignment.json",
+      "sha256": "ec07ac693165d2ffe3c2b61de4659d4dc5ca33921b67ffa4a935d07ff3784250"
+    },
+    {
+      "path": "results/analysis/interstage_buffer/exact_replay_validation.json",
+      "sha256": "030be3102cf25999e7c4e1e2c542e445e6b0781df2d0eb152f7524ecb8925d1b"
+    },
+    {
+      "path": "results/analysis/interstage_buffer/negative_control_invariance.json",
+      "sha256": "62c612b4974095ede1d3035711c2221d059e9c20f2cc52101e9101f714598ca1"
+    },
+    {
+      "path": "results/analysis/interstage_buffer/negative_control_contrasts.csv",
+      "sha256": "fccd52da742106e2ecd1054033e4a27e2e2b647671e9ffcf5f9cb4421d8f8ba7"
+    },
+    {
+      "path": "results/analysis/interstage_buffer/replication_kpis.csv",
+      "sha256": "98c40f6009ce4130a3ff64aa6205d35ed8cfa245038250537cba2ccc5b944991"
+    },
+    {
+      "path": "results/analysis/interstage_buffer/cell_estimates.csv",
+      "sha256": "f29d005b2b33eb22024bad4000d6b6092a236ad673415f31bc10387c5bbf4fb9"
+    },
+    {
+      "path": "results/analysis/interstage_buffer/chart_d_payload.json",
+      "sha256": "dae25f594adea26ea57e9a9c8e57d92524d806df9e0f34d95fc2ba022f0a9094"
+    }
+  ],
+  "primary_metric": "system_time_p95_seconds",
+  "replications_per_cell": 50,
+  "schema_version": "1.0",
+  "status": "PASS",
+  "study_id": "TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1"
+}

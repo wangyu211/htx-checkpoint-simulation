@@ -105,6 +105,18 @@ This resolves the identified media blocker. It does not authorize remote
 publication, replace the clean-clone gate, or change the retention rule for
 the restricted source video and private review artifacts.
 
+### Private assessment branch exception (2026-07-30)
+
+The private `submission-final-private` branch intentionally restores three
+registered, source-video-derived illustrations to the Task 4 deck so that the
+assessor can audit the implemented detection, tracking, and crossing-ledger
+workflow. Their SHA-256 values are recorded as restricted content in
+`config/public_release_data_policy.json`; they are not approved non-pixel
+media. This exception applies only to direct private delivery to the
+assessment owner. The branch must not be pushed to a public remote, and a
+public release still requires replacing those illustrations and rerunning the
+release precheck.
+
 During this audit, three clothing/appearance descriptions in
 `candidate_false_negative_sweep_x640.csv` were replaced with
 trajectory/occlusion-only wording while preserving candidate ID, time,

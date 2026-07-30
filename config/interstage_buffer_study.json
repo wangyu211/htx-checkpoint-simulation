@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.0",
+  "study_id": "TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1",
+  "model_version": "TASK3_OPERATIONAL_POOLED_INTERSTAGE_BAS_V1",
+  "design_status": "FROZEN_PRE_RUN",
+  "frozen_on": "2026-07-30",
+  "purpose": "Test how a finite waiting space between Security and Immigration changes blocking, queue location, end-to-end delay, and clearance under an Immigration-bottleneck positive regime and a Security-bottleneck negative control.",
+  "analysis_role": "EXPLORATORY_ASSUMPTION_SENSITIVITY_NOT_CALIBRATION",
+  "claim_ceiling": "CONDITIONAL_INTERSTAGE_SPACE_SENSITIVITY_ONLY",
+  "post_outcome_disclosure": "This study was designed after inspection of the registered capacity response surface. The two regimes and buffer levels are diagnostic choices informed by those results. The study does not modify, replace, or retroactively reinterpret the frozen capacity analyses.",
+  "fixed_inputs": {
+    "arrival_mode": "HPP",
+    "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "arrival_rate_per_second": 1.3642132969720073,
+    "demand_multiplier": 1.0,
+    "arrival_cutoff_seconds": 300,
+    "arrival_guard": 5000,
+    "drain_rule": "FULL_DRAIN",
+    "security_queue_capacity": 5000,
+    "security_service_distribution": "FIXED",
+    "security_service_p1_seconds": 21.818181818,
+    "immigration_queue_capacity": 5000,
+    "immigration_service_distribution": "FIXED",
+    "immigration_service_p1_seconds": 13,
+    "queue_policy": "pooled",
+    "automation_mapping_mode": "DISABLED",
+    "additional_check_semantics": "NONE",
+    "start_state": "EMPTY_AND_IDLE"
+  },
+  "capacity_regimes": [
+    {
+      "capacity_regime_id": "IMMIGRATION_BOTTLENECK_POSITIVE",
+      "security_capacity": 36,
+      "immigration_capacity": 16,
+      "reference_scenario_id": "CAPACITY_RESPONSE_S36_I16",
+      "prior_diagnostic_classification": "IMMIGRATION_WAIT_DOMINANT",
+      "prior_nonbinding_peak_immigration_queue": {
+        "replications": 50,
+        "minimum": 13,
+        "median": 46,
+        "maximum": 90,
+        "mean": 48.26
+      },
+      "role": "POSITIVE_CONTROL_EXPECTED_TO_BIND_AT_25_AND_SOMETIMES_AT_50"
+    },
+    {
+      "capacity_regime_id": "SECURITY_BOTTLENECK_NEGATIVE_CONTROL",
+      "security_capacity": 30,
+      "immigration_capacity": 21,
+      "reference_scenario_id": "CAPACITY_RESPONSE_S30_I21",
+      "prior_diagnostic_classification": "SECURITY_WAIT_DOMINANT",
+      "prior_nonbinding_peak_immigration_queue": {
+        "replications": 50,
+        "minimum": 0,
+        "median": 3,
+        "maximum": 9,
+        "mean": 2.86
+      },
+      "role": "NEGATIVE_CONTROL_EXPECTED_NOT_TO_BIND_AT_ANY_TESTED_FINITE_LEVEL"
+    }
+  ],
+  "interstage_buffer_grid": {
+    "capacity_levels": [
+      25,
+      50,
+      100,
+      5000
+    ],
+    "capacity_unit": "travellers_waiting_between_security_and_immigration",
+    "factorial_cell_count": 8,
+    "nonbinding_control_capacity": 5000,
+    "finite_sensitivity_levels": [
+      25,
+      50,
+      100
+    ],
+    "measured_site_capacity": false,
+    "selection_rationale": "The prior non-binding runs place 25 below, 50 near, and 100 above the observed positive-regime peak-queue range. The 5000-traveller arm preserves the registered non-binding computational control. These are declared sensitivity levels, not measurements of a checkpoint waiting area.",
+    "restriction": "Do not translate these levels into floor area, density, safe occupancy, or a site capacity without separately supplied and approved physical-space evidence."
+  },
+  "blocking_contract": {
+    "policy_id": "BAS_HOLD_SECURITY_UNTIL_BUFFER_SLOT",
+    "policy_name": "BLOCKING_AFTER_SERVICE",
+    "service_completion_rule": "A traveller who completes Security while the interstage buffer is full remains attached to the Security resource until a buffer slot is reserved.",
+    "resource_release_rule": "Release the Security resource only after the traveller is admitted atomically to the finite interstage buffer.",
+    "buffer_departure_rule": "A traveller leaves the interstage buffer when Immigration service starts.",
+    "zero_loss_rule": "A full interstage buffer must block upstream flow; it must not drop, reject, preempt, or silently discard a traveller.",
+    "required_runtime_parameter": "interstage_buffer_capacity",
+    "implementation_status": "REQUIRES_SEPARATELY_REVIEWED_ANYLOGIC_RUNTIME_CHANGE",
+    "forbidden_shortcut": "Do not implement this study solely by lowering the existing Immigration Service internal queueCapacity. The current Service abstraction releases resources after its delay and forced pushing does not constitute blocking-after-service."
+  },
+  "execution": {
+    "experiment_name": "InterstageBufferSpillbackSensitivity",
+    "output_collection_id": "interstage_buffer",
+    "study_cell_count": 8,
+    "replications_per_cell": 50,
+    "total_runs": 400,
+    "parallel_evaluations": false,
+    "adaptive_extension_allowed": false
+  },
+  "runtime_output_contract": {
+    "exact_replay_digest": {
+      "field": "normalized_event_payload_sha256",
+      "definition": "SHA-256 of the ordered traveller timing and routing event payload after excluding scenario, configuration, lineage, and output-path identifiers.",
+      "comparison_rule": "Use this normalized digest, not the raw event-ledger file digest, when testing exact paired replay between buffer arms that never become full."
+    },
+    "blocking_metrics": {
+      "security_blocked_resource_seconds": "Total Security resource-seconds retained after Security service completion while waiting to reserve an interstage-buffer slot.",
+      "security_busy_seconds": "Total Security resource-seconds spent performing Security service, excluding post-service blocking.",
+      "security_blocked_resource_fraction": {
+        "formula": "security_blocked_resource_seconds / (security_capacity * last_exit_seconds)",
+        "zero_denominator_value": 0,
+        "interpretation": "Share of total Security capacity-time consumed by blocking after service; this is not resource utilisation."
+      },
+      "security_blocked_share_of_occupied": {
+        "formula": "security_blocked_resource_seconds / (security_busy_seconds + security_blocked_resource_seconds)",
+        "zero_denominator_value": 0,
+        "interpretation": "Share of occupied Security resource-time attributable to post-service blocking; keep separate from utilisation and from security_blocked_resource_fraction."
+      }
+    }
+  },
+  "seed_policy": {
+    "source_manifest": "config/confirmatory_seed_manifest.csv",
+    "source_arrival_level_id": "MLE_BASE",
+    "source_input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+    "reuse_rule": "For replication r, all eight regime-by-buffer cells copy the exact Base master, arrival, service, routing, and tie seed tuple from the registered confirmatory manifest.",
+    "alignment_intent": "COMMON_EXOGENOUS_STREAMS_ACROSS_ALL_REGIME_BY_BUFFER_CELLS",
+    "paired_interpretation_gate": "Paired intervals may be reported only after exact seed coverage, arrival-trace alignment, traveller-level exogenous-draw alignment, and complete zero-loss conservation checks pass."
+  },
+  "analysis": {
+    "primary_descriptive_metric": "system_time_p95_seconds",
+    "primary_descriptive_contrast": "WITHIN_REGIME_BUFFER_25_MINUS_BUFFER_5000",
+    "supporting_metrics": [
+      "total_wait_including_interstage_mean_seconds",
+      "total_wait_including_interstage_p95_seconds",
+      "interstage_block_time_mean_seconds",
+      "interstage_block_time_p95_seconds",
+      "interstage_buffer_full_time_fraction",
+      "security_blocked_resource_fraction",
+      "security_blocked_share_of_occupied",
+      "interstage_buffer_peak_occupancy",
+      "time_weighted_mean_interstage_buffer_occupancy",
+      "security_wait_p95_seconds",
+      "immigration_wait_p95_seconds",
+      "cohort_clear_time_after_cutoff_seconds",
+      "completed_after_drain",
+      "rejected_or_dropped_count"
+    ],
+    "required_views": [
+      "p95_system_time_by_buffer_and_regime",
+      "positive_regime_mean_wait_decomposition",
+      "buffer_full_and_security_blocked_fraction",
+      "negative_control_flatness_check"
+    ],
+    "wait_decomposition_contract": "Mean additive waiting components are Security queue wait, post-Security blocking time, and finite interstage-buffer wait. Do not add component-wise P95 values.",
+    "uncertainty": "Report replication-level means with 95% Student-t intervals. Use paired differences only after the registered CRN alignment gate passes.",
+    "validation_expectations": [
+      "Every admitted traveller completes after full drain and rejected_or_dropped_count remains zero.",
+      "Observed interstage occupancy never exceeds the registered buffer capacity.",
+      "Any cell with zero buffer-full events must reproduce its larger-buffer paired arm exactly under the same seeds.",
+      "The 100 and 5000 positive-control arms are expected to be exact if the prior maximum occupancy of 90 remains unchanged under the reviewed runtime implementation.",
+      "All negative-control arms are expected to be exact if their buffer-full event counts remain zero."
+    ],
+    "multiplicity_rule": "No confirmatory p-value, calibrated space-capacity claim, or staffing decision claim. Treat knees, blocking fractions, queue relocation, and regime interactions as descriptive exploratory findings."
+  },
+  "calibration_boundary": {
+    "interstage_capacity_observed": false,
+    "usable_floor_area_observed": false,
+    "safe_density_observed": false,
+    "physical_layout_calibrated": false,
+    "site_forecast_claim": false,
+    "observed_roster_claim": false,
+    "staffing_recommendation_claim": false,
+    "interpretation": "Results will describe sensitivity of the assumption sandbox to declared finite waiting-space levels. They will not estimate the capacity or safe occupancy of an HTX checkpoint."
+  }
+}

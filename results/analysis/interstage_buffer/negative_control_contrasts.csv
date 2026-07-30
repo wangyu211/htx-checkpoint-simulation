@@ -1,0 +1,4 @@
+schema_version,study_id,regime,security_capacity,immigration_capacity,interstage_buffer_capacity,reference_buffer_capacity,metric,contrast,n_pairs,mean_difference_seconds,standard_deviation,standard_error,degrees_of_freedom,ci_level,ci_low_seconds,ci_high_seconds,equivalence_margin_seconds,zero_buffer_full_status,exact_replay_status,equivalence_status
+1.0,TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1,SECURITY_BOTTLENECK_NEGATIVE_CONTROL,30,21,25,5000,system_time_p95_seconds,B25_MINUS_B5000,50,0,0,0,49,0.95,0,0,1,PASS,PASS,PASS
+1.0,TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1,SECURITY_BOTTLENECK_NEGATIVE_CONTROL,30,21,50,5000,system_time_p95_seconds,B50_MINUS_B5000,50,0,0,0,49,0.95,0,0,1,PASS,PASS,PASS
+1.0,TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1,SECURITY_BOTTLENECK_NEGATIVE_CONTROL,30,21,100,5000,system_time_p95_seconds,B100_MINUS_B5000,50,0,0,0,49,0.95,0,0,1,PASS,PASS,PASS

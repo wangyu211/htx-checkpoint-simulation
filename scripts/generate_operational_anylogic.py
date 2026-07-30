@@ -62,6 +62,18 @@ from src.analysis.peak_duration_sensitivity_design import (  # noqa: E402
     load_peak_duration_seed_rows,
     validate_peak_duration_design,
 )
+from src.analysis.interstage_buffer_design import (  # noqa: E402
+    BLOCKING_POLICY as INTERSTAGE_BLOCKING_POLICY,
+    DEFAULT_DESIGN as INTERSTAGE_BUFFER_DESIGN,
+    DEFAULT_SCENARIOS as INTERSTAGE_BUFFER_SCENARIOS,
+    DEFAULT_SEED_MANIFEST as INTERSTAGE_BUFFER_SEED_MANIFEST,
+    MODEL_VERSION as INTERSTAGE_BUFFER_MODEL_VERSION,
+    STUDY_ID as INTERSTAGE_BUFFER_STUDY_ID,
+    interstage_scenario_config_sha256,
+    load_interstage_buffer_scenario_rows,
+    load_interstage_buffer_seed_rows,
+    validate_interstage_buffer_design,
+)
 
 ALP = REPO / "simulation" / "anylogic" / "HTXCheckpointSimulation" / "_alp"
 SPLIT_ALPX = ALP.parent / "HTXCheckpointSimulation.alpx"
@@ -69,9 +81,16 @@ AGENTS = ALP / "Agents"
 CHECKPOINT = AGENTS / "CheckpointModel"
 OP_MODEL = AGENTS / "OperationalCheckpointModel"
 OP_TRAVELLER = AGENTS / "OperationalTraveller"
+SPILLBACK_MODEL = AGENTS / "SpillbackCheckpointModel"
 OP_MODEL_ADDITIONAL_CLASS = OP_MODEL / "Code" / "AdditionalClass.java"
 OP_MODEL_ADDITIONAL_CLASS_CODE = (
     OP_MODEL / "Code" / "AdditionalClassCode.java"
+)
+SPILLBACK_MODEL_ADDITIONAL_CLASS = (
+    SPILLBACK_MODEL / "Code" / "AdditionalClass.java"
+)
+SPILLBACK_MODEL_ADDITIONAL_CLASS_CODE = (
+    SPILLBACK_MODEL / "Code" / "AdditionalClassCode.java"
 )
 EXPERIMENTS = ALP / "Experiments.xml"
 SCENARIOS = REPO / "config" / "operational_scenarios.csv"
@@ -106,6 +125,12 @@ PEAK_DURATION_EXPERIMENT_NAME = "PeakDurationSensitivity"
 PEAK_DURATION_OUTPUT_COLLECTION = "peak_duration_sensitivity"
 PEAK_DURATION_EXPERIMENT_ID = "1785162980001"
 PEAK_DURATION_TIMER_ID = "1785162980002"
+INTERSTAGE_BUFFER_EXPERIMENT_NAME = (
+    "InterstageBufferSpillbackSensitivity"
+)
+INTERSTAGE_BUFFER_OUTPUT_COLLECTION = "interstage_buffer"
+INTERSTAGE_BUFFER_EXPERIMENT_ID = "1785162990001"
+INTERSTAGE_BUFFER_TIMER_ID = "1785162990002"
 CANONICAL_EXPERIMENT_ORDER = (
     "GatePV2x3",
     "HppArrivalVerification",
@@ -118,6 +143,7 @@ CANONICAL_EXPERIMENT_ORDER = (
     "CapacityResponseSurfaceExploratory",
     "ServiceVariabilitySensitivity",
     "PeakDurationSensitivity",
+    "InterstageBufferSpillbackSensitivity",
 )
 CANONICAL_EXPERIMENT_TAGS = {
     "GatePV2x3": "ParamVariationExperiment",
@@ -131,6 +157,7 @@ CANONICAL_EXPERIMENT_TAGS = {
     "CapacityResponseSurfaceExploratory": "ParamVariationExperiment",
     "ServiceVariabilitySensitivity": "ParamVariationExperiment",
     "PeakDurationSensitivity": "ParamVariationExperiment",
+    "InterstageBufferSpillbackSensitivity": "ParamVariationExperiment",
 }
 CLI_GUI_SUFFIX_TAGS = (
     "Type",
@@ -151,6 +178,8 @@ INTERACTIVE_PARAMETER_NAMES = (
 TRAVELLER_POPULATION_NAME = "operationalTravellers"
 TRAVELLER_POPULATION_ID = "1785218300001"
 TRAVELLER_POPULATION_PRESENTATION_ID = "1785218300002"
+SPILLBACK_TRAVELLER_POPULATION_ID = "1785228300001"
+SPILLBACK_TRAVELLER_POPULATION_PRESENTATION_ID = "1785228300002"
 
 MODEL_BLOCK_POSITIONS = {
     "travellerSource": (90, 280, -18, -24),
@@ -381,6 +410,40 @@ def _load_peak_duration_inputs() -> tuple[
     return rows, seed_rows, validation
 
 
+def _load_interstage_buffer_inputs() -> tuple[
+    list[dict[str, str]], list[dict[str, str]], dict[str, object]
+]:
+    validation = validate_interstage_buffer_design(
+        design_path=INTERSTAGE_BUFFER_DESIGN,
+        scenarios_path=INTERSTAGE_BUFFER_SCENARIOS,
+        seed_manifest_path=INTERSTAGE_BUFFER_SEED_MANIFEST,
+    )
+    if validation["status"] != "PASS":
+        raise RuntimeError(
+            "Interstage-buffer design failed: "
+            + "; ".join(str(error) for error in validation["errors"])
+        )
+    rows = load_interstage_buffer_scenario_rows(
+        INTERSTAGE_BUFFER_SCENARIOS
+    )
+    seed_rows = load_interstage_buffer_seed_rows(
+        INTERSTAGE_BUFFER_SEED_MANIFEST
+    )
+    if len(rows) != 8 or len(seed_rows) != 50:
+        raise RuntimeError(
+            "InterstageBufferSpillbackSensitivity requires 8 execution cells "
+            "and 50 frozen Base seed groups"
+        )
+    if {
+        int(row["interstage_buffer_capacity"]) for row in rows
+    } != {25, 50, 100, 5000}:
+        raise RuntimeError(
+            "InterstageBufferSpillbackSensitivity buffer grid must remain "
+            "25, 50, 100, 5000"
+        )
+    return rows, seed_rows, validation
+
+
 def _ensure_split_references(
     path: Path,
     *,
@@ -548,6 +611,11 @@ TRAVELLER_VARIABLES = [
     ("security_queue_join", "double", "Double.NaN", True),
     ("security_start", "double", "Double.NaN", True),
     ("security_end", "double", "Double.NaN", True),
+    ("security_processing_end", "double", "Double.NaN", False),
+    ("interstage_block_start", "double", "Double.NaN", False),
+    ("interstage_admitted", "double", "Double.NaN", False),
+    ("interstage_block_seconds", "double", "0.0", False),
+    ("interstage_waiting_flag", "boolean", "false", False),
     ("immigration_queue_join", "double", "Double.NaN", True),
     ("immigration_lane_id", "String", '""', True),
     ("immigration_start", "double", "Double.NaN", True),
@@ -710,6 +778,76 @@ MODEL_PARAMETERS = [
 ]
 
 
+SPILLBACK_MODEL_VARIABLES = MODEL_VARIABLES + [
+    ("interstage_occupied_count", "int", "0", False),
+    ("interstage_occupancy_at_cutoff", "int", "0", False),
+    ("max_interstage_occupancy", "int", "0", False),
+    ("security_blocked_count", "int", "0", False),
+    ("security_blocked_at_cutoff", "int", "0", False),
+    ("max_security_blocked", "int", "0", False),
+    ("interstage_occupancy_last_change_time", "double", "0.0", False),
+    ("interstage_occupancy_area", "double", "0.0", False),
+    ("buffer_full_since", "double", "Double.NaN", False),
+    ("buffer_full_seconds", "double", "0.0", False),
+    ("security_blocked_resource_seconds", "double", "0.0", False),
+    ("security_occupied_seconds", "double", "0.0", False),
+    (
+        "interstage_block_times",
+        "java.util.ArrayList<Double>",
+        "new java.util.ArrayList<Double>()",
+        False,
+    ),
+    (
+        "total_wait_including_interstage_times",
+        "java.util.ArrayList<Double>",
+        "new java.util.ArrayList<Double>()",
+        False,
+    ),
+    (
+        "input_draw_rows",
+        "java.util.ArrayList<String>",
+        "new java.util.ArrayList<String>()",
+        False,
+    ),
+    (
+        "normalized_event_rows",
+        "java.util.ArrayList<String>",
+        "new java.util.ArrayList<String>()",
+        False,
+    ),
+]
+
+
+SPILLBACK_MODEL_PARAMETERS = [
+    (
+        name,
+        value_type,
+        (
+            f'"{INTERSTAGE_BUFFER_MODEL_VERSION}"'
+            if name == "model_version"
+            else (
+                f'"{INTERSTAGE_BUFFER_OUTPUT_COLLECTION}"'
+                if name == "output_collection_id"
+                else default
+            )
+        ),
+    )
+    for name, value_type, default in MODEL_PARAMETERS
+] + [
+    (
+        "study_id",
+        "String",
+        f'"{INTERSTAGE_BUFFER_STUDY_ID}"',
+    ),
+    ("interstage_buffer_capacity", "int", "5000"),
+    (
+        "interstage_blocking_policy",
+        "String",
+        '"BAS_HOLD_SECURITY_UNTIL_BUFFER_SLOT"',
+    ),
+]
+
+
 SERVICE_VARIABILITY_CLASS_CODE = """\
 /* SERVICE_VARIABILITY_BEGIN
  * Independent service streams preserve the HPP arrival stream.  Positive-CV
@@ -774,6 +912,38 @@ private double primaryServiceDemand(
 \treturn demand;
 }
 /* SERVICE_VARIABILITY_END */"""
+
+
+SPILLBACK_AUDIT_CLASS_CODE = """\
+/* INTERSTAGE_SPILLBACK_AUDIT_BEGIN
+ * Canonical, configuration-independent digests support CRN and exact-replay
+ * gates.  Rows are sorted before hashing so the digest does not depend on
+ * collection iteration order.
+ */
+public String sha256CanonicalRows( java.util.List<String> sourceRows ) {
+\ttry {
+\t\tjava.util.ArrayList<String> rows =
+\t\t\tnew java.util.ArrayList<String>( sourceRows );
+\t\tjava.util.Collections.sort( rows );
+\t\tjava.security.MessageDigest digest =
+\t\t\tjava.security.MessageDigest.getInstance( "SHA-256" );
+\t\tfor ( String row : rows ) {
+\t\t\tdigest.update(
+\t\t\t\trow.getBytes( java.nio.charset.StandardCharsets.UTF_8 )
+\t\t\t);
+\t\t\tdigest.update( (byte) '\\n' );
+\t\t}
+\t\tStringBuilder hexadecimal = new StringBuilder();
+\t\tfor ( byte value : digest.digest() )
+\t\t\thexadecimal.append(
+\t\t\t\tString.format( java.util.Locale.ROOT, "%02x", value & 0xff )
+\t\t\t);
+\t\treturn hexadecimal.toString();
+\t} catch ( java.security.NoSuchAlgorithmException exception ) {
+\t\tthrow new IllegalStateException( "SHA-256 is unavailable", exception );
+\t}
+}
+/* INTERSTAGE_SPILLBACK_AUDIT_END */"""
 
 
 PRESENTATION_ANIMATION_CLASS_CODE = """\
@@ -1034,9 +1204,265 @@ entity_log_rows.add(
 \t\t\ttraveller.additional_check_flag
 \t\t\t\t? String.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_end )
 \t\t\t\t: "",
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.exit )
+\t\t}
+\t)
+);
+if ( arrivals_closed && completed == admitted ) {
+\trun_status = "COMPLETE";
+\tfinishSimulation();
+}"""
+
+
+SPILLBACK_SOURCE_ON_EXIT = (
+    SOURCE_ON_EXIT.rsplit(
+        "\nif ( presentation_animation_enabled ) {",
+        maxsplit=1,
+    )[0]
+    + "\n"
+    + """\
+input_draw_rows.add(
+\tString.join(
+\t\t",",
+\t\tnew String[] {
+\t\t\ttraveller.traveller_id,
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.arrival ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_service_demand ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_conventional_service_demand ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.automation_u ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_u ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.lane_tie_u ),
+\t\t\tBoolean.toString( traveller.technology_flag ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_primary_service_demand ),
+\t\t\tBoolean.toString( traveller.additional_check_flag ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_service_demand )
+\t\t}
+\t)
+);"""
+)
+
+
+SPILLBACK_SECURITY_SEIZE_ENTER = """\
+if ( security_queue_count >= security_queue_capacity ) {
+\trejected_or_dropped_count++;
+\tthrow new IllegalStateException( "Security queue capacity reached" );
+}
+OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.security_queue_join = time();
+security_queue_count++;
+max_security_queue = Math.max( max_security_queue, security_queue_count );"""
+
+
+SPILLBACK_SECURITY_SEIZE_EXIT = """\
+OperationalTraveller traveller = (OperationalTraveller) agent;
+security_queue_count--;
+security_in_service_count++;
+traveller.security_start = time();"""
+
+
+SPILLBACK_SECURITY_DELAY_EXIT = """\
+OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.security_processing_end = time();
+traveller.interstage_block_start = time();"""
+
+
+SPILLBACK_SPACE_SEIZE_ENTER = """\
+OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.interstage_block_start = time();
+traveller.interstage_waiting_flag =
+\tinterstage_occupied_count >= interstage_buffer_capacity;
+if ( traveller.interstage_waiting_flag ) {
+\tsecurity_blocked_count++;
+\tmax_security_blocked = Math.max(
+\t\tmax_security_blocked,
+\t\tsecurity_blocked_count
+\t);
+}"""
+
+
+SPILLBACK_SPACE_SEIZE_UNIT = """\
+OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.interstage_admitted = time();
+traveller.interstage_block_seconds = Math.max(
+\t0.0,
+\ttraveller.interstage_admitted - traveller.interstage_block_start
+);
+interstage_block_times.add( traveller.interstage_block_seconds );
+security_blocked_resource_seconds += traveller.interstage_block_seconds;
+if ( traveller.interstage_waiting_flag ) {
+\tsecurity_blocked_count--;
+\ttraveller.interstage_waiting_flag = false;
+}
+interstage_occupancy_area += interstage_occupied_count
+\t* Math.max( 0.0, time() - interstage_occupancy_last_change_time );
+interstage_occupancy_last_change_time = time();
+interstage_occupied_count++;
+if ( interstage_occupied_count > interstage_buffer_capacity )
+\tthrow new IllegalStateException(
+\t\t"interstage occupancy exceeded declared capacity"
+\t);
+max_interstage_occupancy = Math.max(
+\tmax_interstage_occupancy,
+\tinterstage_occupied_count
+);
+if ( interstage_occupied_count == interstage_buffer_capacity ) {
+\tif ( !Double.isNaN( buffer_full_since ) )
+\t\tthrow new IllegalStateException(
+\t\t\t"interstage full interval was already open"
+\t\t);
+\tbuffer_full_since = time();
+}"""
+
+
+SPILLBACK_SECURITY_RELEASE_ENTER = """\
+OperationalTraveller traveller = (OperationalTraveller) agent;
+security_in_service_count--;
+traveller.security_end = time();
+security_busy_seconds += traveller.security_service_demand;
+security_occupied_seconds +=
+\ttraveller.security_end - traveller.security_start;"""
+
+
+SPILLBACK_IMMIGRATION_SEIZE_ENTER = """\
+if ( immigration_queue_count >= immigration_queue_capacity ) {
+\trejected_or_dropped_count++;
+\tthrow new IllegalStateException( "Immigration queue capacity reached" );
+}
+OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.immigration_queue_join = time();
+traveller.immigration_lane_id = "IMMIGRATION_POOLED";
+immigration_queue_count++;
+max_immigration_queue = Math.max(
+\tmax_immigration_queue,
+\timmigration_queue_count
+);"""
+
+
+SPILLBACK_IMMIGRATION_SEIZE_EXIT = """\
+OperationalTraveller traveller = (OperationalTraveller) agent;
+immigration_queue_count--;
+immigration_in_service_count++;
+traveller.immigration_start = time();
+traveller.immigration_primary_end =
+\ttraveller.immigration_start
+\t+ traveller.immigration_primary_service_demand;"""
+
+
+SPILLBACK_SPACE_RELEASE_ENTER = """\
+if ( interstage_occupied_count <= 0 )
+\tthrow new IllegalStateException(
+\t\t"interstage occupancy underflow before release"
+\t);
+interstage_occupancy_area += interstage_occupied_count
+\t* Math.max( 0.0, time() - interstage_occupancy_last_change_time );
+interstage_occupancy_last_change_time = time();
+if ( interstage_occupied_count == interstage_buffer_capacity ) {
+\tif ( Double.isNaN( buffer_full_since ) )
+\t\tthrow new IllegalStateException(
+\t\t\t"interstage full interval is missing its start"
+\t\t);
+\tbuffer_full_seconds += Math.max( 0.0, time() - buffer_full_since );
+\tbuffer_full_since = Double.NaN;
+}
+interstage_occupied_count--;"""
+
+
+SPILLBACK_IMMIGRATION_DELAY_EXIT = """\
+OperationalTraveller traveller = (OperationalTraveller) agent;
+immigration_in_service_count--;
+if ( traveller.additional_check_flag )
+\ttraveller.additional_check_end = time();
+immigration_busy_seconds +=
+\ttraveller.immigration_primary_service_demand
+\t+ traveller.additional_check_service_demand;"""
+
+
+SPILLBACK_SINK_ENTER = """\
+OperationalTraveller traveller = (OperationalTraveller) agent;
+traveller.exit = time();
+completed++;
+last_exit = traveller.exit;
+double securityWait =
+\ttraveller.security_start - traveller.security_queue_join;
+double immigrationWait =
+\ttraveller.immigration_start - traveller.immigration_queue_join;
+double totalQueueWait = securityWait + immigrationWait;
+double totalWaitIncludingInterstage =
+\ttotalQueueWait + traveller.interstage_block_seconds;
+double systemTime = traveller.exit - traveller.arrival;
+security_waits.add( securityWait );
+immigration_waits.add( immigrationWait );
+total_queue_waits.add( totalQueueWait );
+total_wait_including_interstage_times.add(
+\ttotalWaitIncludingInterstage
+);
+system_times.add( systemTime );
+if ( totalQueueWait > 600.0 ) exceed_600_count++;
+if ( totalQueueWait > 900.0 ) exceed_900_count++;
+if ( totalQueueWait > 1200.0 ) exceed_1200_count++;
+entity_log_rows.add(
+\tString.join(
+\t\t",",
+\t\tnew String[] {
+\t\t\tschema_version,
+\t\t\tconfig_id,
+\t\t\tconfig_sha256,
+\t\t\tmodel_version,
+\t\t\tscenario_id,
+\t\t\ttraveller.input_sample_id,
+\t\t\tInteger.toString( traveller.replication_id ),
+\t\t\ttraveller.traveller_id,
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.arrival ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_service_demand ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_conventional_service_demand ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.automation_u ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_u ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.lane_tie_u ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_queue_join ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_start ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_end ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_queue_join ),
+\t\t\ttraveller.immigration_lane_id,
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_start ),
+\t\t\tBoolean.toString( traveller.technology_flag ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_primary_service_demand ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_primary_end ),
+\t\t\tBoolean.toString( traveller.additional_check_flag ),
+\t\t\ttraveller.additional_check_flag
+\t\t\t\t? String.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_service_demand )
+\t\t\t\t: "",
+\t\t\ttraveller.additional_check_flag
+\t\t\t\t? String.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_end )
+\t\t\t\t: "",
 \t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.exit ),
 \t\t\ttraveller.security_resource_id,
-\t\t\ttraveller.immigration_resource_id
+\t\t\ttraveller.immigration_resource_id,
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_processing_end ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.interstage_block_start ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.interstage_admitted ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.interstage_block_seconds )
+\t\t}
+\t)
+);
+normalized_event_rows.add(
+\tString.join(
+\t\t",",
+\t\tnew String[] {
+\t\t\ttraveller.traveller_id,
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.arrival ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_queue_join ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_start ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_processing_end ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.interstage_admitted ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.interstage_block_seconds ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.security_end ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_queue_join ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_start ),
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.immigration_primary_end ),
+\t\t\ttraveller.additional_check_flag
+\t\t\t\t? String.format( java.util.Locale.ROOT, "%.9f", traveller.additional_check_end )
+\t\t\t\t: "",
+\t\t\tString.format( java.util.Locale.ROOT, "%.9f", traveller.exit )
 \t\t}
 \t)
 );
@@ -1064,6 +1490,15 @@ if ( completed == admitted ) {
 \trun_status = "COMPLETE";
 \tfinishSimulation();
 }"""
+
+
+SPILLBACK_CUTOFF_ACTION = CUTOFF_ACTION.replace(
+    "immigration_in_service_at_cutoff = immigration_in_service_count;",
+    """\
+immigration_in_service_at_cutoff = immigration_in_service_count;
+interstage_occupancy_at_cutoff = interstage_occupied_count;
+security_blocked_at_cutoff = security_blocked_count;""",
+)
 
 
 def _presentation_rectangle(
@@ -1586,17 +2021,22 @@ def _replace_parameter(block: str, name: str, replacement: str) -> str:
     return result
 
 
-def _traveller_population_xml(op_traveller_generic_id: str) -> str:
+def _traveller_population_xml(
+    op_traveller_generic_id: str,
+    *,
+    population_id: str = TRAVELLER_POPULATION_ID,
+    presentation_id: str = TRAVELLER_POPULATION_PRESENTATION_ID,
+) -> str:
     return f"""\
 \t<EmbeddedObject>
-\t\t<Id>{TRAVELLER_POPULATION_ID}</Id>
+\t\t<Id>{population_id}</Id>
 \t\t<Name><![CDATA[{TRAVELLER_POPULATION_NAME}]]></Name>
 \t\t<X>40</X><Y>650</Y>
 \t\t<Label><X>20</X><Y>0</Y></Label>
 \t\t<PublicFlag>false</PublicFlag>
 \t\t<PresentationFlag>true</PresentationFlag>
 \t\t<ShowLabel>false</ShowLabel>
-\t\t<PresentationId>{TRAVELLER_POPULATION_PRESENTATION_ID}</PresentationId>
+\t\t<PresentationId>{presentation_id}</PresentationId>
 \t\t<ActiveObjectClass>
 \t\t\t<PackageName><![CDATA[htx.checkpoint]]></PackageName>
 \t\t\t<ClassName><![CDATA[OperationalTraveller]]></ClassName>
@@ -1629,6 +2069,219 @@ def _traveller_population_xml(op_traveller_generic_id: str) -> str:
 \t\t<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
 \t\t<QuantityColumn/>
 \t</EmbeddedObject>"""
+
+
+def _named_embedded_object(text: str, name: str) -> str:
+    pattern = re.compile(
+        r"\t<EmbeddedObject>\s*"
+        r"<Id>\d+</Id>\s*"
+        + rf"<Name><!\[CDATA\[{re.escape(name)}\]\]></Name>"
+        + r".*?\t</EmbeddedObject>",
+        re.DOTALL,
+    )
+    matches = pattern.findall(text)
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"Expected one embedded object {name}, found {len(matches)}"
+        )
+    return matches[0]
+
+
+def _reassign_embedded_ids(block: str, base: int) -> str:
+    ids = list(dict.fromkeys(re.findall(r"<Id>(\d+)</Id>", block)))
+    replacements = {
+        old: str(base + index)
+        for index, old in enumerate(ids)
+    }
+    for old, new in replacements.items():
+        block = block.replace(f"<Id>{old}</Id>", f"<Id>{new}</Id>")
+    return block
+
+
+def _clone_embedded_object(
+    source: str,
+    source_name: str,
+    *,
+    name: str,
+    id_base: int,
+    x: int,
+    y: int,
+    label_x: int,
+    label_y: int,
+) -> str:
+    block = _named_embedded_object(source, source_name)
+    block = _reassign_embedded_ids(block, id_base)
+    block = block.replace(
+        f"<Name><![CDATA[{source_name}]]></Name>",
+        f"<Name><![CDATA[{name}]]></Name>",
+        1,
+    )
+    return _replace_embedded_position(
+        block,
+        x=x,
+        y=y,
+        label_x=label_x,
+        label_y=label_y,
+    )
+
+
+def _library_process_block_xml(
+    *,
+    item_id: int,
+    query_id: int,
+    name: str,
+    class_name: str,
+    generic_item_id: str,
+    x: int,
+    y: int,
+    label_x: int,
+    label_y: int,
+    parameter_names: tuple[str, ...],
+    parameter_values: dict[str, tuple[str | None, str, str]],
+) -> str:
+    parameters: list[str] = []
+    for parameter_name in parameter_names:
+        value_class, code, unit = parameter_values.get(
+            parameter_name,
+            (None, "", ""),
+        )
+        parameters.append(
+            _parameter_fragment(
+                parameter_name,
+                value_class,
+                code,
+                unit,
+            )
+        )
+    parameter_xml = "\n".join(parameters)
+    return f"""\
+\t<EmbeddedObject>
+\t\t<Id>{item_id}</Id>
+\t\t<Name><![CDATA[{name}]]></Name>
+\t\t<X>{x}</X>
+\t\t<Y>{y}</Y>
+\t\t<Label><X>{label_x}</X><Y>{label_y}</Y></Label>
+\t\t<PublicFlag>false</PublicFlag>
+\t\t<PresentationFlag>true</PresentationFlag>
+\t\t<ShowLabel>true</ShowLabel>
+\t\t<ActiveObjectClass>
+\t\t\t<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+\t\t\t<ClassName>{class_name}</ClassName>
+\t\t</ActiveObjectClass>
+\t\t<GenericParameterSubstitute>
+\t\t\t<GenericParameterSubstituteReference>
+\t\t\t\t<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+\t\t\t\t<ClassName>{class_name}</ClassName>
+\t\t\t\t<ItemName>{generic_item_id}</ItemName>
+\t\t\t</GenericParameterSubstituteReference>
+\t\t</GenericParameterSubstitute>
+\t\t<Parameters>
+{parameter_xml}
+\t\t</Parameters>
+\t\t<ReplicationFlag>false</ReplicationFlag>
+\t\t<Replication Class="CodeValue">
+\t\t\t<Code><![CDATA[100]]></Code>
+\t\t</Replication>
+\t\t<CollectionType>ARRAY_LIST_BASED</CollectionType>
+\t\t<InitialLocationType>XYZ</InitialLocationType>
+\t\t<ColumnCode Class="CodeValue"><Code><![CDATA[0]]></Code></ColumnCode>
+\t\t<RowCode Class="CodeValue"><Code><![CDATA[0]]></Code></RowCode>
+\t\t<LocationNameCode Class="CodeValue"><Code><![CDATA[""]]></Code></LocationNameCode>
+\t\t<InitializationType>SPECIFIED_NUMBER</InitializationType>
+\t\t<InitializationDatabaseTableQuery>
+\t\t\t<Id>{query_id}</Id>
+\t\t\t<TableReference/>
+\t\t</InitializationDatabaseTableQuery>
+\t\t<InitializationDatabaseType>ONE_AGENT_PER_DATABASE_RECORD</InitializationDatabaseType>
+\t\t<QuantityColumn/>
+\t</EmbeddedObject>"""
+
+
+SEIZE_PARAMETER_NAMES = (
+    "seizeFromOnePool",
+    "resourceSets",
+    "resourcePool",
+    "resourceQuantity",
+    "seizePolicy",
+    "capacity",
+    "maximumCapacity",
+    "sendResources",
+    "destinationType",
+    "destinationNode",
+    "destinationAttractor",
+    "destinationResource",
+    "destinationX",
+    "destinationY",
+    "destinationZ",
+    "attachResources",
+    "entityLocationQueue",
+    "priority",
+    "taskMayPreemptOtherTasks",
+    "taskPreemptionPolicy",
+    "terminatedTaskProcessing",
+    "terminatedTasksEnter",
+    "suspendResumeEntities",
+    "customizeResourceChoice",
+    "resourceChoiceCondition",
+    "resourceSelectionMode",
+    "resourceRating",
+    "resourceComparison",
+    "taskStartBlocksAreConnected",
+    "taskStartBlocks",
+    "enableTimeout",
+    "timeout",
+    "enablePreemption",
+    "canceledUnitsBehavior",
+    "canceledUnitsRelease",
+    "pushProtocol",
+    "restoreEntityLocationOnExit",
+    "forceStatisticsCollection",
+    "onEnter",
+    "onExitTimeout",
+    "onExitPreempted",
+    "onSeizeUnit",
+    "onPrepareUnit",
+    "onExit",
+    "onRemove",
+    "onTaskTerminated",
+    "onTaskSuspended",
+    "onTaskResumed",
+)
+
+
+DELAY_PARAMETER_NAMES = (
+    "type",
+    "delayTime",
+    "capacity",
+    "maximumCapacity",
+    "entityLocation",
+    "pushProtocol",
+    "restoreEntityLocationOnExit",
+    "forceStatisticsCollection",
+    "onEnter",
+    "onAtExit",
+    "onExit",
+    "onRemove",
+)
+
+
+RELEASE_PARAMETER_NAMES = (
+    "releaseMode",
+    "resourcePool",
+    "quantity",
+    "resources",
+    "seizeBlocks",
+    "movingGoHome",
+    "wrapUpTaskPolicyType",
+    "wrapUpTaskPriority",
+    "wrapUpTaskMayPreemptOtherTasks",
+    "wrapUpTaskPreemptionPolicy",
+    "wrapUpUsageState",
+    "onEnter",
+    "onReleaseUnit",
+    "onExit",
+    "onWrapUpTerminated",
+)
 
 
 def _transform_embedded_objects(op_traveller_generic_id: str) -> str:
@@ -1793,6 +2446,394 @@ def _transform_embedded_objects(op_traveller_generic_id: str) -> str:
     )
 
 
+def _transform_spillback_embedded_objects(
+    op_traveller_generic_id: str,
+) -> str:
+    """Build the explicit Seize/Delay/Release BAS flow.
+
+    The interstage ResourcePool is a token pool for waiting-space slots.  A
+    traveller must seize one slot before Security is released, which implements
+    blocking after service without changing the frozen operational model.
+    """
+
+    operational = _read(OP_MODEL / "EmbeddedObjects.xml")
+
+    source = _clone_embedded_object(
+        operational,
+        "travellerSource",
+        name="travellerSource",
+        id_base=1785163320001,
+        x=70,
+        y=280,
+        label_x=-18,
+        label_y=-24,
+    )
+    source = _replace_parameter(
+        source,
+        "onExit",
+        _parameter_fragment(
+            "onExit",
+            "CodeValue",
+            SPILLBACK_SOURCE_ON_EXIT,
+        ),
+    )
+
+    security_resources = _clone_embedded_object(
+        operational,
+        "securityResources",
+        name="securityResources",
+        id_base=1785163320101,
+        x=250,
+        y=400,
+        label_x=-34,
+        label_y=-20,
+    )
+    security_resources = _replace_parameter(
+        security_resources,
+        "capacity",
+        _parameter_fragment(
+            "capacity",
+            "CodeValue",
+            "security_capacity",
+        ),
+    )
+
+    interstage_space = _clone_embedded_object(
+        operational,
+        "securityResources",
+        name="interstageSpace",
+        id_base=1785163320201,
+        x=500,
+        y=400,
+        label_x=-34,
+        label_y=-20,
+    )
+    interstage_space = _replace_parameter(
+        interstage_space,
+        "capacity",
+        _parameter_fragment(
+            "capacity",
+            "CodeValue",
+            "interstage_buffer_capacity",
+        ),
+    )
+
+    immigration_resources = _clone_embedded_object(
+        operational,
+        "immigrationResources",
+        name="immigrationResources",
+        id_base=1785163320301,
+        x=760,
+        y=400,
+        label_x=-40,
+        label_y=-20,
+    )
+    immigration_resources = _replace_parameter(
+        immigration_resources,
+        "capacity",
+        _parameter_fragment(
+            "capacity",
+            "CodeValue",
+            "immigration_capacity",
+        ),
+    )
+
+    security_seize = _library_process_block_xml(
+        item_id=1785163320401,
+        query_id=1785163320402,
+        name="securitySeize",
+        class_name="Seize",
+        generic_item_id="1412336243147",
+        x=170,
+        y=270,
+        label_x=-26,
+        label_y=-24,
+        parameter_names=SEIZE_PARAMETER_NAMES,
+        parameter_values={
+            "seizeFromOnePool": ("CodeValue", "true", ""),
+            "resourcePool": ("CodeValue", "securityResources", ""),
+            "resourceQuantity": ("CodeValue", "1", ""),
+            "capacity": ("CodeValue", "security_queue_capacity", ""),
+            "maximumCapacity": ("CodeValue", "false", ""),
+            "sendResources": ("CodeValue", "false", ""),
+            "pushProtocol": ("CodeValue", "false", ""),
+            "forceStatisticsCollection": ("CodeValue", "true", ""),
+            "onEnter": (
+                "CodeValue",
+                SPILLBACK_SECURITY_SEIZE_ENTER,
+                "",
+            ),
+            "onSeizeUnit": (
+                "CodeValue",
+                '((OperationalTraveller) agent).security_resource_id = '
+                '"SECURITY_" + Integer.toString( unit.getId() );',
+                "",
+            ),
+            "onExit": (
+                "CodeValue",
+                SPILLBACK_SECURITY_SEIZE_EXIT,
+                "",
+            ),
+        },
+    )
+
+    security_delay = _library_process_block_xml(
+        item_id=1785163320501,
+        query_id=1785163320502,
+        name="securityDelay",
+        class_name="Delay",
+        generic_item_id="1412336242930",
+        x=280,
+        y=270,
+        label_x=-24,
+        label_y=-24,
+        parameter_names=DELAY_PARAMETER_NAMES,
+        parameter_values={
+            "type": ("CodeValue", "self.TIMEOUT", ""),
+            "delayTime": (
+                "CodeUnitValue",
+                "((OperationalTraveller) agent).security_service_demand",
+                "TimeUnits",
+            ),
+            "capacity": ("CodeValue", "security_capacity", ""),
+            "maximumCapacity": ("CodeValue", "false", ""),
+            "pushProtocol": ("CodeValue", "false", ""),
+            "forceStatisticsCollection": ("CodeValue", "true", ""),
+            "onAtExit": (
+                "CodeValue",
+                SPILLBACK_SECURITY_DELAY_EXIT,
+                "",
+            ),
+        },
+    )
+
+    interstage_space_seize = _library_process_block_xml(
+        item_id=1785163320601,
+        query_id=1785163320602,
+        name="interstageSpaceSeize",
+        class_name="Seize",
+        generic_item_id="1412336243147",
+        x=390,
+        y=270,
+        label_x=-45,
+        label_y=-24,
+        parameter_names=SEIZE_PARAMETER_NAMES,
+        parameter_values={
+            "seizeFromOnePool": ("CodeValue", "true", ""),
+            "resourcePool": ("CodeValue", "interstageSpace", ""),
+            "resourceQuantity": ("CodeValue", "1", ""),
+            "capacity": ("CodeValue", "arrival_guard", ""),
+            "maximumCapacity": ("CodeValue", "false", ""),
+            "sendResources": ("CodeValue", "false", ""),
+            "pushProtocol": ("CodeValue", "false", ""),
+            "forceStatisticsCollection": ("CodeValue", "true", ""),
+            "onEnter": (
+                "CodeValue",
+                SPILLBACK_SPACE_SEIZE_ENTER,
+                "",
+            ),
+            "onSeizeUnit": (
+                "CodeValue",
+                SPILLBACK_SPACE_SEIZE_UNIT,
+                "",
+            ),
+        },
+    )
+
+    security_release = _library_process_block_xml(
+        item_id=1785163320701,
+        query_id=1785163320702,
+        name="securityRelease",
+        class_name="Release",
+        generic_item_id="1412336243154",
+        x=500,
+        y=270,
+        label_x=-34,
+        label_y=-24,
+        parameter_names=RELEASE_PARAMETER_NAMES,
+        parameter_values={
+            "releaseMode": (
+                "CodeValue",
+                "self.SPECIFIED_QUANTITY",
+                "",
+            ),
+            "resourcePool": ("CodeValue", "securityResources", ""),
+            "quantity": ("CodeValue", "1", ""),
+            "onEnter": (
+                "CodeValue",
+                SPILLBACK_SECURITY_RELEASE_ENTER,
+                "",
+            ),
+        },
+    )
+
+    immigration_seize = _library_process_block_xml(
+        item_id=1785163320801,
+        query_id=1785163320802,
+        name="immigrationSeize",
+        class_name="Seize",
+        generic_item_id="1412336243147",
+        x=610,
+        y=270,
+        label_x=-35,
+        label_y=-24,
+        parameter_names=SEIZE_PARAMETER_NAMES,
+        parameter_values={
+            "seizeFromOnePool": ("CodeValue", "true", ""),
+            "resourcePool": ("CodeValue", "immigrationResources", ""),
+            "resourceQuantity": ("CodeValue", "1", ""),
+            "capacity": ("CodeValue", "immigration_queue_capacity", ""),
+            "maximumCapacity": ("CodeValue", "false", ""),
+            "sendResources": ("CodeValue", "false", ""),
+            "pushProtocol": ("CodeValue", "false", ""),
+            "forceStatisticsCollection": ("CodeValue", "true", ""),
+            "onEnter": (
+                "CodeValue",
+                SPILLBACK_IMMIGRATION_SEIZE_ENTER,
+                "",
+            ),
+            "onSeizeUnit": (
+                "CodeValue",
+                '((OperationalTraveller) agent).immigration_resource_id = '
+                '"IMMIGRATION_" + Integer.toString( unit.getId() );',
+                "",
+            ),
+            "onExit": (
+                "CodeValue",
+                SPILLBACK_IMMIGRATION_SEIZE_EXIT,
+                "",
+            ),
+        },
+    )
+
+    interstage_space_release = _library_process_block_xml(
+        item_id=1785163320901,
+        query_id=1785163320902,
+        name="interstageSpaceRelease",
+        class_name="Release",
+        generic_item_id="1412336243154",
+        x=720,
+        y=270,
+        label_x=-46,
+        label_y=-24,
+        parameter_names=RELEASE_PARAMETER_NAMES,
+        parameter_values={
+            "releaseMode": (
+                "CodeValue",
+                "self.SPECIFIED_QUANTITY",
+                "",
+            ),
+            "resourcePool": ("CodeValue", "interstageSpace", ""),
+            "quantity": ("CodeValue", "1", ""),
+            "onEnter": (
+                "CodeValue",
+                SPILLBACK_SPACE_RELEASE_ENTER,
+                "",
+            ),
+        },
+    )
+
+    immigration_delay = _library_process_block_xml(
+        item_id=1785163321001,
+        query_id=1785163321002,
+        name="immigrationDelay",
+        class_name="Delay",
+        generic_item_id="1412336242930",
+        x=830,
+        y=270,
+        label_x=-36,
+        label_y=-24,
+        parameter_names=DELAY_PARAMETER_NAMES,
+        parameter_values={
+            "type": ("CodeValue", "self.TIMEOUT", ""),
+            "delayTime": (
+                "CodeUnitValue",
+                "((OperationalTraveller) agent).immigration_primary_service_demand\n"
+                "+ ((OperationalTraveller) agent).additional_check_service_demand",
+                "TimeUnits",
+            ),
+            "capacity": ("CodeValue", "immigration_capacity", ""),
+            "maximumCapacity": ("CodeValue", "false", ""),
+            "pushProtocol": ("CodeValue", "false", ""),
+            "forceStatisticsCollection": ("CodeValue", "true", ""),
+            "onAtExit": (
+                "CodeValue",
+                SPILLBACK_IMMIGRATION_DELAY_EXIT,
+                "",
+            ),
+        },
+    )
+
+    immigration_release = _library_process_block_xml(
+        item_id=1785163321101,
+        query_id=1785163321102,
+        name="immigrationRelease",
+        class_name="Release",
+        generic_item_id="1412336243154",
+        x=940,
+        y=270,
+        label_x=-42,
+        label_y=-24,
+        parameter_names=RELEASE_PARAMETER_NAMES,
+        parameter_values={
+            "releaseMode": (
+                "CodeValue",
+                "self.SPECIFIED_QUANTITY",
+                "",
+            ),
+            "resourcePool": ("CodeValue", "immigrationResources", ""),
+            "quantity": ("CodeValue", "1", ""),
+        },
+    )
+
+    sink = _clone_embedded_object(
+        operational,
+        "checkpointSink",
+        name="checkpointSink",
+        id_base=1785163321201,
+        x=1050,
+        y=280,
+        label_x=-10,
+        label_y=-24,
+    )
+    sink = _replace_parameter(
+        sink,
+        "onEnter",
+        _parameter_fragment(
+            "onEnter",
+            "CodeValue",
+            SPILLBACK_SINK_ENTER,
+        ),
+    )
+
+    blocks = (
+        source,
+        security_resources,
+        interstage_space,
+        immigration_resources,
+        security_seize,
+        security_delay,
+        interstage_space_seize,
+        security_release,
+        immigration_seize,
+        interstage_space_release,
+        immigration_delay,
+        immigration_release,
+        sink,
+        _traveller_population_xml(
+            op_traveller_generic_id,
+            population_id=SPILLBACK_TRAVELLER_POPULATION_ID,
+            presentation_id=SPILLBACK_TRAVELLER_POPULATION_PRESENTATION_ID,
+        ),
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        "<EmbeddedObjects>\n"
+        + "\n".join(blocks)
+        + "\n</EmbeddedObjects>\n"
+    )
+
+
 def _transform_connectors() -> str:
     text = _read(CHECKPOINT / "Connectors.xml")
     text = text.replace("178508803", "178516313")
@@ -1826,6 +2867,166 @@ def _transform_connectors() -> str:
                 raise RuntimeError(f"Connector {name} points are missing")
         transformed.append(block)
     return "".join(transformed)
+
+
+def _process_connector_xml(
+    *,
+    item_id: int,
+    name: str,
+    source_name: str,
+    source_class: str,
+    target_name: str,
+    target_class: str,
+    start: tuple[int, int],
+    end: tuple[int, int],
+) -> str:
+    return f"""\
+\t<Connector>
+\t\t<Id>{item_id}</Id>
+\t\t<Name><![CDATA[{name}]]></Name>
+\t\t<X>0</X><Y>0</Y>
+\t\t<Label><X>10</X><Y>0</Y></Label>
+\t\t<PublicFlag>false</PublicFlag>
+\t\t<PresentationFlag>true</PresentationFlag>
+\t\t<ShowLabel>false</ShowLabel>
+\t\t<SourceEmbeddedObjectReference>
+\t\t\t<PackageName>htx.checkpoint</PackageName>
+\t\t\t<ClassName>SpillbackCheckpointModel</ClassName>
+\t\t\t<ItemName>{source_name}</ItemName>
+\t\t</SourceEmbeddedObjectReference>
+\t\t<SourceConnectableItemReference>
+\t\t\t<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+\t\t\t<ClassName>{source_class}</ClassName>
+\t\t\t<ItemName>out</ItemName>
+\t\t</SourceConnectableItemReference>
+\t\t<TargetEmbeddedObjectReference>
+\t\t\t<PackageName>htx.checkpoint</PackageName>
+\t\t\t<ClassName>SpillbackCheckpointModel</ClassName>
+\t\t\t<ItemName>{target_name}</ItemName>
+\t\t</TargetEmbeddedObjectReference>
+\t\t<TargetConnectableItemReference>
+\t\t\t<PackageName>com.anylogic.libraries.processmodeling</PackageName>
+\t\t\t<ClassName>{target_class}</ClassName>
+\t\t\t<ItemName>in</ItemName>
+\t\t</TargetConnectableItemReference>
+\t\t<Points>
+\t\t\t<Point><X>{start[0]}</X><Y>{start[1]}</Y></Point>
+\t\t\t<Point><X>{end[0]}</X><Y>{end[1]}</Y></Point>
+\t\t</Points>
+\t</Connector>"""
+
+
+def _transform_spillback_connectors() -> str:
+    definitions = (
+        (
+            "sourceToSecuritySeize",
+            "travellerSource",
+            "Source",
+            "securitySeize",
+            "Seize",
+            (100, 290),
+            (170, 290),
+        ),
+        (
+            "securitySeizeToDelay",
+            "securitySeize",
+            "Seize",
+            "securityDelay",
+            "Delay",
+            (230, 290),
+            (280, 290),
+        ),
+        (
+            "securityDelayToSpaceSeize",
+            "securityDelay",
+            "Delay",
+            "interstageSpaceSeize",
+            "Seize",
+            (340, 290),
+            (390, 290),
+        ),
+        (
+            "spaceSeizeToSecurityRelease",
+            "interstageSpaceSeize",
+            "Seize",
+            "securityRelease",
+            "Release",
+            (450, 290),
+            (500, 290),
+        ),
+        (
+            "securityReleaseToImmigrationSeize",
+            "securityRelease",
+            "Release",
+            "immigrationSeize",
+            "Seize",
+            (560, 290),
+            (610, 290),
+        ),
+        (
+            "immigrationSeizeToSpaceRelease",
+            "immigrationSeize",
+            "Seize",
+            "interstageSpaceRelease",
+            "Release",
+            (670, 290),
+            (720, 290),
+        ),
+        (
+            "spaceReleaseToImmigrationDelay",
+            "interstageSpaceRelease",
+            "Release",
+            "immigrationDelay",
+            "Delay",
+            (780, 290),
+            (830, 290),
+        ),
+        (
+            "immigrationDelayToRelease",
+            "immigrationDelay",
+            "Delay",
+            "immigrationRelease",
+            "Release",
+            (890, 290),
+            (940, 290),
+        ),
+        (
+            "immigrationReleaseToSink",
+            "immigrationRelease",
+            "Release",
+            "checkpointSink",
+            "Sink",
+            (1000, 290),
+            (1050, 290),
+        ),
+    )
+    blocks = [
+        _process_connector_xml(
+            item_id=1785163330001 + 10 * index,
+            name=name,
+            source_name=source_name,
+            source_class=source_class,
+            target_name=target_name,
+            target_class=target_class,
+            start=start,
+            end=end,
+        )
+        for index, (
+            name,
+            source_name,
+            source_class,
+            target_name,
+            target_class,
+            start,
+            end,
+        ) in enumerate(definitions)
+    ]
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        "<Connectors>\n"
+        + "\n".join(blocks)
+        + "\n</Connectors>\n"
+    )
 
 
 COMMON_BEFORE_RUN = """\
@@ -2229,6 +3430,109 @@ root.immigration_service_rng = null;
 getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );"""
 
 
+def _interstage_buffer_before_run(
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    cell_guards: list[str] = []
+    for index, row in enumerate(rows):
+        keyword = "if" if index == 0 else "else if"
+        scenario_id = json.dumps(row["scenario_id"])
+        input_sample_id = json.dumps(row["input_sample_id"])
+        config_id = json.dumps(row["config_id"])
+        config_hash = json.dumps(
+            interstage_scenario_config_sha256(row)
+        )
+        buffer_capacity = int(row["interstage_buffer_capacity"])
+        cell_guards.append(
+            f"""{keyword} ( {scenario_id}.equals( root.scenario_id )
+\t&& {input_sample_id}.equals( root.input_sample_id ) ) {{
+\texpectedConfigId = {config_id};
+\texpectedConfigHash = {config_hash};
+\texpectedBufferCapacity = {buffer_capacity};
+}}"""
+        )
+
+    seed_guards: list[str] = []
+    for index, seed in enumerate(seed_rows):
+        keyword = "if" if index == 0 else "else if"
+        input_sample_id = json.dumps(seed["input_sample_id"])
+        replication_id = int(seed["replication_id"])
+        seed_guards.append(
+            f"""{keyword} ( {input_sample_id}.equals( root.input_sample_id )
+\t&& replication == {replication_id} ) {{
+\troot.arrival_seed = {int(seed["arrival_seed"])}L;
+\troot.service_seed = {int(seed["service_seed"])}L;
+\troot.routing_seed = {int(seed["routing_seed"])}L;
+\troot.tie_seed = {int(seed["tie_seed"])}L;
+\tseedGroupMatched = true;
+}}"""
+        )
+
+    masters = {int(row["master_seed"]) for row in seed_rows}
+    if len(masters) != 1:
+        raise RuntimeError(
+            "interstage-buffer seed manifest has multiple master seeds"
+        )
+    master_seed = next(iter(masters))
+    return COMMON_BEFORE_RUN + f"""\
+if ( !"{INTERSTAGE_BUFFER_MODEL_VERSION}".equals( root.model_version ) )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity model_version mismatch"
+\t);
+if ( !"{INTERSTAGE_BUFFER_STUDY_ID}".equals( root.study_id ) )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity study_id mismatch"
+\t);
+if ( !"{INTERSTAGE_BUFFER_OUTPUT_COLLECTION}".equals( root.output_collection_id ) )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity output collection mismatch"
+\t);
+if ( !"{INTERSTAGE_BLOCKING_POLICY}".equals( root.interstage_blocking_policy ) )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity requires the registered BAS policy"
+\t);
+if ( root.master_seed != {master_seed}L )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity master seed mismatch"
+\t);
+if ( root.interstage_buffer_capacity <= 0 )
+\tthrow new IllegalArgumentException(
+\t\t"interstage_buffer_capacity must be positive"
+\t);
+String expectedConfigId = null;
+String expectedConfigHash = null;
+int expectedBufferCapacity = -1;
+{chr(10).join(cell_guards)}
+if ( expectedConfigId == null || expectedConfigHash == null
+\t|| expectedBufferCapacity <= 0 )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity received an unknown scenario/input cell"
+\t);
+if ( !expectedConfigId.equals( root.config_id )
+\t|| !expectedConfigHash.equals( root.config_sha256 )
+\t|| expectedBufferCapacity != root.interstage_buffer_capacity )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity lineage mismatch for "
+\t\t+ root.scenario_id + "/" + root.input_sample_id
+\t);
+int replication = getCurrentReplication();
+if ( replication < 1 || replication > 50 )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity replication must be 1..50"
+\t);
+root.replication_id = replication;
+boolean seedGroupMatched = false;
+{chr(10).join(seed_guards)}
+if ( !seedGroupMatched )
+\tthrow new IllegalArgumentException(
+\t\t"InterstageBufferSpillbackSensitivity seed group is not frozen"
+\t);
+root.security_service_rng = null;
+root.immigration_service_rng = null;
+getEngine().getDefaultRandomGenerator().setSeed( root.arrival_seed );"""
+
+
 AFTER_RUN = """\
 if ( !"COMPLETE".equals( root.run_status ) )
 \tthrow new IllegalStateException( "operational run did not reach COMPLETE" );
@@ -2395,6 +3699,284 @@ try {
 \t);
 } catch ( java.io.IOException exception ) {
 \tthrow new RuntimeException( "Operational CSV export failed", exception );
+}"""
+
+
+SPILLBACK_AFTER_RUN = """\
+if ( !"COMPLETE".equals( root.run_status ) )
+\tthrow new IllegalStateException(
+\t\t"interstage-buffer run did not reach COMPLETE"
+\t);
+if ( root.guard_hit || root.rejected_or_dropped_count != 0 )
+\tthrow new IllegalStateException(
+\t\t"guard, rejection, or drop detected"
+\t);
+if ( root.admitted != root.completed )
+\tthrow new IllegalStateException(
+\t\t"full-drain conservation failed"
+\t);
+if ( root.security_queue_count != 0
+\t|| root.security_in_service_count != 0
+\t|| root.immigration_queue_count != 0
+\t|| root.immigration_in_service_count != 0
+\t|| root.interstage_occupied_count != 0
+\t|| root.security_blocked_count != 0 )
+\tthrow new IllegalStateException(
+\t\t"non-zero queue, service, buffer, or blocked WIP after drain"
+\t);
+if ( !Double.isNaN( root.buffer_full_since ) )
+\tthrow new IllegalStateException(
+\t\t"interstage buffer full interval remained open after drain"
+\t);
+int wipAtCutoff =
+\troot.security_queue_at_cutoff
+\t+ root.security_in_service_at_cutoff
+\t+ root.immigration_queue_at_cutoff
+\t+ root.immigration_in_service_at_cutoff;
+boolean conservationPass =
+\troot.admitted_at_cutoff == root.completed_at_cutoff + wipAtCutoff;
+if ( !conservationPass )
+\tthrow new IllegalStateException(
+\t\t"interstage-buffer cutoff conservation failed"
+\t);
+
+java.util.ArrayList<Double> systemSorted =
+\tnew java.util.ArrayList<Double>( root.system_times );
+java.util.ArrayList<Double> blockSorted =
+\tnew java.util.ArrayList<Double>( root.interstage_block_times );
+java.util.ArrayList<Double> totalIncludingInterstageSorted =
+\tnew java.util.ArrayList<Double>(
+\t\troot.total_wait_including_interstage_times
+\t);
+java.util.Collections.sort( systemSorted );
+java.util.Collections.sort( blockSorted );
+java.util.Collections.sort( totalIncludingInterstageSorted );
+int n = root.completed;
+if ( n <= 0 )
+\tthrow new IllegalStateException(
+\t\t"interstage-buffer run generated no travellers"
+\t);
+if ( root.input_draw_rows.size() != n
+\t|| root.normalized_event_rows.size() != n
+\t|| blockSorted.size() != n
+\t|| totalIncludingInterstageSorted.size() != n )
+\tthrow new IllegalStateException(
+\t\t"interstage-buffer audit ledgers are incomplete"
+\t);
+int p95Index = Math.max( 0, (int) Math.ceil( 0.95 * n ) - 1 );
+double blockSum = 0.0;
+double totalIncludingInterstageSum = 0.0;
+for ( double value : blockSorted ) blockSum += value;
+for ( double value : totalIncludingInterstageSorted )
+\ttotalIncludingInterstageSum += value;
+double lastExitSeconds = root.last_exit;
+if ( !( lastExitSeconds > 0.0 ) || !Double.isFinite( lastExitSeconds ) )
+\tthrow new IllegalStateException( "last exit must be positive and finite" );
+double securityResourceHorizon =
+\troot.security_capacity * lastExitSeconds;
+double securityBlockedResourceFraction =
+\troot.security_blocked_resource_seconds / securityResourceHorizon;
+double securityOccupiedResourceSeconds =
+\troot.security_busy_seconds + root.security_blocked_resource_seconds;
+double securityBlockedShareOfOccupied =
+\tsecurityOccupiedResourceSeconds > 0.0
+\t\t? root.security_blocked_resource_seconds
+\t\t\t/ securityOccupiedResourceSeconds
+\t\t: 0.0;
+double interstageBufferFullTimeFraction =
+\troot.buffer_full_seconds / lastExitSeconds;
+double timeWeightedMeanInterstageOccupancy =
+\troot.interstage_occupancy_area / lastExitSeconds;
+double occupiedAuditTolerance =
+\t1.0e-6 * Math.max( 1.0, securityOccupiedResourceSeconds );
+if ( Math.abs(
+\troot.security_occupied_seconds - securityOccupiedResourceSeconds
+) > occupiedAuditTolerance )
+\tthrow new IllegalStateException(
+\t\t"Security occupied-resource audit does not equal busy plus blocked"
+\t);
+if ( root.max_interstage_occupancy < 0
+\t|| root.max_interstage_occupancy > root.interstage_buffer_capacity
+\t|| securityBlockedResourceFraction < 0.0
+\t|| securityBlockedResourceFraction > 1.0
+\t|| interstageBufferFullTimeFraction < 0.0
+\t|| interstageBufferFullTimeFraction > 1.0
+\t|| timeWeightedMeanInterstageOccupancy < 0.0
+\t|| timeWeightedMeanInterstageOccupancy
+\t\t> root.max_interstage_occupancy + 1.0e-9 )
+\tthrow new IllegalStateException(
+\t\t"interstage-buffer mechanism metrics are outside their domains"
+\t);
+String inputDrawsSha256 =
+\troot.sha256CanonicalRows( root.input_draw_rows );
+String normalizedEventPayloadSha256 =
+\troot.sha256CanonicalRows( root.normalized_event_rows );
+double cohortClearTimeAfterCutoff = Math.max(
+\t0.0,
+\tlastExitSeconds - root.arrival_cutoff_seconds
+);
+java.util.function.DoubleFunction<String> number = value ->
+\tString.format( java.util.Locale.ROOT, "%.9f", value );
+
+java.io.File probe = new java.io.File(
+\tSystem.getProperty( "htx.repo.root", System.getProperty( "user.dir" ) )
+).getAbsoluteFile();
+while ( probe != null
+\t&& !new java.io.File(
+\t\tprobe,
+\t\t"config/interstage_buffer_scenarios.csv"
+\t).isFile() ) {
+\tprobe = probe.getParentFile();
+}
+if ( probe == null )
+\tthrow new IllegalStateException( "Cannot locate repository root" );
+java.nio.file.Path runDirectory = new java.io.File(
+\tprobe,
+\tString.format(
+\t\tjava.util.Locale.ROOT,
+\t\t"results/raw/%s/%s/%s/replication_%03d",
+\t\troot.output_collection_id,
+\t\troot.scenario_id,
+\t\troot.input_sample_id,
+\t\troot.replication_id
+\t)
+).toPath();
+try {
+\tjava.nio.file.Files.createDirectories( runDirectory );
+\tjava.util.ArrayList<String> manifest =
+\t\tnew java.util.ArrayList<String>();
+\tmanifest.add(
+\t\t"schema_version,study_id,config_id,config_sha256,model_version,"
+\t\t+ "scenario_id,input_sample_id,replication_id,master_seed,"
+\t\t+ "arrival_seed,service_seed,routing_seed,tie_seed,"
+\t\t+ "security_capacity,immigration_capacity,"
+\t\t+ "interstage_buffer_capacity,interstage_blocking_policy,"
+\t\t+ "arrival_cutoff_seconds,last_exit_seconds,run_status"
+\t);
+\tmanifest.add( String.join( ",", new String[] {
+\t\troot.schema_version,
+\t\troot.study_id,
+\t\troot.config_id,
+\t\troot.config_sha256,
+\t\troot.model_version,
+\t\troot.scenario_id,
+\t\troot.input_sample_id,
+\t\tInteger.toString( root.replication_id ),
+\t\tLong.toString( root.master_seed ),
+\t\tLong.toString( root.arrival_seed ),
+\t\tLong.toString( root.service_seed ),
+\t\tLong.toString( root.routing_seed ),
+\t\tLong.toString( root.tie_seed ),
+\t\tInteger.toString( root.security_capacity ),
+\t\tInteger.toString( root.immigration_capacity ),
+\t\tInteger.toString( root.interstage_buffer_capacity ),
+\t\troot.interstage_blocking_policy,
+\t\tnumber.apply( root.arrival_cutoff_seconds ),
+\t\tnumber.apply( lastExitSeconds ),
+\t\troot.run_status
+\t} ) );
+
+\tjava.util.ArrayList<String> entities =
+\t\tnew java.util.ArrayList<String>();
+\tentities.add(
+\t\t"schema_version,config_id,config_sha256,model_version,scenario_id,"
+\t\t+ "input_sample_id,replication_id,traveller_id,arrival_seconds,"
+\t\t+ "security_service_demand_seconds,"
+\t\t+ "immigration_conventional_service_demand_seconds,automation_u,"
+\t\t+ "additional_check_u,lane_tie_u,security_queue_join_seconds,"
+\t\t+ "security_start_seconds,security_end_seconds,"
+\t\t+ "immigration_queue_join_seconds,immigration_lane_id,"
+\t\t+ "immigration_start_seconds,technology_flag,"
+\t\t+ "immigration_primary_service_demand_seconds,"
+\t\t+ "immigration_primary_end_seconds,additional_check_flag,"
+\t\t+ "additional_check_service_demand_seconds,"
+\t\t+ "additional_check_end_seconds,exit_seconds,security_resource_id,"
+\t\t+ "immigration_resource_id,security_processing_end_seconds,"
+\t\t+ "interstage_block_start_seconds,interstage_admitted_seconds,"
+\t\t+ "interstage_block_seconds"
+\t);
+\tentities.addAll( root.entity_log_rows );
+
+\tjava.util.ArrayList<String> kpis =
+\t\tnew java.util.ArrayList<String>();
+\tkpis.add(
+\t\t"schema_version,study_id,config_id,config_sha256,model_version,"
+\t\t+ "scenario_id,input_sample_id,replication_id,security_capacity,"
+\t\t+ "immigration_capacity,interstage_buffer_capacity,master_seed,"
+\t\t+ "arrival_seed,service_seed,routing_seed,tie_seed,"
+\t\t+ "input_draws_sha256,normalized_event_payload_sha256,arrivals,"
+\t\t+ "completed_after_drain,rejected_or_dropped_count,"
+\t\t+ "conservation_pass,run_status,interstage_buffer_peak_occupancy,"
+\t\t+ "system_time_p95_seconds,security_blocked_resource_fraction,"
+\t\t+ "security_blocked_resource_seconds,security_busy_seconds,"
+\t\t+ "last_exit_seconds,security_blocked_share_of_occupied,"
+\t\t+ "interstage_buffer_full_time_fraction,"
+\t\t+ "time_weighted_mean_interstage_buffer_occupancy,"
+\t\t+ "interstage_block_time_mean_seconds,"
+\t\t+ "interstage_block_time_p95_seconds,"
+\t\t+ "total_wait_including_interstage_mean_seconds,"
+\t\t+ "total_wait_including_interstage_p95_seconds,"
+\t\t+ "cohort_clear_time_after_cutoff_seconds"
+\t);
+\tkpis.add( String.join( ",", new String[] {
+\t\troot.schema_version,
+\t\troot.study_id,
+\t\troot.config_id,
+\t\troot.config_sha256,
+\t\troot.model_version,
+\t\troot.scenario_id,
+\t\troot.input_sample_id,
+\t\tInteger.toString( root.replication_id ),
+\t\tInteger.toString( root.security_capacity ),
+\t\tInteger.toString( root.immigration_capacity ),
+\t\tInteger.toString( root.interstage_buffer_capacity ),
+\t\tLong.toString( root.master_seed ),
+\t\tLong.toString( root.arrival_seed ),
+\t\tLong.toString( root.service_seed ),
+\t\tLong.toString( root.routing_seed ),
+\t\tLong.toString( root.tie_seed ),
+\t\tinputDrawsSha256,
+\t\tnormalizedEventPayloadSha256,
+\t\tInteger.toString( root.admitted ),
+\t\tInteger.toString( root.completed ),
+\t\tInteger.toString( root.rejected_or_dropped_count ),
+\t\tBoolean.toString( conservationPass ),
+\t\troot.run_status,
+\t\tInteger.toString( root.max_interstage_occupancy ),
+\t\tnumber.apply( systemSorted.get( p95Index ) ),
+\t\tnumber.apply( securityBlockedResourceFraction ),
+\t\tnumber.apply( root.security_blocked_resource_seconds ),
+\t\tnumber.apply( root.security_busy_seconds ),
+\t\tnumber.apply( lastExitSeconds ),
+\t\tnumber.apply( securityBlockedShareOfOccupied ),
+\t\tnumber.apply( interstageBufferFullTimeFraction ),
+\t\tnumber.apply( timeWeightedMeanInterstageOccupancy ),
+\t\tnumber.apply( blockSum / n ),
+\t\tnumber.apply( blockSorted.get( p95Index ) ),
+\t\tnumber.apply( totalIncludingInterstageSum / n ),
+\t\tnumber.apply( totalIncludingInterstageSorted.get( p95Index ) ),
+\t\tnumber.apply( cohortClearTimeAfterCutoff )
+\t} ) );
+\tjava.nio.file.Files.write(
+\t\trunDirectory.resolve( "run_manifest.csv" ),
+\t\tmanifest,
+\t\tjava.nio.charset.StandardCharsets.UTF_8
+\t);
+\tjava.nio.file.Files.write(
+\t\trunDirectory.resolve( "entity_log.csv" ),
+\t\tentities,
+\t\tjava.nio.charset.StandardCharsets.UTF_8
+\t);
+\tjava.nio.file.Files.write(
+\t\trunDirectory.resolve( "replication_kpis.csv" ),
+\t\tkpis,
+\t\tjava.nio.charset.StandardCharsets.UTF_8
+\t);
+} catch ( java.io.IOException exception ) {
+\tthrow new RuntimeException(
+\t\t"Interstage-buffer CSV export failed",
+\t\texception
+\t);
 }"""
 
 
@@ -2704,6 +4286,76 @@ def _service_variability_parameter_expressions(
     return expressions
 
 
+def _interstage_buffer_parameter_expressions(
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> dict[str, str]:
+    defaults = {
+        name: default
+        for name, _, default in SPILLBACK_MODEL_PARAMETERS
+    }
+    first_seed_by_input = {
+        row["input_sample_id"]: row
+        for row in seed_rows
+        if row["replication_id"] == "1"
+    }
+    expressions: dict[str, str] = {}
+    for name, value_type, _ in SPILLBACK_MODEL_PARAMETERS:
+        values: list[str] = []
+        for row in rows:
+            if name == "output_collection_id":
+                value = _java_literal(
+                    value_type,
+                    INTERSTAGE_BUFFER_OUTPUT_COLLECTION,
+                )
+            elif name == "config_sha256":
+                value = _java_literal(
+                    value_type,
+                    interstage_scenario_config_sha256(row),
+                )
+            elif name in {
+                "arrival_seed",
+                "service_seed",
+                "routing_seed",
+                "tie_seed",
+            }:
+                seed = first_seed_by_input.get(row["input_sample_id"])
+                if seed is None:
+                    raise RuntimeError(
+                        "interstage-buffer input sample has no "
+                        "replication-1 seed"
+                    )
+                value = _java_literal(value_type, seed[name])
+            elif name == "replication_id":
+                value = "0"
+            elif name == "model_version":
+                value = _java_literal(
+                    value_type,
+                    INTERSTAGE_BUFFER_MODEL_VERSION,
+                )
+            elif name == "study_id":
+                value = _java_literal(
+                    value_type,
+                    INTERSTAGE_BUFFER_STUDY_ID,
+                )
+            elif name in {
+                "start_state",
+                "security_service_cv",
+                "immigration_service_cv",
+            }:
+                value = defaults[name]
+            elif name in row:
+                value = _java_literal(value_type, row[name])
+            else:
+                raise RuntimeError(
+                    "No InterstageBufferSpillbackSensitivity mapping for "
+                    f"parameter {name}"
+                )
+            values.append(value)
+        expressions[name] = _indexed_expression(values)
+    return expressions
+
+
 def _pilot_experiment_xml(
     model_id: str,
     experiment_id: str,
@@ -2810,6 +4462,9 @@ def _confirmatory_experiment_xml(
     timer_variable_name: str = "confirmatory_auto_start_timer",
     before_run_code: str | None = None,
     parameter_expressions: dict[str, str] | None = None,
+    after_run_code: str = AFTER_RUN,
+    model_parameters: list[tuple[str, str, str]] = MODEL_PARAMETERS,
+    parameter_id_base: int = 1785163110001,
 ) -> str:
     before = html.escape(
         (
@@ -2819,7 +4474,7 @@ def _confirmatory_experiment_xml(
         ),
         quote=False,
     )
-    after = html.escape(AFTER_RUN, quote=False)
+    after = html.escape(after_run_code, quote=False)
     expressions = (
         _confirmatory_parameter_expressions(rows, seed_rows)
         if parameter_expressions is None
@@ -2827,8 +4482,8 @@ def _confirmatory_experiment_xml(
     )
     freeform_values: list[str] = []
     range_values: list[str] = []
-    for index, (name, _, _) in enumerate(MODEL_PARAMETERS):
-        parameter_id = 1785163110001 + 10 * index
+    for index, (name, _, _) in enumerate(model_parameters):
+        parameter_id = parameter_id_base + 10 * index
         expression = expressions[name]
         freeform_values.append(
             f"""\t\t<FreeformParamValue>
@@ -3029,6 +4684,34 @@ def _peak_duration_experiment_xml(
             f'"{CONFIRMATORY_OUTPUT_COLLECTION}"',
             f'"{PEAK_DURATION_OUTPUT_COLLECTION}"',
         )
+    )
+
+
+def _interstage_buffer_experiment_xml(
+    model_id: str,
+    experiment_id: str,
+    timer_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    """Create the registered finite-buffer BAS sensitivity batch."""
+
+    return _confirmatory_experiment_xml(
+        model_id,
+        experiment_id,
+        timer_id,
+        rows,
+        seed_rows,
+        experiment_name=INTERSTAGE_BUFFER_EXPERIMENT_NAME,
+        timer_variable_name="interstage_buffer_auto_start_timer",
+        before_run_code=_interstage_buffer_before_run(rows, seed_rows),
+        parameter_expressions=_interstage_buffer_parameter_expressions(
+            rows,
+            seed_rows,
+        ),
+        after_run_code=SPILLBACK_AFTER_RUN,
+        model_parameters=SPILLBACK_MODEL_PARAMETERS,
+        parameter_id_base=1785163310001,
     )
 
 
@@ -3439,6 +5122,25 @@ def _upsert_peak_duration_experiment(
     )
 
 
+def _upsert_interstage_buffer_experiment(
+    text: str,
+    model_id: str,
+    rows: list[dict[str, str]],
+    seed_rows: list[dict[str, str]],
+) -> str:
+    return _upsert_registered_batch_experiment(
+        text,
+        model_id,
+        rows,
+        seed_rows,
+        experiment_name=INTERSTAGE_BUFFER_EXPERIMENT_NAME,
+        timer_variable_name="interstage_buffer_auto_start_timer",
+        insertion_experiment_id=INTERSTAGE_BUFFER_EXPERIMENT_ID,
+        insertion_timer_id=INTERSTAGE_BUFFER_TIMER_ID,
+        builder=_interstage_buffer_experiment_xml,
+    )
+
+
 def _xml_root_without_declaration(path: Path) -> str:
     return re.sub(
         r"\A<\?xml[^>]*\?>\s*",
@@ -3709,6 +5411,20 @@ def _indent_xml(block: str, prefix: str) -> str:
     )
 
 
+def _spillback_aoc_from_operational() -> str:
+    text = _read(OP_MODEL / "AOC.OperationalCheckpointModel.xml")
+    text = text.replace(
+        "OperationalCheckpointModel",
+        "SpillbackCheckpointModel",
+    )
+    text = text.replace("178516252", "178516302")
+    text = text.replace("1785218", "1785228")
+    text = text.replace("<WidthCode>500</WidthCode>", "<WidthCode>1200</WidthCode>", 1)
+    if text.count("<Name><![CDATA[SpillbackCheckpointModel]]></Name>") != 1:
+        raise RuntimeError("SpillbackCheckpointModel AOC rename failed")
+    return text
+
+
 def _inline_operational_model() -> str:
     model = _xml_root_without_declaration(
         OP_MODEL / "AOC.OperationalCheckpointModel.xml"
@@ -3741,6 +5457,52 @@ def _inline_operational_model() -> str:
     for marker, replacement in replacements.items():
         if model.count(marker) != 1:
             raise RuntimeError(f"Expected one split marker {marker}")
+        model = model.replace(marker, replacement, 1)
+    return model
+
+
+def _inline_spillback_model() -> str:
+    model = _xml_root_without_declaration(
+        SPILLBACK_MODEL / "AOC.SpillbackCheckpointModel.xml"
+    )
+    additional_class_code = _read(
+        SPILLBACK_MODEL_ADDITIONAL_CLASS_CODE
+    )
+    variables = _xml_root_without_declaration(
+        SPILLBACK_MODEL / "Variables.xml"
+    )
+    connectors = _xml_root_without_declaration(
+        SPILLBACK_MODEL / "Connectors.xml"
+    )
+    events = _xml_root_without_declaration(
+        SPILLBACK_MODEL / "Code" / "Events.xml"
+    )
+    embedded = _xml_root_without_declaration(
+        SPILLBACK_MODEL / "EmbeddedObjects.xml"
+    )
+    events, count = re.subn(
+        r"<Action(?:\s[^>]*)?/>",
+        f"<Action><![CDATA[{SPILLBACK_CUTOFF_ACTION}]]></Action>",
+        events,
+        count=1,
+    )
+    if count != 1:
+        raise RuntimeError("Spillback cutoff action placeholder is missing")
+    replacements = {
+        "<AdditionalClassCode/>": (
+            "<AdditionalClassCode><![CDATA["
+            + additional_class_code
+            + "]]></AdditionalClassCode>"
+        ),
+        '<Variables xmlns:al="http://anylogic.com"/>': (
+            variables + "\n" + connectors
+        ),
+        '<Events xmlns:al="http://anylogic.com"/>': events,
+        '<EmbeddedObjects xmlns:al="http://anylogic.com"/>': embedded,
+    }
+    for marker, replacement in replacements.items():
+        if model.count(marker) != 1:
+            raise RuntimeError(f"Expected one spillback split marker {marker}")
         model = model.replace(marker, replacement, 1)
     return model
 
@@ -3779,6 +5541,37 @@ def _replace_single_file_class(
     return text[:line_start] + replacement + text[class_end:]
 
 
+def _upsert_single_file_class(
+    text: str,
+    *,
+    class_name: str,
+    inline_class: str,
+) -> str:
+    try:
+        _named_top_level_span(
+            text,
+            tag="ActiveObjectClass",
+            name=class_name,
+        )
+    except RuntimeError:
+        marker = "\t</ActiveObjectClasses>"
+        if text.count(marker) != 1:
+            raise RuntimeError(
+                "single-file ActiveObjectClasses root is not canonical"
+            )
+        block = (
+            "\t\t<!--   =========   Active Object Class   ========  -->\n"
+            + _indent_xml(inline_class, "\t\t")
+            + "\n"
+        )
+        return text.replace(marker, block + marker, 1)
+    return _replace_single_file_class(
+        text,
+        class_name=class_name,
+        inline_class=inline_class,
+    )
+
+
 def _sync_single_file(
     *,
     model_id: str,
@@ -3795,6 +5588,11 @@ def _sync_single_file(
         text,
         class_name="OperationalCheckpointModel",
         inline_class=_inline_operational_model(),
+    )
+    text = _upsert_single_file_class(
+        text,
+        class_name="SpillbackCheckpointModel",
+        inline_class=_inline_spillback_model(),
     )
 
     experiment_match = re.search(r"<Experiments>", text)
@@ -3845,6 +5643,11 @@ def generate() -> None:
         peak_duration_seed_rows,
         peak_duration_validation,
     ) = _load_peak_duration_inputs()
+    (
+        interstage_buffer_rows,
+        interstage_buffer_seed_rows,
+        interstage_buffer_validation,
+    ) = _load_interstage_buffer_inputs()
     traveller_aoc = OP_TRAVELLER / "AOC.OperationalTraveller.xml"
     model_aoc = OP_MODEL / "AOC.OperationalCheckpointModel.xml"
     if not traveller_aoc.is_file() or not model_aoc.is_file():
@@ -3932,6 +5735,63 @@ void arrivalCutoff()
             + "\n",
         )
 
+    spillback_aoc = SPILLBACK_MODEL / "AOC.SpillbackCheckpointModel.xml"
+    _write(spillback_aoc, _spillback_aoc_from_operational())
+    _ensure_split_references(
+        spillback_aoc,
+        events=True,
+        embedded_objects=True,
+    )
+    spillback_model_id = _class_id(spillback_aoc)
+    _write(
+        SPILLBACK_MODEL / "Variables.xml",
+        _variables_xml(
+            SPILLBACK_MODEL_VARIABLES,
+            SPILLBACK_MODEL_PARAMETERS,
+            plain_base=1785163300001,
+            parameter_base=1785163310001,
+        ),
+    )
+    _write(
+        SPILLBACK_MODEL / "EmbeddedObjects.xml",
+        _transform_spillback_embedded_objects(
+            op_traveller_generic_id
+        ),
+    )
+    _write(
+        SPILLBACK_MODEL / "Connectors.xml",
+        _transform_spillback_connectors(),
+    )
+    spillback_event_xml = _read(OP_MODEL / "Code" / "Events.xml").replace(
+        "178516314",
+        "178516334",
+    )
+    _write(
+        SPILLBACK_MODEL / "Code" / "Events.xml",
+        spillback_event_xml,
+    )
+    spillback_event_java = f"""\
+void arrivalCutoff()
+{{/*ALCODESTART::1785163343775*/
+{SPILLBACK_CUTOFF_ACTION}
+/*ALCODEEND*/}}
+"""
+    _write_split_event_code(
+        SPILLBACK_MODEL / "Code" / "Events.java",
+        spillback_event_java,
+    )
+    for additional_class_path in (
+        SPILLBACK_MODEL_ADDITIONAL_CLASS_CODE,
+        SPILLBACK_MODEL_ADDITIONAL_CLASS,
+    ):
+        _write(
+            additional_class_path,
+            SERVICE_VARIABILITY_CLASS_CODE
+            + "\n\n"
+            + SPILLBACK_AUDIT_CLASS_CODE
+            + "\n",
+        )
+
     experiment_text = _replace_operational_experiment(_read(EXPERIMENTS), op_model_id)
     experiment_text = _replace_operational_pilot_experiment(
         experiment_text,
@@ -3968,12 +5828,19 @@ void arrivalCutoff()
         peak_duration_rows,
         peak_duration_seed_rows,
     )
+    experiment_text = _upsert_interstage_buffer_experiment(
+        experiment_text,
+        spillback_model_id,
+        interstage_buffer_rows,
+        interstage_buffer_seed_rows,
+    )
     experiment_text = _canonicalize_experiment_order(experiment_text)
     _write(EXPERIMENTS, experiment_text)
     _sync_single_file(model_id=op_model_id)
 
     print(f"OperationalTraveller class ID: {op_traveller_id}")
     print(f"OperationalCheckpointModel class ID: {op_model_id}")
+    print(f"SpillbackCheckpointModel class ID: {spillback_model_id}")
     print(
         f"OperationalPilot: {len(scenario_rows)} scenarios x "
         "10 replications (serial)"
@@ -4005,6 +5872,12 @@ void arrivalCutoff()
         "PeakDurationSensitivity: "
         f"{len(peak_duration_rows)} capacity-duration cells x 50 replications "
         f"({peak_duration_validation['planned_run_count']} planned runs, serial)"
+    )
+    print(
+        f"{INTERSTAGE_BUFFER_EXPERIMENT_NAME}: "
+        f"{len(interstage_buffer_rows)} regime-buffer cells x 50 replications "
+        f"({interstage_buffer_validation['run_count']} planned runs, "
+        "serial; finite BAS waiting-space sensitivity)"
     )
     print("Generated operational AnyLogic split fragments and single-file launcher")
 

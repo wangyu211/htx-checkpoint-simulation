@@ -1,0 +1,38 @@
+{
+  "actual_run_count": 400,
+  "blocking_metric_definitions": {
+    "security_blocked_resource_fraction": "security_blocked_resource_seconds / (security_capacity * last_exit_seconds)",
+    "security_blocked_share_of_occupied": "security_blocked_resource_seconds / (security_busy_seconds + security_blocked_resource_seconds); zero when the denominator is zero"
+  },
+  "buffer_level_count": 4,
+  "buffer_levels": [
+    25,
+    50,
+    100,
+    5000
+  ],
+  "claim_boundary": "CONDITIONAL_FINITE_BUFFER_SENSITIVITY_NOT_SITE_FORECAST",
+  "conservation_rule": "arrivals == completed_after_drain and rejected_or_dropped_count == 0",
+  "errors": [],
+  "expected_run_count": 400,
+  "input_sample_id": "LOCAL_WINDOW_HPP_BASE",
+  "model_version": "TASK3_OPERATIONAL_POOLED_INTERSTAGE_BAS_V1",
+  "regime_count": 2,
+  "regimes": [
+    {
+      "immigration_capacity": 16,
+      "regime": "IMMIGRATION_BOTTLENECK_POSITIVE",
+      "security_capacity": 36
+    },
+    {
+      "immigration_capacity": 21,
+      "regime": "SECURITY_BOTTLENECK_NEGATIVE_CONTROL",
+      "security_capacity": 30
+    }
+  ],
+  "replications_per_cell": 50,
+  "schema_version": "1.0",
+  "status": "PASS",
+  "study_id": "TASK3_INTERSTAGE_BUFFER_SPILLBACK_SENSITIVITY_V1",
+  "validation_id": "TASK3_INTERSTAGE_BUFFER_IMPORT_VALIDATION_V1"
+}

@@ -38,6 +38,8 @@ _work/
 .vscode/
 *.log
 *.alp.autosave
+*.original.alp
+*.before_*.alp
 *.pptx.inspect.ndjson
 ~$*
 Thumbs.db

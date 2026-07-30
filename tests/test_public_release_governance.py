@@ -185,16 +185,22 @@ class PublicReleaseGovernanceTests(unittest.TestCase):
         )
         tracked = [line for line in result.stdout.splitlines() if line]
         findings = audit_paths(PROJECT_ROOT, tracked)
-        expected_blocker_hash = (
+        expected_private_deck_blockers = {
             "Source-video-derived 1280x720 frame embedded in the current "
-            "Task 4 deck"
-        )
+            "Task 4 deck",
+            "Supplied-video-derived full-frame ROI and count-line illustration "
+            "in the private Task 4 deck",
+            "Supplied-video-derived detector and tracker overlay in the private "
+            "Task 4 deck",
+            "Supplied-video-derived crossing-event sequence in the private "
+            "Task 4 deck",
+        }
         unexpected = [
             finding
             for finding in findings
             if not (
                 finding.code == "RESTRICTED_CONTENT_HASH"
-                and finding.detail == expected_blocker_hash
+                and finding.detail in expected_private_deck_blockers
                 and finding.path.startswith(
                     "slides/HTX_Task4_Operational_Insights.pptx!/"
                 )
