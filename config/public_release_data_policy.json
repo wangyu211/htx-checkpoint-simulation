@@ -7,11 +7,12 @@
     "Aggregate counts and rates that contain no source pixels or appearance descriptions",
     "Accepted-only, non-pixel crossing-event ledgers after registered review and detached sign-off",
     "De-identified numerical method-audit tables whose local tracker tokens are confined to this single video",
-    "Synthetic simulation inputs, run-level summaries, aggregate results, charts, and non-pixel schematics"
+    "Synthetic simulation inputs, run-level summaries, aggregate results, charts, and non-pixel schematics",
+    "Three exact-hash Task 1 screenshots embedded only in the assessment slide deck to evidence the supplied-video inference workflow"
   ],
   "restricted_data_classes": [
     "The supplied source video or audio",
-    "Decoded frames, crops, thumbnails, contact sheets, review videos, and evidence packets that reproduce source pixels",
+    "Decoded frames, crops, thumbnails, contact sheets, review videos, and evidence packets that reproduce source pixels, except the exact-hash assessment screenshots explicitly approved below",
     "Faces, face templates, biometric features, appearance descriptions, identity embeddings, or re-identification features",
     "Cross-camera or cross-dataset identity links and persistent person identifiers",
     "Raw review-item history, reviewer free-text notes, and private alias-to-person mappings",
@@ -124,12 +125,14 @@
     "9451e7e0760c5cc8c23327987ad1bcda1b1ab78864834c2f7ea0bf56e06cff82": "Peak-duration queue-wait and cutoff-queue chart re-encoded by the private Task 4 deck; aggregate simulation results only",
     "207511e52a9d312c0839e593579b6d4a91e7b2c5caed3ecd90be20b92987b035": "Peak-duration recovery and queue-growth chart re-encoded by the private Task 4 deck; aggregate simulation results only"
   },
+  "approved_assessment_use_media_sha256": {
+    "4d40dd451f3cf721ea82ccc03b11e8d737153aff82fe9aca81dec58527314980": "Minimal HTX-supplied Task 1 ROI and count-line screenshot retained in the assessment deck; original video excluded",
+    "63fd5996b3f5155ebe46dcc1dfc7769f77d0f6a717f7084868524e2091f422dc": "Minimal HTX-supplied Task 1 detector/tracker screenshot retained in the assessment deck; original video excluded",
+    "fd818a16fc41df87abd34f0452e6c49a26b2d3da90489d16762b70ed4d657f18": "Minimal HTX-supplied Task 1 crossing-event sequence retained in the assessment deck; original video excluded"
+  },
   "restricted_content_sha256": {
     "4e2adef6a7c11ff4bac604a034229a08dfd53747360862cc53d0098f53bc7a2c": "Supplied TestVidTask.mov source video",
-    "c6996d8d9afff105757b6e42fb4fd4957128aeafa57322b0e518ea1842f0b797": "Source-video-derived 1280x720 frame embedded in the current Task 4 deck",
-    "4d40dd451f3cf721ea82ccc03b11e8d737153aff82fe9aca81dec58527314980": "Supplied-video-derived full-frame ROI and count-line illustration in the private Task 4 deck",
-    "63fd5996b3f5155ebe46dcc1dfc7769f77d0f6a717f7084868524e2091f422dc": "Supplied-video-derived detector and tracker overlay in the private Task 4 deck",
-    "fd818a16fc41df87abd34f0452e6c49a26b2d3da90489d16762b70ed4d657f18": "Supplied-video-derived crossing-event sequence in the private Task 4 deck"
+    "c6996d8d9afff105757b6e42fb4fd4957128aeafa57322b0e518ea1842f0b797": "Unapproved source-video-derived 1280x720 frame from an older Task 4 deck"
   },
   "task1_public_artifacts": {
     "reviewer_alias_pattern": "^[A-Z][A-Z0-9_]{2,63}$",

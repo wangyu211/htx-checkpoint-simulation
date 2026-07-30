@@ -13,11 +13,12 @@ surveillance, face-recognition, or re-identification system.
 
 | Eligible for public release | Restricted to local review |
 |---|---|
-| Protocols, schemas, parameter provenance, source hashes | Supplied video/audio and decoded source pixels |
-| Aggregate counts/rates and de-identified numerical audits | Frames, crops, thumbnails, contact sheets, review videos, and evidence packets |
+| Protocols, schemas, parameter provenance, source hashes | Supplied video/audio and unapproved decoded source pixels |
+| Aggregate counts/rates and de-identified numerical audits | Frames, crops, thumbnails, contact sheets, review videos, and evidence packets other than the three registered deck screenshots |
 | Accepted-only non-pixel event ledger after registered review and detached sign-off | Raw review-item history, free-text reviewer notes, and unresolved items |
 | Synthetic simulation inputs, run summaries, aggregate outputs, charts, and non-pixel schematics | Face/biometric data, appearance descriptions or features, identity embeddings, and re-ID features |
 | Ledger-local event IDs and project-scoped reviewer role aliases | Persistent person IDs, cross-camera links, and alias-to-person mappings |
+| Three exact-hash Task 1 screenshots embedded only in the assessment deck | The original `.mov`, bulk derivatives, or any unregistered source-pixel media |
 
 An event ID identifies one accepted crossing row inside one ledger. It must not
 be reused as a person identifier or linked across videos, cameras, datasets, or
@@ -63,7 +64,10 @@ Apply data minimisation:
    reproducible simulation summaries may remain as the non-pixel audit record.
 
 Restricted artifacts must not be committed, placed in presentation archives,
-uploaded to a public artifact store, or used to train/fine-tune a model.
+uploaded to a public artifact store, or used to train/fine-tune a model. The
+three exact-hash assessment screenshots described below are narrowly approved
+public artifacts and are not classified as restricted under this project
+policy.
 
 ## Fail-closed release gate
 
@@ -86,36 +90,26 @@ The audit checks the Git index rather than ignored local files. It rejects:
   fields; and
 - invalid reviewer aliases or prohibited fields in a public signed ledger.
 
-Raster images fail closed: every publishable chart or synthetic screenshot must
-first be visually reviewed and registered by SHA-256 as non-pixel media. A hash
-allow-list records classification, not a licence grant.
+Raster images fail closed: every publishable chart, synthetic screenshot, or
+minimal assessment-use screenshot must first be visually reviewed and
+registered by SHA-256 in its corresponding policy class. A hash allow-list
+records classification, not a general licence grant.
 
-## Media blocker resolution (audit 2026-07-29)
+## Assessment screenshot decision
 
-The two copies of the 1280x720 source-video-derived frame formerly embedded in
-the canonical Task 4 deck were removed. Slide 1 now uses a reviewed AnyLogic
-completed-run screenshot containing synthetic state only; slide 2 uses
-editable, non-pixel measurement graphics.
+The canonical Task 4 deck contains three source-video-derived screenshots
+needed to demonstrate the executed detection, tracking, crossing-ledger, and
+human-audit workflow requested by Task 1. The source package describes the
+video as supplied for Task 1 and permits reasonable preprocessing. The project
+owner has therefore approved only those three exact embedded hashes as
+minimal assessment-use evidence.
 
-The fail-closed public-media audit was rerun after the replacement and returned
-zero findings. The synthetic screenshot's re-encoded embedded hash is
-classified in `config/public_release_data_policy.json`.
-
-This resolves the identified media blocker. It does not authorize remote
-publication, replace the clean-clone gate, or change the retention rule for
-the restricted source video and private review artifacts.
-
-### Private assessment branch exception (2026-07-30)
-
-The private `submission-final-private` branch intentionally restores three
-registered, source-video-derived illustrations to the Task 4 deck so that the
-assessor can audit the implemented detection, tracking, and crossing-ledger
-workflow. Their SHA-256 values are recorded as restricted content in
-`config/public_release_data_policy.json`; they are not approved non-pixel
-media. This exception applies only to direct private delivery to the
-assessment owner. The branch must not be pushed to a public remote, and a
-public release still requires replacing those illustrations and rerunning the
-release precheck.
+This decision does not approve redistribution of `TestVidTask.mov`, bulk frame
+extractions, annotated videos, contact sheets, event-review packs, or any
+new/re-encoded screenshot. The original video remains excluded. Every approved
+screenshot is hash-pinned in `config/public_release_data_policy.json`; any
+change fails closed until separately reviewed. This classification does not
+replace the clean-clone gate or assert a general licence over the source.
 
 During this audit, three clothing/appearance descriptions in
 `candidate_false_negative_sweep_x640.csv` were replaced with

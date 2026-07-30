@@ -597,21 +597,22 @@ The target public release does not redistribute the assessment video.
 2. Place it at `data/raw/TestVidTask.mov`.
 3. Run the documented pipeline locally.
 
-Generated videos or frames containing original pixels are also kept local.
-Public documentation must use numerical audit tables and
-trajectory/counting-line schematics that do not reproduce the source video.
+Generated videos, bulk frame extractions, and review packs containing original
+pixels are also kept local. The Task 4 deck retains only three exact-hash
+screenshots needed to evidence the Task 1 inference and human-audit workflow.
+They are registered as assessment-use exceptions; no other source-pixel media
+is approved.
+
+Source: `HTX TechnicalTestVideo`, supplied for Task 1. The original video is
+not redistributed in this repository.
+
 The complete retention, reviewer-alias, no-re-identification, and release policy
 is [`docs/privacy_and_data_governance.md`](docs/privacy_and_data_governance.md).
 
-The `submission-final-private` branch intentionally restores supplied-video
-frames in the canonical Task 4 deck to demonstrate the executed AI inference
-and human-audit workflow to the assessment reviewers. This is a private
-assessment artifact and must not be published. Before any public release,
-replace those frames with the reviewed non-pixel measurement graphics, rerun
-`tools/precheck.py --run-tests --check-generator`, and pass the local Git
-clean-clone gate. The
-public-media audit is expected to fail closed while the private deck is
-tracked.
+The exact approved hashes are recorded in
+`config/public_release_data_policy.json`. Re-encoding, replacing, or adding a
+screenshot changes its hash and fails closed until it is reviewed and
+registered. The `.mov` file itself remains always restricted.
 
 ## Repository map
 

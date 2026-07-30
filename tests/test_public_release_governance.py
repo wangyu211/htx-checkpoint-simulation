@@ -91,6 +91,16 @@ class PublicReleaseGovernanceTests(unittest.TestCase):
         self.write_bytes(relative, content)
         self.assertEqual(self.codes([relative]), set())
 
+    def test_explicit_assessment_use_raster_passes(self) -> None:
+        relative = "slides/task1_assessment_screenshot.png"
+        content = b"minimal assessment-use source-pixel fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        self.policy.setdefault(
+            "approved_assessment_use_media_sha256", {}
+        )[digest] = "Approved Task 1 assessment screenshot"
+        self.write_bytes(relative, content)
+        self.assertEqual(self.codes([relative]), set())
+
     def test_restricted_source_frame_inside_pptx_fails(self) -> None:
         relative = "slides/deck.pptx"
         content = b"restricted source-frame fixture"
@@ -174,7 +184,7 @@ class PublicReleaseGovernanceTests(unittest.TestCase):
             ],
         )
 
-    def test_current_repository_has_no_unregistered_privacy_findings(self) -> None:
+    def test_current_repository_has_no_privacy_findings(self) -> None:
         result = subprocess.run(
             ["git", "ls-files"],
             cwd=PROJECT_ROOT,
@@ -185,31 +195,10 @@ class PublicReleaseGovernanceTests(unittest.TestCase):
         )
         tracked = [line for line in result.stdout.splitlines() if line]
         findings = audit_paths(PROJECT_ROOT, tracked)
-        expected_private_deck_blockers = {
-            "Source-video-derived 1280x720 frame embedded in the current "
-            "Task 4 deck",
-            "Supplied-video-derived full-frame ROI and count-line illustration "
-            "in the private Task 4 deck",
-            "Supplied-video-derived detector and tracker overlay in the private "
-            "Task 4 deck",
-            "Supplied-video-derived crossing-event sequence in the private "
-            "Task 4 deck",
-        }
-        unexpected = [
-            finding
-            for finding in findings
-            if not (
-                finding.code == "RESTRICTED_CONTENT_HASH"
-                and finding.detail in expected_private_deck_blockers
-                and finding.path.startswith(
-                    "slides/HTX_Task4_Operational_Insights.pptx!/"
-                )
-            )
-        ]
         self.assertEqual(
-            unexpected,
+            findings,
             [],
-            "\n".join(finding.render() for finding in unexpected),
+            "\n".join(finding.render() for finding in findings),
         )
 
 

@@ -65,9 +65,13 @@ See `LICENSING.md` for the repository-level deployment boundary.
 
 ## Assessment input
 
-`TestVidTask.mov`, decoded frames, annotated videos, and other derivatives that
-reproduce source pixels are not redistributed. Users must obtain the assessment
-input from an authorised source.
+`TestVidTask.mov`, annotated videos, bulk decoded-frame outputs, and review
+packs are not redistributed. The Task 4 deck retains three exact-hash
+screenshots solely to explain the supplied Task 1 inference workflow.
+
+Source: `HTX TechnicalTestVideo`, supplied for Task 1. The original video is
+not redistributed in this repository. The assessment-use screenshot
+classification is a project release decision, not a general licence grant.
 
 The repository's stricter public/private data boundary, including embedded
 presentation-media checks, is documented in

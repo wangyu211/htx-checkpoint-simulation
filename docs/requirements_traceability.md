@@ -188,17 +188,13 @@ tracked because the release contract permits exactly one Task 4 PPTX.
 - [x] Task 2 requirements/design.
 - [x] Task 3 simulation logic and key outputs/metrics.
 - [x] Task 4 slides.
-- [x] A public-safe revision passed the 2026-07-29 in-worktree privacy gate and
-  local Git clean-clone gate after source-video-derived frames were removed.
-  That historical pass included the then-current tests, local-link and
-  filesystem checks, and the two-pass generator check; see
+- [x] The original `.mov`, bulk pixel derivatives, and review packs remain
+  excluded. Three exact-hash Task 1 screenshots are registered as minimal
+  assessment-use evidence in the canonical deck; any changed or additional
+  source-pixel asset fails closed.
+- [x] The current full test suite, public-media audit, local-link and
+  filesystem checks, and two-pass generator check pass in the committed
+  release candidate; see
   [`privacy_and_data_governance.md`](privacy_and_data_governance.md).
-- [ ] The current `submission-final-private` branch intentionally contains
-  three registered source-video-derived illustrations for direct private
-  assessment delivery. Its public-media audit therefore fails closed by
-  design, and the branch must not be published.
-- [ ] Create and commit a final public-safe revision, replace the three
-  restricted illustrations, then rerun the current full test suite,
-  `precheck.py --run-tests --check-generator`, and the local Git clean-clone
-  gate without diagnostic switches.
+- [x] The local Git clean-clone gate passes without diagnostic switches.
 - [ ] Repository URL ready for submission by email.

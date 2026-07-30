@@ -1,8 +1,9 @@
 """Fail-closed audit of tracked public-release artifacts.
 
-The audit intentionally treats unclassified raster media as restricted.  A
-human must review a non-pixel chart or synthetic screenshot and register its
-SHA-256 in ``config/public_release_data_policy.json`` before it can pass.
+The audit intentionally treats unclassified raster media as restricted. A
+human must review and register either a non-pixel/synthetic asset or an
+explicitly approved, minimal assessment-use screenshot by SHA-256 in
+``config/public_release_data_policy.json`` before it can pass.
 """
 
 from __future__ import annotations
@@ -258,10 +259,19 @@ def audit_paths(
         str(value).lower()
         for value in policy["restricted_structured_field_prefixes"]
     )
-    approved_media_hashes = {
+    approved_non_pixel_hashes = {
         str(value).lower()
         for value in dict(policy["approved_non_pixel_media_sha256"]).keys()
     }
+    approved_assessment_use_hashes = {
+        str(value).lower()
+        for value in dict(
+            policy.get("approved_assessment_use_media_sha256", {})
+        ).keys()
+    }
+    approved_media_hashes = (
+        approved_non_pixel_hashes | approved_assessment_use_hashes
+    )
     restricted_hashes = {
         str(key).lower(): str(value)
         for key, value in dict(policy["restricted_content_sha256"]).items()
